@@ -56,11 +56,15 @@ int main(int nc, char *np[]) {
         printf("File %s can not open.\n", np[1]);
         return 0;
     }
-    /* 作成する部分：トークンカウント用の配列？を初期化する */
+
+    /* トークンカウント用の配列を初期化する */
+    init_array(&numtoken, NUMOFTOKEN + 1);
+
     while ((token = scan()) >= 0) {
         /* 作成する部分：トークンをカウントする */
     }
     end_scan();
+
     /* 作成する部分:カウントした結果を出力する */
     return 0;
 }

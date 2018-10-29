@@ -1,1 +1,1 @@
-/usr/bin/cc -g   CMakeFiles/Task1.dir/main.c.o CMakeFiles/Task1.dir/id-list.c.o CMakeFiles/Task1.dir/token-list.c.o  -o Task1 
+/usr/bin/cc -g   CMakeFiles/Task1.dir/id-list.c.o CMakeFiles/Task1.dir/token-list.c.o CMakeFiles/Task1.dir/scan.c.o  -o Task1 

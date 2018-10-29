@@ -3,4 +3,4 @@ project(Task1 C)
 
 set(CMAKE_C_STANDARD 90)
 
-add_executable(Task1 id-list.c cmake-build-debug/token-list.c token-list.h)
+add_executable(Task1 id-list.c cmake-build-debug/token-list.c token-list.h scan.c)

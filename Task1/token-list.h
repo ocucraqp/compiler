@@ -74,7 +74,10 @@ extern int init_scan(char *filename);
 
 extern int scan(void);
 
+extern void init_array(int **, arraylength);
+
 extern int num_attr;
+
 extern char string_attr[MAXSTRSIZE];
 
 extern int get_linenum(void);

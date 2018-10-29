@@ -57,22 +57,9 @@ include CMakeFiles/Task1.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/Task1.dir/flags.make
 
-CMakeFiles/Task1.dir/main.c.o: CMakeFiles/Task1.dir/flags.make
-CMakeFiles/Task1.dir/main.c.o: ../main.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/Task1.dir/main.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/Task1.dir/main.c.o   -c /home/masaya/ドキュメント/compiler/Task1/main.c
-
-CMakeFiles/Task1.dir/main.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/Task1.dir/main.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/masaya/ドキュメント/compiler/Task1/main.c > CMakeFiles/Task1.dir/main.c.i
-
-CMakeFiles/Task1.dir/main.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/Task1.dir/main.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/masaya/ドキュメント/compiler/Task1/main.c -o CMakeFiles/Task1.dir/main.c.s
-
 CMakeFiles/Task1.dir/id-list.c.o: CMakeFiles/Task1.dir/flags.make
 CMakeFiles/Task1.dir/id-list.c.o: ../id-list.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/Task1.dir/id-list.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/Task1.dir/id-list.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/Task1.dir/id-list.c.o   -c /home/masaya/ドキュメント/compiler/Task1/id-list.c
 
 CMakeFiles/Task1.dir/id-list.c.i: cmake_force
@@ -85,7 +72,7 @@ CMakeFiles/Task1.dir/id-list.c.s: cmake_force
 
 CMakeFiles/Task1.dir/token-list.c.o: CMakeFiles/Task1.dir/flags.make
 CMakeFiles/Task1.dir/token-list.c.o: token-list.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/Task1.dir/token-list.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/Task1.dir/token-list.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/Task1.dir/token-list.c.o   -c /home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/token-list.c
 
 CMakeFiles/Task1.dir/token-list.c.i: cmake_force
@@ -96,18 +83,31 @@ CMakeFiles/Task1.dir/token-list.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/Task1.dir/token-list.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/token-list.c -o CMakeFiles/Task1.dir/token-list.c.s
 
+CMakeFiles/Task1.dir/scan.c.o: CMakeFiles/Task1.dir/flags.make
+CMakeFiles/Task1.dir/scan.c.o: ../scan.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/Task1.dir/scan.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/Task1.dir/scan.c.o   -c /home/masaya/ドキュメント/compiler/Task1/scan.c
+
+CMakeFiles/Task1.dir/scan.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/Task1.dir/scan.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/masaya/ドキュメント/compiler/Task1/scan.c > CMakeFiles/Task1.dir/scan.c.i
+
+CMakeFiles/Task1.dir/scan.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/Task1.dir/scan.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/masaya/ドキュメント/compiler/Task1/scan.c -o CMakeFiles/Task1.dir/scan.c.s
+
 # Object files for target Task1
 Task1_OBJECTS = \
-"CMakeFiles/Task1.dir/main.c.o" \
 "CMakeFiles/Task1.dir/id-list.c.o" \
-"CMakeFiles/Task1.dir/token-list.c.o"
+"CMakeFiles/Task1.dir/token-list.c.o" \
+"CMakeFiles/Task1.dir/scan.c.o"
 
 # External object files for target Task1
 Task1_EXTERNAL_OBJECTS =
 
-Task1: CMakeFiles/Task1.dir/main.c.o
 Task1: CMakeFiles/Task1.dir/id-list.c.o
 Task1: CMakeFiles/Task1.dir/token-list.c.o
+Task1: CMakeFiles/Task1.dir/scan.c.o
 Task1: CMakeFiles/Task1.dir/build.make
 Task1: CMakeFiles/Task1.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking C executable Task1"

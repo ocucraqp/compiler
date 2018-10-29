@@ -150,32 +150,32 @@ id-list.c.s:
 	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/id-list.c.s
 .PHONY : id-list.c.s
 
-main.o: main.c.o
+scan.o: scan.c.o
 
-.PHONY : main.o
+.PHONY : scan.o
 
 # target to build an object file
-main.c.o:
-	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/main.c.o
-.PHONY : main.c.o
+scan.c.o:
+	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/scan.c.o
+.PHONY : scan.c.o
 
-main.i: main.c.i
+scan.i: scan.c.i
 
-.PHONY : main.i
+.PHONY : scan.i
 
 # target to preprocess a source file
-main.c.i:
-	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/main.c.i
-.PHONY : main.c.i
+scan.c.i:
+	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/scan.c.i
+.PHONY : scan.c.i
 
-main.s: main.c.s
+scan.s: scan.c.s
 
-.PHONY : main.s
+.PHONY : scan.s
 
 # target to generate assembly for a file
-main.c.s:
-	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/main.c.s
-.PHONY : main.c.s
+scan.c.s:
+	$(MAKE) -f CMakeFiles/Task1.dir/build.make CMakeFiles/Task1.dir/scan.c.s
+.PHONY : scan.c.s
 
 token-list.o: token-list.c.o
 
@@ -216,9 +216,9 @@ help:
 	@echo "... id-list.o"
 	@echo "... id-list.i"
 	@echo "... id-list.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... scan.o"
+	@echo "... scan.i"
+	@echo "... scan.s"
 	@echo "... token-list.o"
 	@echo "... token-list.i"
 	@echo "... token-list.s"

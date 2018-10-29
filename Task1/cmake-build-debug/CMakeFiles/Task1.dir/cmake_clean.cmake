@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/Task1.dir/main.c.o"
   "CMakeFiles/Task1.dir/id-list.c.o"
   "CMakeFiles/Task1.dir/token-list.c.o"
+  "CMakeFiles/Task1.dir/scan.c.o"
   "Task1.pdb"
   "Task1"
 )

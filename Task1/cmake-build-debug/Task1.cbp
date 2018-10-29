@@ -84,7 +84,7 @@
 		<Unit filename="/home/masaya/ドキュメント/compiler/Task1/id-list.c">
 			<Option target="Task1"/>
 		</Unit>
-		<Unit filename="/home/masaya/ドキュメント/compiler/Task1/main.c">
+		<Unit filename="/home/masaya/ドキュメント/compiler/Task1/scan.c">
 			<Option target="Task1"/>
 		</Unit>
 		<Unit filename="/home/masaya/ドキュメント/compiler/Task1/token-list.h">
