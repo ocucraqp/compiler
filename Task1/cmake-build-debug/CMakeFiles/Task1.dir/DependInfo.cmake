@@ -6,7 +6,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_CHECK_C
   "/home/masaya/ドキュメント/compiler/Task1/id-list.c" "/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles/Task1.dir/id-list.c.o"
   "/home/masaya/ドキュメント/compiler/Task1/scan.c" "/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles/Task1.dir/scan.c.o"
-  "/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/token-list.c" "/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles/Task1.dir/token-list.c.o"
+  "/home/masaya/ドキュメント/compiler/Task1/token-list.c" "/home/masaya/ドキュメント/compiler/Task1/cmake-build-debug/CMakeFiles/Task1.dir/token-list.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

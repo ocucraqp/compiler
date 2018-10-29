@@ -47,29 +47,38 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 
 int main(int nc, char *np[]) {
     int token, i;
+    FILE *fp;
 
+    /* 引数がなければ終了 */
     if (nc < 2) {
         printf("File name id not given.\n");
-        return 0;
+        return EXIT_FAILURE;
     }
-    if (init_scan(np[1]) < 0) {
+
+    /* ファイルが開けなければ終了 */
+    if (init_scan(np[1], &fp) < 0) {
         printf("File %s can not open.\n", np[1]);
-        return 0;
+        return EXIT_FAILURE;
     }
 
     /* トークンカウント用の配列を初期化する */
-    init_array(&numtoken, NUMOFTOKEN + 1);
+    init_array(numtoken, NUMOFTOKEN + 1);
 
-    while ((token = scan()) >= 0) {
-        /* 作成する部分：トークンをカウントする */
+    /* トークンをカウントする */
+    while ((token = scan(fp)) >= 0) {
+        /* todo：トークンをカウントする */
     }
-    end_scan();
 
-    /* 作成する部分:カウントした結果を出力する */
-    return 0;
+    /* スキャン終了 */
+    end_scan(fp);
+
+    /* todo:カウントした結果を出力する */
+
+    return EXIT_SUCCESS;
 }
 
-void error(char *mes) {
+/* errorの表示とスキャン終了処理 */
+void error(char *mes, FILE *fp) {
     printf("\n ERROR: %s\n", mes);
-    end_scan();
+    end_scan(fp);
 }

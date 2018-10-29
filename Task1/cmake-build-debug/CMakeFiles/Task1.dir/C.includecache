@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/masaya/ドキュメント/compiler/Task1/scan.c
+token-list.h
+/home/masaya/ドキュメント/compiler/Task1/token-list.h
+
+/home/masaya/ドキュメント/compiler/Task1/token-list.c
+token-list.h
+/home/masaya/ドキュメント/compiler/Task1/token-list.h
+
+/home/masaya/ドキュメント/compiler/Task1/token-list.h
+stdlib.h
+-
+stdio.h
+-
+string.h
+-
+
