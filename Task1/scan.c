@@ -1,5 +1,7 @@
 #include "token-list.h"
 
+char string_attr[MAXSTRSIZE];
+
 /* スキャン前に呼び出し、ファイルをオープンし、スキャンの準備 */
 int init_scan(char *filename, FILE **fp) {
     /* ファイルポインタはポインタのポインタとして受け取り、値を返す */
@@ -32,7 +34,7 @@ int scan(FILE *fp) {
         }
     }
 
-    // 分離子まで読み込む
+    // 分離子もしくは記号まで読み込む
     for (i = 1; (cbuf = fgetc(fp)) != EOF; i++) {
         if (is_check_separator(cbuf)) {
             break;
@@ -46,7 +48,7 @@ int scan(FILE *fp) {
 
 /* int型配列を0で初期化する */
 void init_int_array(int *array, int arraylength) {
-    int i;
+    int i = 0;
     for (i = 0; i < arraylength; i++) {
         array[i] = 0;
     }
@@ -54,10 +56,26 @@ void init_int_array(int *array, int arraylength) {
 
 /* char型配列を\0で初期化する */
 void init_char_array(char *array, int arraylength) {
-    int i;
+    int i = 0;
     for (i = 0; i < arraylength; i++) {
         array[i] = '\0';
     }
+}
+
+/* 文字がアルファベットか確認する */
+int is_check_alphabet(char c) {
+    if ((c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)) {
+        return 1;
+    }
+    return 0;
+}
+
+/* 文字が数字か確認する */
+int is_check_number(char c) {
+    if (c >= 0x30 && c <= 0x39) {
+        return 1;
+    }
+    return 0;
 }
 
 /* 引数が
@@ -82,17 +100,18 @@ int is_check_separator(char c) {
     }
 }
 
+/* トークンを識別する */
 int identify_token(const char *tokenstr) {
     int token = 0;
 
-    if ((tokenstr[0] >= 0x41 && tokenstr[0] <= 0x5a) || (tokenstr[0] >= 0x61 && tokenstr[0] <= 0x7a)) {
+    if (is_check_alphabet(tokenstr[0])) {
         // todo アルファベットから始まるとき
         if ((token = identify_keyword(tokenstr)) > 0) {
             return token;
         } else {
             return identify_name(tokenstr);
         }
-    } else if (tokenstr[0] >= 0x30 && tokenstr[0] <= 0x39) {
+    } else if (is_check_number(tokenstr[0])) {
         // todo 数字から始まるとき
     } else if ((tokenstr[0] >= 0x28 && tokenstr[0] <= 0x2e) || (tokenstr[0] >= 0x28 && tokenstr[0] <= 0x2e) ||
                tokenstr[0] == 0x5b || tokenstr[0] == 0x5d) {
@@ -104,21 +123,36 @@ int identify_token(const char *tokenstr) {
 
 /* キーワードを識別する */
 int identify_keyword(const char *tokenstr) {
-    int i;
+    int i = 0;
     if (strlen(tokenstr) <= MAXKEYWORDLENGTH) {
         for (i = 0; i < KEYWORDSIZE; i++) {
             if (strcmp(tokenstr, key[i].keyword) == 0) {
                 return key[i].keytoken;
             }
-            printf("%s\n",key[i].keyword);
+            printf("%s\n", key[i].keyword);
         }
     }
 
     return -1;
 }
 
+/* 名前に英字と数字以外が入っていないか確認し、
+ * 入っていなければstring_attrに名前を格納し、TNAME(1)を返す */
 int identify_name(const char *tokenstr) {
-    // todo
+    int i = 0;
+
+    while ((i < MAXSTRSIZE) && (tokenstr[i] != '\0')) {
+        if (!(is_check_alphabet(tokenstr[i]) || is_check_number(tokenstr[i]))) {
+            return -1;
+        }
+        i++;
+    }
+
+    /* 名前をstringattrに格納 */
+    init_char_array(string_attr, MAXSTRSIZE);
+    snprintf(string_attr, MAXSTRSIZE, "%s", tokenstr);
+
+    return TNAME;
 }
 
 int get_linenum(void) {

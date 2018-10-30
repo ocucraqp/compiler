@@ -79,6 +79,10 @@ extern void init_int_array(int *array, int arraylength);
 
 extern void init_char_array(char *array, int arraylength);
 
+extern int is_check_alphabet(char c);
+
+extern int is_check_number(char c);
+
 extern int is_check_separator(char c);
 
 extern int identify_token(const char *tokenstr);
