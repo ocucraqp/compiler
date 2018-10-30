@@ -62,7 +62,7 @@ int main(int nc, char *np[]) {
     }
 
     /* トークンカウント用の配列を初期化する */
-    init_array(numtoken, NUMOFTOKEN + 1);
+    init_int_array(numtoken, NUMOFTOKEN + 1);
 
     /* トークンをカウントする */
     while ((token = scan(fp)) >= 0) {

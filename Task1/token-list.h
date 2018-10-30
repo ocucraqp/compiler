@@ -61,6 +61,7 @@
 /* token-list.c */
 
 #define KEYWORDSIZE    28
+#define MAXKEYWORDLENGTH    9
 
 extern struct KEY {
     char *keyword;
@@ -74,7 +75,17 @@ extern int init_scan(char *filename, FILE **fp);
 
 extern int scan(FILE *fp);
 
-extern void init_array(int *array, int arraylength);
+extern void init_int_array(int *array, int arraylength);
+
+extern void init_char_array(char *array, int arraylength);
+
+extern int is_check_separator(char c);
+
+extern int identify_token(const char *tokenstr);
+
+extern int identify_keyword(const char *tokenstr);
+
+extern int identify_name(const char *tokenstr);
 
 extern int num_attr;
 
