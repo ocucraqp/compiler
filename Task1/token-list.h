@@ -73,7 +73,7 @@ extern void error(char *mes, FILE *fp);
 /* scan.c */
 extern int init_scan(char *filename, FILE **fp);
 
-extern int scan(FILE *fp);
+extern int scan(FILE *fp, char *cbuf);
 
 extern void init_int_array(int *array, int arraylength);
 
@@ -83,6 +83,8 @@ extern int is_check_alphabet(char c);
 
 extern int is_check_number(char c);
 
+extern int is_check_symbol(char c);
+
 extern int is_check_separator(char c);
 
 extern int identify_token(const char *tokenstr);
@@ -90,6 +92,8 @@ extern int identify_token(const char *tokenstr);
 extern int identify_keyword(const char *tokenstr);
 
 extern int identify_name(const char *tokenstr);
+
+extern int identify_symbol(const char *tokenstr, FILE *fp);
 
 extern int num_attr;
 

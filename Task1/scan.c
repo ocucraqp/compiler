@@ -19,27 +19,31 @@ int init_scan(char *filename, FILE **fp) {
 
 /* トークンのコードを返す。
  * 次のトークンをスキャンできないときは、-1を返す。 */
-int scan(FILE *fp) {
-    char cbuf;
+int scan(FILE *fp, char *cbuf) {
     char strbuf[MAXSTRSIZE];
     int i;
 
     init_char_array(strbuf, MAXSTRSIZE);
 
-    // 字句の1文字目を読み込む
-    while ((cbuf = fgetc(fp)) != EOF) {
-        if (!is_check_separator(cbuf)) {
-            strbuf[0] = cbuf;
-            break;
+    /* cbufに記号が入ってないか調べてなければ、他種類の字句の解析 */
+    if (is_check_symbol(*cbuf)) {
+        identify_symbol(cbuf, fp);
+    } else {
+        // 字句の1文字目を読み込む
+        while ((*cbuf = fgetc(fp)) != EOF) {
+            if (!is_check_separator(*cbuf)) {
+                strbuf[0] = *cbuf;
+                break;
+            }
         }
-    }
 
-    // 分離子もしくは記号まで読み込む
-    for (i = 1; (cbuf = fgetc(fp)) != EOF; i++) {
-        if (is_check_separator(cbuf)) {
-            break;
-        } else {
-            strbuf[i] = cbuf;
+        // 分離子もしくは記号まで読み込む
+        for (i = 1; (*cbuf = fgetc(fp)) != EOF; i++) {
+            if (is_check_separator(*cbuf) || is_check_symbol(*cbuf)) {
+                break;
+            } else {
+                strbuf[i] = *cbuf;
+            }
         }
     }
 
@@ -78,6 +82,15 @@ int is_check_number(char c) {
     return 0;
 }
 
+/* 文字が記号か確認する */
+int is_check_symbol(char c) {
+    if ((c >= 0x28 && c <= 0x2e) || (c >= 0x28 && c <= 0x2e) ||
+        c == 0x5b || c == 0x5d) {
+        return 1;
+    }
+    return 0;
+}
+
 /* 引数が
  * 空白、タブ、改行のとき1
  * 注釈のとき2
@@ -93,7 +106,8 @@ int is_check_separator(char c) {
         case 0x20: // 空白文字
             return 1;
             break;
-            /* todo 注釈
+            /* todo 注釈をつける
+             * ファイルポインタをもらって注釈の終わりまで進める
              * case: */
         default:
             return 0;
@@ -113,8 +127,7 @@ int identify_token(const char *tokenstr) {
         }
     } else if (is_check_number(tokenstr[0])) {
         // todo 数字から始まるとき
-    } else if ((tokenstr[0] >= 0x28 && tokenstr[0] <= 0x2e) || (tokenstr[0] >= 0x28 && tokenstr[0] <= 0x2e) ||
-               tokenstr[0] == 0x5b || tokenstr[0] == 0x5d) {
+    } else if (is_check_symbol(tokenstr[0])) {
         // todo 記号から始まるとき
     } else {
         // todo 想定されていない字句
@@ -153,6 +166,11 @@ int identify_name(const char *tokenstr) {
     snprintf(string_attr, MAXSTRSIZE, "%s", tokenstr);
 
     return TNAME;
+}
+
+/* 記号を識別する */
+int identify_symbol(const char *tokenstr, FILE *fp) {
+    //todo
 }
 
 int get_linenum(void) {
