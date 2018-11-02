@@ -2,7 +2,7 @@
 
 char string_attr[MAXSTRSIZE];
 
-int num_attr = 0;
+int num_attr;
 
 char cbuf = '\0';
 
@@ -18,6 +18,13 @@ int init_scan(char *filename, FILE **fp) {
         return -1;
     }
 
+    /* 行番号を初期化 */
+    linenum = 0;
+
+    /* cbufに一文字読み込む */
+    cbuf = (char) fgetc(*fp);
+
+
     return 0;
 
 }
@@ -30,11 +37,6 @@ int scan(FILE *fp) {
 
     //strbufを'\0'で初期化
     init_char_array(strbuf, MAXSTRSIZE);
-
-    /* cbufが初期状態'\0'であれば、 一文字読み込む */
-    if (cbuf == '\0') {
-        cbuf = (char) fgetc(fp);
-    }
 
     /* cbufに分離子かEOFが入ってないか調べ、
      * 分離子の場合は分離子がなくなるまで分離子を飛ばし

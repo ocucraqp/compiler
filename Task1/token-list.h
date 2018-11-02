@@ -110,3 +110,15 @@ extern int linenum;
 extern int get_linenum(void);
 
 extern void end_scan(FILE *fp);
+
+/* id-list.c */
+
+extern void init_idtab();
+
+extern struct ID *search_idtab(char *np);
+
+extern void id_countup(char *np);
+
+extern void print_idtab();
+
+extern void release_idtab();

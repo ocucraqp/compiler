@@ -46,38 +46,54 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 };
 
 int main(int nc, char *np[]) {
-    int token, i;
+    int token = 0, i = 0;
     FILE *fp;
+    char *temp;
 
     /* 引数がなければ終了 */
     if (nc < 2) {
-        printf("File name id not given.\n");
+        error("File name id not given.");
         return EXIT_FAILURE;
     }
 
     /* ファイルが開けなければ終了 */
     if (init_scan(np[1], &fp) < 0) {
-        printf("File %s can not open.\n", np[1]);
+        sprintf(temp, "File %s can not open.\n", np[1]);
+        error(temp);
         return EXIT_FAILURE;
     }
 
-    /* トークンカウント用の配列を初期化する */
+    /* トークンカウント用の配列と識別子カウント用の構造体を初期化する */
     init_int_array(numtoken, NUMOFTOKEN + 1);
+    init_idtab();
 
     /* トークンをカウントする */
     while ((token = scan(fp)) >= 0) {
-        /* todo：トークンをカウントする */
+        numtoken[token]++;
+        if (token == TNAME) {
+            id_countup(string_attr);
+        }
     }
 
     /* スキャン終了 */
     end_scan(fp);
 
-    /* todo:カウントした結果を出力する */
+    /* カウントした結果を出力する */
+    for (i = 1; i < NUMOFTOKEN + 1; i++) {
+        if (numtoken[i] > 0) {
+            printf("\t\"%s\" \t%d\n", tokenstr[i], numtoken[i]);
+        }
+    }
 
+    /* カウントした識別子を出力する */
+    print_idtab();
+    release_idtab();
+
+    printf("finished\n");
     return EXIT_SUCCESS;
 }
 
 /* errorの表示とスキャン終了処理 */
 void error(char *mes) {
-    printf("\nline%d ERROR: %s\n", get_linenum(), mes);
+    fprintf(stderr, "\nline%d ERROR: %s\n", get_linenum(), mes);
 }
