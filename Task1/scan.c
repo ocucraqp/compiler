@@ -287,12 +287,19 @@ int identify_string(FILE *fp) {
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
         if (cbuf == '\'') {
-            /* 文字列をstring_attrに格納 */
-            init_char_array(string_attr, MAXSTRSIZE);
-            snprintf(string_attr, MAXSTRSIZE, "%s", tempbuf);
             //cbufに1文字読み込む
             cbuf = (char) fgetc(fp);
-            return TSTRING;
+            if(cbuf == '\'') {
+                tempbuf[i] = '\'';
+                i++;
+                tempbuf[i] = '\'';
+            } else{
+                /* 文字列をstring_attrに格納 */
+                init_char_array(string_attr, MAXSTRSIZE);
+                snprintf(string_attr, MAXSTRSIZE, "%s", tempbuf);
+                return TSTRING;
+
+            }
         } else {
             tempbuf[i] = cbuf;
         }
