@@ -45,10 +45,11 @@ char *tokenstr[NUMOFTOKEN + 1] = {
         ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
 };
 
+char cbuf='\0';
+
 int main(int nc, char *np[]) {
     int token, i;
     FILE *fp;
-    char *cbuf;
 
     /* 引数がなければ終了 */
     if (nc < 2) {
@@ -66,7 +67,7 @@ int main(int nc, char *np[]) {
     init_int_array(numtoken, NUMOFTOKEN + 1);
 
     /* トークンをカウントする */
-    while ((token = scan(fp, cbuf)) >= 0) {
+    while ((token = scan(fp)) >= 0) {
         /* todo：トークンをカウントする */
     }
 
