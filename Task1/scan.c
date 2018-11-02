@@ -26,7 +26,7 @@ int init_scan(char *filename, FILE **fp) {
  * 次のトークンをスキャンできないときは、-1を返す。 */
 int scan(FILE *fp) {
     char strbuf[MAXSTRSIZE];
-    int i = 0, temp = 0;
+    int i = 0, temp = 0, sep_type = 0;
 
     //strbufを'\0'で初期化
     init_char_array(strbuf, MAXSTRSIZE);
@@ -37,12 +37,15 @@ int scan(FILE *fp) {
     }
 
     /* cbufに分離子かEOFが入ってないか調べ、
-     * 分離子の場合は分離子を飛ばし
+     * 分離子の場合は分離子がなくなるまで分離子を飛ばし
      * EOFの場合は-1を返し終了 */
-    if (skip_separator(cbuf, fp) == -1) {
-        error("failed to reach comment end.");
-        return -1;
-    } else if (cbuf == EOF) {
+    while ((sep_type = skip_separator(cbuf, fp)) != 0) {
+        if (sep_type == -1) {
+            error("failed to reach comment end.");
+            return -1;
+        }
+    }
+    if (cbuf == EOF) {
         return -1;
     }
 
@@ -148,14 +151,14 @@ int skip_separator(char c, FILE *fp) {
             return 1;
         case '\r': // 復帰
             cbuf = (char) fgetc(fp);
-            if(cbuf == '\n'){
+            if (cbuf == '\n') {
                 cbuf = (char) fgetc(fp);
             }
             linenum++;
             return 1;
         case '\n': // 改行
             cbuf = (char) fgetc(fp);
-            if(cbuf == '\r'){
+            if (cbuf == '\r') {
                 cbuf = (char) fgetc(fp);
             }
             linenum++;
