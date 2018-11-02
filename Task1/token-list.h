@@ -111,6 +111,8 @@ extern int get_linenum(void);
 
 extern void end_scan(FILE *fp);
 
+extern int is_check_token_size(int i);
+
 /* id-list.c */
 
 extern void init_idtab();

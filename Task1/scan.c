@@ -61,6 +61,9 @@ int scan(FILE *fp) {
         /* 数字が入っていた場合は、数字が続く限り続け、identify_numberを呼ぶ */
         strbuf[0] = cbuf;
         for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+            if (is_check_token_size(i) == -1) {
+                return -1;
+            }
             if (is_check_number(cbuf)) {
                 strbuf[i] = cbuf;
             } else {
@@ -77,6 +80,9 @@ int scan(FILE *fp) {
          * キーワードでなければidentify_nameを呼ぶ */
         strbuf[0] = cbuf;
         for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+            if (is_check_token_size(i) == -1) {
+                return -1;
+            }
             if (is_check_alphabet(cbuf) || is_check_number(cbuf)) {
                 strbuf[i] = cbuf;
             } else {
@@ -286,14 +292,17 @@ int identify_string(FILE *fp) {
     char tempbuf[MAXSTRSIZE];
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+        if (is_check_token_size(i) == -1) {
+            return -1;
+        }
         if (cbuf == '\'') {
             //cbufに1文字読み込む
             cbuf = (char) fgetc(fp);
-            if(cbuf == '\'') {
+            if (cbuf == '\'') {
                 tempbuf[i] = '\'';
                 i++;
                 tempbuf[i] = '\'';
-            } else{
+            } else {
                 /* 文字列をstring_attrに格納 */
                 init_char_array(string_attr, MAXSTRSIZE);
                 snprintf(string_attr, MAXSTRSIZE, "%s", tempbuf);
@@ -340,4 +349,13 @@ void end_scan(FILE *fp) {
     if (fclose(fp) == EOF) {
         error("File can not close.");
     };
+}
+
+/* トークンのサイズが最大を超えたら-1を返す */
+int is_check_token_size(int i) {
+    if (i >= MAXSTRSIZE) {
+        error("one token is too long.");
+        return -1;
+    }
+    return 1;
 }
