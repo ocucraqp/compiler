@@ -280,7 +280,7 @@ int identify_number(const char *tokenstr) {
     return TNUMBER;
 }
 
-/* string_attrに名前を格納し、TSTRINGを返す */
+/* string_attrに文字列を格納し、TSTRINGを返す */
 int identify_string(FILE *fp) {
     int i = 0;
     char tempbuf[MAXSTRSIZE];
@@ -322,6 +322,7 @@ int skip_comment(FILE *fp, int sep_type) {
     return -1;
 }
 
+/* もっとも最近にscan()で返されたトークンが存在した番号を返す。 */
 int get_linenum(void) {
     return linenum;
 }

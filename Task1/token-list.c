@@ -71,6 +71,7 @@ int main(int nc, char *np[]) {
     while ((token = scan(fp)) >= 0) {
         numtoken[token]++;
         if (token == TNAME) {
+            /* 名前のトークンだった場合は、識別子もカウント */
             id_countup(string_attr);
         }
     }
