@@ -81,6 +81,7 @@ int main(int nc, char *np[]) {
 
 /* errorの表示とスキャン終了処理 */
 void error(char *mes, FILE *fp) {
+    // todo :エラーが起こった行の表示
     printf("\n ERROR: %s\n", mes);
     end_scan(fp);
 }

@@ -95,6 +95,8 @@ extern int identify_keyword(const char *tokenstr);
 
 extern int identify_name(const char *tokenstr);
 
+extern int identify_number(const char *tokenstr);
+
 extern int identify_symbol(char tokenc, FILE *fp);
 
 extern int skip_comment(FILE *fp, int sep_type);

@@ -2,6 +2,8 @@
 
 char string_attr[MAXSTRSIZE];
 
+int num_attr;
+
 /* スキャン前に呼び出し、ファイルをオープンし、スキャンの準備 */
 int init_scan(char *filename, FILE **fp) {
     /* ファイルポインタはポインタのポインタとして受け取り、値を返す */
@@ -145,15 +147,17 @@ int identify_token(const char *tokenstr, FILE *fp) {
     int token = 0;
 
     if (is_check_alphabet(tokenstr[0])) {
-        // todo アルファベットから始まるとき
+        // アルファベットから始まるとき
         if ((token = identify_keyword(tokenstr)) > 0) {
             return token;
         } else {
             return identify_name(tokenstr);
         }
     } else if (is_check_number(tokenstr[0])) {
-        // todo 数字から始まるとき
+        // 数字から始まるとき
+        return identify_number(tokenstr);
     } else if (is_check_symbol(tokenstr[0])) {
+        // 記号から始まるとき
         return identify_symbol(*tokenstr, fp);
     } else {
         // todo 想定されていない字句
@@ -255,6 +259,30 @@ int identify_symbol(char tokenc, FILE *fp) {
             error("failed to identify symbol.", fp);
             exit(EXIT_FAILURE);
     }
+}
+
+int identify_number(const char *tokenstr){
+    int i = 0;
+            long temp = 0;
+
+    while ((i < MAXSTRSIZE) && (tokenstr[i] != '\0')) {
+        if (!(is_check_number(tokenstr[i]))) {
+            printf("\nERROR: failed to identify number.\n");
+            return -1;
+        }
+        i++;
+    }
+
+    /* 符号なし整数をnum_attrに格納 */
+    temp = strtol(tokenstr,NULL, 10);
+    if(temp <= 32767){
+        num_attr = (int)temp;
+    }else{
+        printf("\nERROR: number is bigeer than 32767.\n");
+        return -1;
+    }
+
+    return TNUMBER;
 }
 
 /* 注釈をスキップする
