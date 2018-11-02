@@ -68,9 +68,7 @@ extern struct KEY {
     int keytoken;
 } key[KEYWORDSIZE];
 
-extern char cbuf;
-
-extern void error(char *mes, FILE *fp);
+extern void error(char *mes);
 
 /* scan.c */
 extern int init_scan(char *filename, FILE **fp);
@@ -87,9 +85,7 @@ extern int is_check_number(char c);
 
 extern int is_check_symbol(char c);
 
-extern int is_check_separator(char c, FILE *fp);
-
-extern int identify_token(const char *tokenstr, FILE *fp);
+extern int skip_separator(char c, FILE *fp);
 
 extern int identify_keyword(const char *tokenstr);
 
@@ -97,13 +93,19 @@ extern int identify_name(const char *tokenstr);
 
 extern int identify_number(const char *tokenstr);
 
-extern int identify_symbol(char tokenc, FILE *fp);
+extern int identify_symbol(char *tokenstr, FILE *fp);
+
+extern int identify_string(FILE *fp);
 
 extern int skip_comment(FILE *fp, int sep_type);
 
 extern int num_attr;
 
 extern char string_attr[MAXSTRSIZE];
+
+extern char cbuf;
+
+extern int linenum;
 
 extern int get_linenum(void);
 

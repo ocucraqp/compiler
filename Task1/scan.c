@@ -2,16 +2,19 @@
 
 char string_attr[MAXSTRSIZE];
 
-int num_attr;
+int num_attr = 0;
 
-/* スキャン前に呼び出し、ファイルをオープンし、スキャンの準備 */
+char cbuf = '\0';
+
+int linenum = 0;
+
+/* スキャン前に呼び出し、ファイルをオープンし、スキャンの準備
+ * 成功したら0、失敗したら-1を返す */
 int init_scan(char *filename, FILE **fp) {
     /* ファイルポインタはポインタのポインタとして受け取り、値を返す */
     *fp = fopen(filename, "r");
 
     if (*fp == NULL) {
-        // 失敗と表示し終了
-        printf("ERROR: fclose()\n");
         return -1;
     }
 
@@ -23,56 +26,69 @@ int init_scan(char *filename, FILE **fp) {
  * 次のトークンをスキャンできないときは、-1を返す。 */
 int scan(FILE *fp) {
     char strbuf[MAXSTRSIZE];
-    int i = 0, sep_type = 0;
+    int i = 0, temp = 0;
 
+    //strbufを'\0'で初期化
     init_char_array(strbuf, MAXSTRSIZE);
 
-    /* cbufに記号が入ってないか調べてなければ、他種類の字句の解析
-     * EOFが入っていれば-1を返し終了*/
-    if (cbuf == EOF) {
+    /* cbufが初期状態'\0'であれば、 一文字読み込む */
+    if (cbuf == '\0') {
+        cbuf = (char) fgetc(fp);
+    }
+
+    /* cbufに分離子かEOFが入ってないか調べ、
+     * 分離子の場合は分離子を飛ばし
+     * EOFの場合は-1を返し終了 */
+    if (skip_separator(cbuf, fp) == -1) {
+        error("failed to reach comment end.");
         return -1;
-    } else if (is_check_symbol(cbuf)) {
-        return identify_symbol(cbuf, fp);
-    } else {
-        /* 字句の1文字目を読み込む
-         * cbufに英字又は数字が入っていればそれを1文字目に
-         * 英字も数字も入ってなければ新たに読み込む */
-        if (is_check_number(cbuf) || is_check_alphabet(cbuf)) {
-            strbuf[0] = cbuf;
-        } else {
-            while ((cbuf = (char) fgetc(fp)) != EOF) {
-                sep_type = is_check_separator(cbuf, fp);
-                if (sep_type == 0) {
-                    strbuf[0] = cbuf;
-                    break;
-                } else if (sep_type >= 2) {
-                    if (skip_comment(fp, sep_type) == 0) {
-                        error("failed to end comment.", fp);
-                        exit(EXIT_FAILURE);
-                    }
-                }
+    } else if (cbuf == EOF) {
+        return -1;
+    }
+
+
+    /* cbufに記号、数字、、文字列、英字の順で何が入っているか調べる */
+    if (is_check_symbol(cbuf)) {
+        /* 記号が入っていた場合は、どの記号か識別して返す */
+        strbuf[0] = cbuf;
+        cbuf = (char) fgetc(fp);
+        return identify_symbol(strbuf, fp);
+    } else if (is_check_number(cbuf)) {
+        /* 数字が入っていた場合は、数字が続く限り続け、identify_numberを呼ぶ */
+        strbuf[0] = cbuf;
+        for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+            if (is_check_number(cbuf)) {
+                strbuf[i] = cbuf;
+            } else {
+                break;
             }
         }
-        // todo string
-        // 分離子もしくは記号まで読み込む
+        return identify_number(strbuf);
+    } else if (cbuf == '\'') {
+        /* "'"が入っていた場合は、文字列と考え、identify_stringを呼ぶ */
+        return identify_string(fp);
+    } else if (is_check_alphabet(cbuf)) {
+        /* 英字が入っていた場合はキーワードか名前なので英字か数字が続く限り、
+         * strbufに入れていき、identify_keywordを呼び、
+         * キーワードでなければidentify_nameを呼ぶ */
+        strbuf[0] = cbuf;
         for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
-            sep_type = is_check_separator(cbuf, fp);
-            if (sep_type == 0) {
-                if (is_check_symbol(cbuf)) {
-                    break;
-                } else {
-                    strbuf[i] = cbuf;
-                }
-            } else if (sep_type >= 2) {
-                if (skip_comment(fp, sep_type) == 0) {
-                    error("failed to end comment.", fp);
-                    exit(EXIT_FAILURE);
-                }
+            if (is_check_alphabet(cbuf) || is_check_number(cbuf)) {
+                strbuf[i] = cbuf;
+            } else {
+                break;
             }
+        }
+        if ((temp = identify_keyword(strbuf)) != -1) {
+            return temp;
+        } else {
+            return identify_name(strbuf);
         }
     }
 
-    return identify_token(strbuf, fp);
+    /*何も入っていなければ想定していない終端記号が来ていたと判別する */
+    error("contain unexpected token.");
+    return -1;
 }
 
 /* int型配列を0で初期化する */
@@ -122,45 +138,38 @@ int is_check_symbol(char c) {
  * "/" "*"から始まる注釈のとき3
  * それ以外のとき0
  * を返す */
-int is_check_separator(char c, FILE *fp) {
+int skip_separator(char c, FILE *fp) {
     switch (c) {
-        case 0x09: // 水平タブ
-        case 0x0a: // 改行
-        case 0x0b: // 垂直タブ
-        case 0x0c: // 改頁
-        case 0x0d: // 復帰
+        case '\t': // 水平タブ
+        case '\v': // 垂直タブ
+        case '\f': // 改頁
         case 0x20: // 空白文字
+            cbuf = (char) fgetc(fp);
+            return 1;
+        case '\r': // 復帰
+            cbuf = (char) fgetc(fp);
+            if(cbuf == '\n'){
+                cbuf = (char) fgetc(fp);
+            }
+            linenum++;
+            return 1;
+        case '\n': // 改行
+            cbuf = (char) fgetc(fp);
+            if(cbuf == '\r'){
+                cbuf = (char) fgetc(fp);
+            }
+            linenum++;
             return 1;
         case '{':
-            return 2;
+            return skip_comment(fp, 2);
         case '/':
             if ((cbuf = (char) fgetc(fp)) == '*') {
-                return 3;
+                return skip_comment(fp, 3);
             }
+            error("contain unexpected token.");
+            return -1;
         default:
             return 0;
-    }
-}
-
-/* トークンを識別する */
-int identify_token(const char *tokenstr, FILE *fp) {
-    int token = 0;
-
-    if (is_check_alphabet(tokenstr[0])) {
-        // アルファベットから始まるとき
-        if ((token = identify_keyword(tokenstr)) > 0) {
-            return token;
-        } else {
-            return identify_name(tokenstr);
-        }
-    } else if (is_check_number(tokenstr[0])) {
-        // 数字から始まるとき
-        return identify_number(tokenstr);
-    } else if (is_check_symbol(tokenstr[0])) {
-        // 記号から始まるとき
-        return identify_symbol(*tokenstr, fp);
-    } else {
-        // todo 想定されていない字句
     }
 }
 
@@ -172,26 +181,15 @@ int identify_keyword(const char *tokenstr) {
             if (strcmp(tokenstr, key[i].keyword) == 0) {
                 return key[i].keytoken;
             }
-            printf("%s\n", key[i].keyword);
         }
     }
 
     return -1;
 }
 
-/* 名前に英字と数字以外が入っていないか確認し、
- * 入っていなければstring_attrに名前を格納し、TNAME(1)を返す */
+/* string_attrに名前を格納し、TNAMEを返す */
 int identify_name(const char *tokenstr) {
-    int i = 0;
-
-    while ((i < MAXSTRSIZE) && (tokenstr[i] != '\0')) {
-        if (!(is_check_alphabet(tokenstr[i]) || is_check_number(tokenstr[i]))) {
-            return -1;
-        }
-        i++;
-    }
-
-    /* 名前をstringattrに格納 */
+    /* 名前をstring_attrに格納 */
     init_char_array(string_attr, MAXSTRSIZE);
     snprintf(string_attr, MAXSTRSIZE, "%s", tokenstr);
 
@@ -199,8 +197,8 @@ int identify_name(const char *tokenstr) {
 }
 
 /* 記号を識別する */
-int identify_symbol(char tokenc, FILE *fp) {
-    switch (tokenc) {
+int identify_symbol(char *tokenstr, FILE *fp) {
+    switch (tokenstr[0]) {
         case '(':
             return TLPAREN;
         case ')':
@@ -216,9 +214,9 @@ int identify_symbol(char tokenc, FILE *fp) {
         case '.':
             return TDOT;
         case ':':
-            cbuf = (char) fgetc(fp);
             switch (cbuf) {
                 case '=':
+                    cbuf = (char) fgetc(fp);
                     return TASSIGN;
                 case EOF:
                     return -1;
@@ -228,11 +226,12 @@ int identify_symbol(char tokenc, FILE *fp) {
         case ';':
             return TSEMI;
         case '<':
-            cbuf = (char) fgetc(fp);
             switch (cbuf) {
                 case '>':
+                    cbuf = (char) fgetc(fp);
                     return TNOTEQ;
                 case '=':
+                    cbuf = (char) fgetc(fp);
                     return TLEEQ;
                 case EOF:
                     return -1;
@@ -242,9 +241,9 @@ int identify_symbol(char tokenc, FILE *fp) {
         case '=':
             return TEQUAL;
         case '>':
-            cbuf = (char) fgetc(fp);
             switch (cbuf) {
                 case '=':
+                    cbuf = (char) fgetc(fp);
                     return TGREQ;
                 case EOF:
                     return -1;
@@ -256,62 +255,76 @@ int identify_symbol(char tokenc, FILE *fp) {
         case ']':
             return TRSQPAREN;
         default:
-            error("failed to identify symbol.", fp);
-            exit(EXIT_FAILURE);
+            error("failed to identify symbol.");
+            return -1;
     }
 }
 
-int identify_number(const char *tokenstr){
-    int i = 0;
-            long temp = 0;
-
-    while ((i < MAXSTRSIZE) && (tokenstr[i] != '\0')) {
-        if (!(is_check_number(tokenstr[i]))) {
-            printf("\nERROR: failed to identify number.\n");
-            return -1;
-        }
-        i++;
-    }
+/* num_attrに名前を格納し、TNUMBERを返す */
+int identify_number(const char *tokenstr) {
+    long temp = 0;
 
     /* 符号なし整数をnum_attrに格納 */
-    temp = strtol(tokenstr,NULL, 10);
-    if(temp <= 32767){
-        num_attr = (int)temp;
-    }else{
-        printf("\nERROR: number is bigeer than 32767.\n");
+    temp = strtol(tokenstr, NULL, 10);
+    if (temp <= 32767) {
+        num_attr = (int) temp;
+    } else {
+        error("number is bigeer than 32767.");
         return -1;
     }
 
     return TNUMBER;
 }
 
+/* string_attrに名前を格納し、TSTRINGを返す */
+int identify_string(FILE *fp) {
+    int i = 0;
+    char tempbuf[MAXSTRSIZE];
+
+    for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+        if (cbuf == '\'') {
+            /* 文字列をstring_attrに格納 */
+            init_char_array(string_attr, MAXSTRSIZE);
+            snprintf(string_attr, MAXSTRSIZE, "%s", tempbuf);
+            //cbufに1文字読み込む
+            cbuf = (char) fgetc(fp);
+            return TSTRING;
+        } else {
+            tempbuf[i] = cbuf;
+        }
+    }
+    return -1;
+}
+
 /* 注釈をスキップする
- * 失敗した場合は0を返す */
+ * EOFまでたどり着いた場合は-1を返す */
 int skip_comment(FILE *fp, int sep_type) {
     while ((cbuf = (char) fgetc(fp)) != EOF) {
         if (cbuf == '}') {
             if (sep_type == 2) {
-                return 1;
+                cbuf = (char) fgetc(fp);
+                return 2;
             }
         } else if (cbuf == '*') {
             if ((cbuf = (char) fgetc(fp)) == '/') {
-                return 2;
+                cbuf = (char) fgetc(fp);
+                return 3;
             } else if (cbuf == EOF) {
-                return 0;
+                return -1;
             }
         }
     }
-    return 0;
+    return -1;
 }
 
 int get_linenum(void) {
-    /* todo */
+    return linenum;
 }
 
 /* スキャン終了後に呼び出しファイルを閉じる */
 void end_scan(FILE *fp) {
     //ファイルを閉じる
     if (fclose(fp) == EOF) {
-        printf("ERROR: fclose()\n");
+        error("File can not close.");
     };
 }
