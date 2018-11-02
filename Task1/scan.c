@@ -43,7 +43,6 @@ int scan(FILE *fp) {
      * EOFの場合は-1を返し終了 */
     while ((sep_type = skip_separator(cbuf, fp)) != 0) {
         if (sep_type == -1) {
-            error("failed to reach comment end.");
             return -1;
         }
     }
@@ -315,6 +314,7 @@ int skip_comment(FILE *fp, int sep_type) {
                 cbuf = (char) fgetc(fp);
                 return 3;
             } else if (cbuf == EOF) {
+                error("failed to reach comment end.");
                 return -1;
             }
         }
