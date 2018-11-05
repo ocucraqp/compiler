@@ -90,7 +90,6 @@ int main(int nc, char *np[]) {
     print_idtab();
     release_idtab();
 
-    printf("finished\n");
     return EXIT_SUCCESS;
 }
 
