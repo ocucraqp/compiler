@@ -50,50 +50,49 @@ int main(int nc, char *np[]) {
     FILE *fp;
     char *temp;
 
-    /* 引数がなければ終了 */
+    /* End without argument */
     if (nc < 2) {
         error("File name id not given.");
         return EXIT_FAILURE;
     }
 
-    /* ファイルが開けなければ終了 */
+    /* End if file can not be opened */
     if (init_scan(np[1], &fp) < 0) {
         sprintf(temp, "File %s can not open.", np[1]);
         error(temp);
         return EXIT_FAILURE;
     }
 
-    /* トークンカウント用の配列と識別子カウント用の構造体を初期化する */
+    /* Initialize the token count array and the identifier count structure */
     init_int_array(numtoken, NUMOFTOKEN + 1);
     init_idtab();
 
-    /* トークンをカウントする */
+    /* Count tokens */
     while ((token = scan(fp)) >= 0) {
         numtoken[token]++;
         if (token == TNAME) {
-            /* 名前のトークンだった場合は、識別子もカウント */
+            /* If it was a name token, the identifier also counts */
             id_countup(string_attr);
         }
     }
 
-    /* スキャン終了 */
     end_scan(fp);
 
-    /* カウントした結果を出力する */
+    /* Output the counted result */
     for (i = 1; i < NUMOFTOKEN + 1; i++) {
         if (numtoken[i] > 0) {
             printf("\t\"%s\" \t%d\n", tokenstr[i], numtoken[i]);
         }
     }
 
-    /* カウントした識別子を出力する */
+    /* Output the counted identifier */
     print_idtab();
     release_idtab();
 
     return EXIT_SUCCESS;
 }
 
-/* errorの表示とスキャン終了処理 */
+/* Display error message */
 void error(char *mes) {
     fprintf(stderr, "\nline%d ERROR: %s\n", get_linenum(), mes);
 }

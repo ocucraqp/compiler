@@ -8,38 +8,38 @@ char cbuf = '\0';
 
 int linenum = 0;
 
-/* スキャン前に呼び出し、ファイルをオープンし、スキャンの準備
- * 成功したら0、失敗したら-1を返す */
+/* Call before scanning, open the file, prepare for scanning
+ * Success:0 Failed:-1 */
 int init_scan(char *filename, FILE **fp) {
-    /* ファイルポインタはポインタのポインタとして受け取り、値を返す */
+    /* The file pointer is received as a pointer to the pointer */
     *fp = fopen(filename, "r");
 
     if (*fp == NULL) {
         return -1;
     }
 
-    /* 行番号を1で初期化 */
+    /* Initialize linenum 1 */
     linenum = 1;
 
-    /* cbufに一文字読み込む */
+    /* Read one character in cbuf */
     cbuf = (char) fgetc(*fp);
 
     return 0;
 
 }
 
-/* トークンのコードを返す。
- * 次のトークンをスキャンできないときは、-1を返す。 */
+/* Return the code of the token
+ * failed:-1 */
 int scan(FILE *fp) {
     char strbuf[MAXSTRSIZE];
     int i = 0, temp = 0, sep_type = 0;
 
-    //strbufを'\0'で初期化
+    //Initialize strbuf with '\ 0'
     init_char_array(strbuf, MAXSTRSIZE);
 
-    /* cbufに分離子かEOFが入ってないか調べ、
-     * 分離子の場合は分離子がなくなるまで分離子を飛ばし
-     * EOFの場合は-1を返し終了 */
+    /* Checks whether cbuf contains a separator or EOF,
+     * if it is a separator, it skips the separator
+     * until there is no separator and returns -1 if it is EOF */
     while ((sep_type = skip_separator(cbuf, fp)) != 0) {
         if (sep_type == -1) {
             return -1;
@@ -50,14 +50,16 @@ int scan(FILE *fp) {
     }
 
 
-    /* cbufに記号、数字、、文字列、英字の順で何が入っているか調べる */
+    /* Find out what cbuf contains
+     * in the order of symbols, numbers, strings, letters */
     if (is_check_symbol(cbuf)) {
-        /* 記号が入っていた場合は、どの記号か識別して返す */
+        /* If there is a symbol, identify which symbol and return */
         strbuf[0] = cbuf;
         cbuf = (char) fgetc(fp);
         return identify_symbol(strbuf, fp);
     } else if (is_check_number(cbuf)) {
-        /* 数字が入っていた場合は、数字が続く限り続け、identify_numberを呼ぶ */
+        /* If there is a number,
+         * continue as long as the number continues, call identify_number */
         strbuf[0] = cbuf;
         for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
             if (is_check_token_size(i) == -1) {
@@ -71,12 +73,14 @@ int scan(FILE *fp) {
         }
         return identify_number(strbuf);
     } else if (cbuf == '\'') {
-        /* "'"が入っていた場合は、文字列と考え、identify_stringを呼ぶ */
+        /* If "'" is included,
+         * think it as a character string and call identify_string */
         return identify_string(fp);
     } else if (is_check_alphabet(cbuf)) {
-        /* 英字が入っていた場合はキーワードか名前なので英字か数字が続く限り、
-         * strbufに入れていき、identify_keywordを呼び、
-         * キーワードでなければidentify_nameを呼ぶ */
+        /* If there is an alphabetic character,
+         * it is a keyword or name, so long as an alphabetic character
+         * or digit continues, put it in strbuf, call identify_keyword,
+         * call identify_name if it is not keyword */
         strbuf[0] = cbuf;
         for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
             if (is_check_token_size(i) == -1) {
@@ -95,12 +99,13 @@ int scan(FILE *fp) {
         }
     }
 
-    /*何も入っていなければ想定していない終端記号が来ていたと判別する */
+    /* If there is nothing in it,
+     * it is determined that a terminal symbol not supposed has come */
     error("contain unexpected token.");
     return -1;
 }
 
-/* int型配列を0で初期化する */
+/* Initialize int type array with 0 */
 void init_int_array(int *array, int arraylength) {
     int i = 0;
     for (i = 0; i < arraylength; i++) {
@@ -108,7 +113,7 @@ void init_int_array(int *array, int arraylength) {
     }
 }
 
-/* char型配列を\0で初期化する */
+/* Initialize char array as \ 0 */
 void init_char_array(char *array, int arraylength) {
     int i = 0;
     for (i = 0; i < arraylength; i++) {
@@ -116,7 +121,7 @@ void init_char_array(char *array, int arraylength) {
     }
 }
 
-/* 文字がアルファベットか確認する */
+/* Check whether the letters are alphabetic */
 int is_check_alphabet(char c) {
     if ((c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)) {
         return 1;
@@ -124,7 +129,7 @@ int is_check_alphabet(char c) {
     return 0;
 }
 
-/* 文字が数字か確認する */
+/* Confirm whether the character is a number */
 int is_check_number(char c) {
     if (c >= 0x30 && c <= 0x39) {
         return 1;
@@ -132,7 +137,7 @@ int is_check_number(char c) {
     return 0;
 }
 
-/* 文字が記号か確認する */
+/* Make sure the letters are symbols */
 int is_check_symbol(char c) {
     if ((c >= 0x28 && c <= 0x2e) || (c >= 0x3a && c <= 0x3e) ||
         c == 0x5b || c == 0x5d) {
@@ -141,27 +146,27 @@ int is_check_symbol(char c) {
     return 0;
 }
 
-/* 引数が
- * 空白、タブ、改行のとき1
- * "{"から始まる注釈のとき2
- * "/" "*"から始まる注釈のとき3
- * それ以外のとき0
- * を返す */
+/* Argument is
+ * When blank, tab, or line feed 1
+ * 2 for annotations beginning with "{"
+ * 3 for annotations beginning with "/" "*"
+ * Otherwise 0
+ * return it */
 int skip_separator(char c, FILE *fp) {
     switch (c) {
-        case '\t': // 水平タブ
-        case '\v': // 垂直タブ
-        case 0x20: // 空白文字
+        case '\t': // Horizontal tab
+        case '\v': // Vertical tab
+        case 0x20: // Space
             cbuf = (char) fgetc(fp);
             return 1;
-        case '\r': // 復帰
+        case '\r': // Return
             cbuf = (char) fgetc(fp);
             if (cbuf == '\n') {
                 cbuf = (char) fgetc(fp);
             }
             linenum++;
             return 1;
-        case '\n': // 改行
+        case '\n': // new line
             cbuf = (char) fgetc(fp);
             if (cbuf == '\r') {
                 cbuf = (char) fgetc(fp);
@@ -181,7 +186,6 @@ int skip_separator(char c, FILE *fp) {
     }
 }
 
-/* キーワードを識別する */
 int identify_keyword(const char *tokenstr) {
     int i = 0;
     if (strlen(tokenstr) <= MAXKEYWORDLENGTH) {
@@ -195,16 +199,14 @@ int identify_keyword(const char *tokenstr) {
     return -1;
 }
 
-/* string_attrに名前を格納し、TNAMEを返す */
+/* Stores name in string_attr and returns TNAME */
 int identify_name(const char *tokenstr) {
-    /* 名前をstring_attrに格納 */
     init_char_array(string_attr, MAXSTRSIZE);
     snprintf(string_attr, MAXSTRSIZE, "%s", tokenstr);
 
     return TNAME;
 }
 
-/* 記号を識別する */
 int identify_symbol(char *tokenstr, FILE *fp) {
     switch (tokenstr[0]) {
         case '(':
@@ -268,11 +270,10 @@ int identify_symbol(char *tokenstr, FILE *fp) {
     }
 }
 
-/* num_attrに数字を格納し、TNUMBERを返す */
+/* Stores numbers in num_attr and returns TNUMBER */
 int identify_number(const char *tokenstr) {
     long temp = 0;
 
-    /* 符号なし整数をnum_attrに格納 */
     temp = strtol(tokenstr, NULL, 10);
     if (temp <= 32767) {
         num_attr = (int) temp;
@@ -284,24 +285,22 @@ int identify_number(const char *tokenstr) {
     return TNUMBER;
 }
 
-/* string_attrに文字列を格納し、TSTRINGを返す */
+/* String is stored in string_attr and TSTRING is returned */
 int identify_string(FILE *fp) {
     int i = 0;
     char tempbuf[MAXSTRSIZE];
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
-        if (is_check_token_size(i+1) == -1) {
+        if (is_check_token_size(i + 1) == -1) {
             return -1;
         }
         if (cbuf == '\'') {
-            //cbufに1文字読み込む
             cbuf = (char) fgetc(fp);
             if (cbuf == '\'') {
                 tempbuf[i] = '\'';
                 i++;
                 tempbuf[i] = '\'';
             } else {
-                /* 文字列をstring_attrに格納 */
                 init_char_array(string_attr, MAXSTRSIZE);
                 snprintf(string_attr, MAXSTRSIZE, "%s", tempbuf);
                 return TSTRING;
@@ -315,8 +314,8 @@ int identify_string(FILE *fp) {
     return -1;
 }
 
-/* 注釈をスキップする
- * EOFまでたどり着いた場合は-1を返す */
+/* Skip annotations
+ * If it reaches EOF, it returns -1 */
 int skip_comment(FILE *fp, int sep_type) {
     while ((cbuf = (char) fgetc(fp)) != EOF) {
         if (cbuf == '}') {
@@ -335,20 +334,20 @@ int skip_comment(FILE *fp, int sep_type) {
     return -1;
 }
 
-/* もっとも最近にscan()で返されたトークンが存在した番号を返す。 */
+/* Returns the number where the token
+ * returned by scan () most recently existed. */
 int get_linenum(void) {
     return linenum;
 }
 
-/* スキャン終了後に呼び出しファイルを閉じる */
+/* Close the call file after scanning */
 void end_scan(FILE *fp) {
-    //ファイルを閉じる
     if (fclose(fp) == EOF) {
         error("File can not close.");
     };
 }
 
-/* トークンのサイズが最大を超えたら-1を返す */
+/* Return -1 if the size of the token exceeds the maximum */
 int is_check_token_size(int i) {
     if (i >= MAXSTRSIZE) {
         error("one token is too long.");
