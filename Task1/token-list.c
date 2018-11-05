@@ -58,7 +58,7 @@ int main(int nc, char *np[]) {
 
     /* ファイルが開けなければ終了 */
     if (init_scan(np[1], &fp) < 0) {
-        sprintf(temp, "File %s can not open.\n", np[1]);
+        sprintf(temp, "File %s can not open.", np[1]);
         error(temp);
         return EXIT_FAILURE;
     }
@@ -90,6 +90,7 @@ int main(int nc, char *np[]) {
     print_idtab();
     release_idtab();
 
+    printf("finished\n");
     return EXIT_SUCCESS;
 }
 

@@ -18,12 +18,11 @@ int init_scan(char *filename, FILE **fp) {
         return -1;
     }
 
-    /* 行番号を初期化 */
-    linenum = 0;
+    /* 行番号を1で初期化 */
+    linenum = 1;
 
     /* cbufに一文字読み込む */
     cbuf = (char) fgetc(*fp);
-
 
     return 0;
 
@@ -291,7 +290,7 @@ int identify_string(FILE *fp) {
     char tempbuf[MAXSTRSIZE];
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
-        if (is_check_token_size(i+2) == -1) {
+        if (is_check_token_size(i+1) == -1) {
             return -1;
         }
         if (cbuf == '\'') {
