@@ -311,6 +311,7 @@ int identify_string(FILE *fp) {
             tempbuf[i] = cbuf;
         }
     }
+    error("failed to reach string end.");
     return -1;
 }
 
@@ -327,12 +328,10 @@ int skip_comment(FILE *fp, int sep_type) {
             if ((cbuf = (char) fgetc(fp)) == '/') {
                 cbuf = (char) fgetc(fp);
                 return 3;
-            } else if (cbuf == EOF) {
-                error("failed to reach comment end.");
-                return -1;
             }
         }
     }
+    error("failed to reach comment end.");
     return -1;
 }
 

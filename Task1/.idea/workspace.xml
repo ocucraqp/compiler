@@ -13,7 +13,7 @@
   <component name="ChangeListManager">
     <list default="true" id="9a934511-e79c-4117-923c-02519c239eac" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/token-list.c" beforeDir="false" afterPath="$PROJECT_DIR$/token-list.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scan.c" beforeDir="false" afterPath="$PROJECT_DIR$/scan.c" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -45,7 +45,7 @@
           <entry key="cbp" value="2" />
           <entry key="cmake" value="1" />
           <entry key="h" value="3" />
-          <entry key="mpl" value="51" />
+          <entry key="mpl" value="58" />
           <entry key="txt" value="4" />
         </counts>
       </usages-collector>
@@ -55,23 +55,23 @@
           <entry key="CMakeLists.txt" value="3" />
           <entry key="Disassembly" value="5" />
           <entry key="ObjectiveC" value="17" />
-          <entry key="PLAIN_TEXT" value="55" />
+          <entry key="PLAIN_TEXT" value="62" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.cidr.testingFrameworks.usages" />
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="c" value="9811" />
+          <entry key="c" value="9858" />
           <entry key="h" value="678" />
           <entry key="m" value="16" />
-          <entry key="mpl" value="505" />
+          <entry key="mpl" value="506" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="ObjectiveC" value="10505" />
-          <entry key="PLAIN_TEXT" value="505" />
+          <entry key="ObjectiveC" value="10552" />
+          <entry key="PLAIN_TEXT" value="506" />
         </counts>
       </usages-collector>
     </session>
@@ -85,7 +85,7 @@
         <entry file="file://$PROJECT_DIR$/token-list.h">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="-63">
-              <caret line="57" lean-forward="true" selection-start-line="57" selection-end-line="57" />
+              <caret line="57" selection-start-line="57" selection-end-line="57" />
               <folding>
                 <element signature="e#20#39#0" expanded="true" />
               </folding>
@@ -96,17 +96,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/token-list.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="448">
-              <caret line="68" lean-forward="true" selection-start-line="68" selection-end-line="68" />
+            <state relative-caret-position="30">
+              <caret line="59" column="31" lean-forward="true" selection-start-line="59" selection-start-column="31" selection-end-line="59" selection-end-column="31" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scan.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2">
-              <caret line="271" column="24" selection-start-line="271" selection-start-column="24" selection-end-line="271" selection-end-column="24" />
+            <state relative-caret-position="492">
+              <caret line="313" column="41" selection-start-line="313" selection-start-column="41" selection-end-line="313" selection-end-column="41" />
               <folding>
                 <element signature="e#108#524#0" />
                 <element signature="e#2542#2677#1" />
@@ -121,25 +121,26 @@
                 <element signature="e#7611#8161#1" />
                 <element signature="e#8203#8248#1" />
                 <element signature="e#8277#8393#1" />
+                <element signature="e#8423#8564#1" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/id-list.c">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="615">
-              <caret line="41" column="1" lean-forward="true" selection-start-line="41" selection-start-column="1" selection-end-line="41" selection-end-column="1" />
+              <caret line="41" column="1" selection-start-line="41" selection-start-column="1" selection-end-line="41" selection-end-column="1" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/sample/test_scan21.mpl">
+        <entry file="file://$PROJECT_DIR$/sample/test_scan11.mpl">
           <provider selected="true" editor-type-id="text-editor">
             <state>
-              <caret column="9" lean-forward="true" selection-end-column="9" />
+              <caret lean-forward="true" />
             </state>
           </provider>
         </entry>
@@ -187,7 +188,6 @@
         <option value="$PROJECT_DIR$/sample/test_scan13.mpl" />
         <option value="$PROJECT_DIR$/sample/test_scan10.mpl" />
         <option value="$PROJECT_DIR$/sample/test_scan14.mpl" />
-        <option value="$PROJECT_DIR$/scan.c" />
         <option value="$PROJECT_DIR$/sample/test_scan15.mpl" />
         <option value="$PROJECT_DIR$/sample/test_scan16.mpl" />
         <option value="$PROJECT_DIR$/sample/test_scan17.mpl" />
@@ -195,6 +195,8 @@
         <option value="$PROJECT_DIR$/sample/test_scan20.mpl" />
         <option value="$PROJECT_DIR$/token-list.c" />
         <option value="$PROJECT_DIR$/sample/test_scan21.mpl" />
+        <option value="$PROJECT_DIR$/sample/test_scan4-2.mpl" />
+        <option value="$PROJECT_DIR$/scan.c" />
       </list>
     </option>
   </component>
@@ -204,7 +206,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="5">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="45" />
     <option name="y" value="25" />
     <option name="width" value="1265" />
@@ -298,7 +300,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="71860000" />
+    <option name="totallyTimeSpent" value="72656000" />
   </component>
   <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
@@ -310,10 +312,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="45" y="25" width="1265" height="1175" extended-state="5" />
+    <frame x="45" y="25" width="1875" height="1175" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23957482" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15984724" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.24986361" />
       <window_info id="Favorites" order="2" side_tool="true" weight="0.32951444" />
       <window_info anchor="bottom" id="Messages" order="0" sideWeight="0.49699944" weight="0.32921028" />
@@ -434,7 +436,7 @@
     <entry file="file://$PROJECT_DIR$/token-list.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-63">
-          <caret line="57" lean-forward="true" selection-start-line="57" selection-end-line="57" />
+          <caret line="57" selection-start-line="57" selection-end-line="57" />
           <folding>
             <element signature="e#20#39#0" expanded="true" />
           </folding>
@@ -454,27 +456,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sample/test_scan3.mpl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="3" lean-forward="true" selection-start-column="3" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/test_scan4.mpl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="5" lean-forward="true" selection-start-column="5" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/test_scan5.mpl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="13" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/sample/test_scan6.mpl">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -486,20 +467,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state>
           <caret column="5" lean-forward="true" selection-start-column="5" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/test_scan8.mpl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="5" selection-start-column="5" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/test_scan11.mpl">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret lean-forward="true" />
         </state>
       </provider>
     </entry>
@@ -582,8 +549,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/token-list.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="448">
-          <caret line="68" lean-forward="true" selection-start-line="68" selection-end-line="68" />
+        <state relative-caret-position="30">
+          <caret line="59" column="31" lean-forward="true" selection-start-line="59" selection-start-column="31" selection-end-line="59" selection-end-column="31" />
         </state>
       </provider>
     </entry>
@@ -594,10 +561,59 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/sample/test_scan8.mpl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="5" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/test_scan4.mpl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/id-list.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="615">
+          <caret line="41" column="1" selection-start-line="41" selection-start-column="1" selection-end-line="41" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/test_scan3.mpl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="3" lean-forward="true" selection-start-column="3" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/test_scan4-2.mpl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="6" lean-forward="true" selection-start-column="6" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/test_scan5.mpl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="13" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/test_scan11.mpl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret lean-forward="true" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/scan.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2">
-          <caret line="271" column="24" selection-start-line="271" selection-start-column="24" selection-end-line="271" selection-end-column="24" />
+        <state relative-caret-position="492">
+          <caret line="313" column="41" selection-start-line="313" selection-start-column="41" selection-end-line="313" selection-end-column="41" />
           <folding>
             <element signature="e#108#524#0" />
             <element signature="e#2542#2677#1" />
@@ -612,14 +628,8 @@
             <element signature="e#7611#8161#1" />
             <element signature="e#8203#8248#1" />
             <element signature="e#8277#8393#1" />
+            <element signature="e#8423#8564#1" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/id-list.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
-          <caret line="41" column="1" lean-forward="true" selection-start-line="41" selection-start-column="1" selection-end-line="41" selection-end-column="1" />
         </state>
       </provider>
     </entry>
