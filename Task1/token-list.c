@@ -65,15 +65,15 @@ int main(int nc, char *np[]) {
 
     /* トークンカウント用の配列と識別子カウント用の構造体を初期化する */
     init_int_array(numtoken, NUMOFTOKEN + 1);
-//    init_idtab();
+    init_idtab();
 
     /* トークンをカウントする */
     while ((token = scan(fp)) >= 0) {
         numtoken[token]++;
-//        if (token == TNAME) {
-//            /* 名前のトークンだった場合は、識別子もカウント */
-//            id_countup(string_attr);
-//        }
+        if (token == TNAME) {
+            /* 名前のトークンだった場合は、識別子もカウント */
+            id_countup(string_attr);
+        }
     }
 
     /* スキャン終了 */
@@ -86,9 +86,9 @@ int main(int nc, char *np[]) {
         }
     }
 
-//    /* カウントした識別子を出力する */
-//    print_idtab();
-//    release_idtab();
+    /* カウントした識別子を出力する */
+    print_idtab();
+    release_idtab();
 
     printf("finished\n");
     return EXIT_SUCCESS;
