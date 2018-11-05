@@ -290,7 +290,7 @@ int identify_string(FILE *fp) {
     char tempbuf[MAXSTRSIZE];
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
-        if (is_check_token_size(i+2) == -1) {
+        if (is_check_token_size(i+1) == -1) {
             return -1;
         }
         if (cbuf == '\'') {

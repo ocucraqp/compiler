@@ -63,25 +63,21 @@ int main(int nc, char *np[]) {
         return EXIT_FAILURE;
     }
 
-    for (i = 0; i < (NUMOFTOKEN + 1); i++) {
-        numtoken[i] = i;
-    }
-
-//    /* トークンカウント用の配列と識別子カウント用の構造体を初期化する */
-//    init_int_array(numtoken, NUMOFTOKEN + 1);
+    /* トークンカウント用の配列と識別子カウント用の構造体を初期化する */
+    init_int_array(numtoken, NUMOFTOKEN + 1);
 //    init_idtab();
-//
-//    /* トークンをカウントする */
-//    while ((token = scan(fp)) >= 0) {
-//        numtoken[token]++;
+
+    /* トークンをカウントする */
+    while ((token = scan(fp)) >= 0) {
+        numtoken[token]++;
 //        if (token == TNAME) {
 //            /* 名前のトークンだった場合は、識別子もカウント */
 //            id_countup(string_attr);
 //        }
-//    }
-//
-//    /* スキャン終了 */
-//    end_scan(fp);
+    }
+
+    /* スキャン終了 */
+    end_scan(fp);
 
     /* カウントした結果を出力する */
     for (i = 1; i < NUMOFTOKEN + 1; i++) {
@@ -89,7 +85,7 @@ int main(int nc, char *np[]) {
             printf("\t\"%s\" \t%d\n", tokenstr[i], numtoken[i]);
         }
     }
-//
+
 //    /* カウントした識別子を出力する */
 //    print_idtab();
 //    release_idtab();
