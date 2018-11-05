@@ -18,12 +18,11 @@ int init_scan(char *filename, FILE **fp) {
         return -1;
     }
 
-    /* 行番号を初期化 */
-    linenum = 0;
+    /* 行番号を1で初期化 */
+    linenum = 1;
 
     /* cbufに一文字読み込む */
     cbuf = (char) fgetc(*fp);
-
 
     return 0;
 
