@@ -60,13 +60,13 @@
 
 /* token-list.c */
 
-#define KEYWORDSIZE    28
+#define NUMOFKEYWORD    28
 #define MAXKEYWORDLENGTH    9
 
 extern struct KEY {
     char *keyword;
     int keytoken;
-} key[KEYWORDSIZE];
+} key[NUMOFKEYWORD];
 
 extern void error(char *mes);
 

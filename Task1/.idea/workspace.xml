@@ -12,7 +12,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9a934511-e79c-4117-923c-02519c239eac" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scan.c" beforeDir="false" afterPath="$PROJECT_DIR$/scan.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/token-list.c" beforeDir="false" afterPath="$PROJECT_DIR$/token-list.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/token-list.h" beforeDir="false" afterPath="$PROJECT_DIR$/token-list.h" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -41,10 +43,10 @@
         <counts>
           <entry key="Makefile" value="1" />
           <entry key="Task1 (disassembly)" value="5" />
-          <entry key="c" value="13" />
+          <entry key="c" value="14" />
           <entry key="cbp" value="2" />
           <entry key="cmake" value="1" />
-          <entry key="h" value="2" />
+          <entry key="h" value="3" />
           <entry key="mpl" value="17" />
           <entry key="txt" value="4" />
         </counts>
@@ -54,7 +56,7 @@
           <entry key="CMakeCache.txt" value="1" />
           <entry key="CMakeLists.txt" value="3" />
           <entry key="Disassembly" value="5" />
-          <entry key="ObjectiveC" value="15" />
+          <entry key="ObjectiveC" value="17" />
           <entry key="PLAIN_TEXT" value="21" />
         </counts>
       </usages-collector>
@@ -62,15 +64,15 @@
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="c" value="9657" />
-          <entry key="h" value="673" />
+          <entry key="c" value="9665" />
+          <entry key="h" value="678" />
           <entry key="m" value="16" />
           <entry key="mpl" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="ObjectiveC" value="10346" />
+          <entry key="ObjectiveC" value="10359" />
           <entry key="PLAIN_TEXT" value="1" />
         </counts>
       </usages-collector>
@@ -84,8 +86,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/token-list.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="457">
-              <caret line="113" column="38" selection-start-line="113" selection-start-column="38" selection-end-line="113" selection-end-column="38" />
+            <state relative-caret-position="15">
+              <caret line="42" column="35" selection-start-line="42" selection-start-column="35" selection-end-line="42" selection-end-column="35" />
               <folding>
                 <element signature="e#20#39#0" expanded="true" />
               </folding>
@@ -96,60 +98,26 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/token-list.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="397">
-              <caret line="70" selection-start-line="70" selection-end-line="70" />
-              <folding>
-                <element signature="e#2468#2558#1" />
-              </folding>
+            <state relative-caret-position="150">
+              <caret line="10" column="29" lean-forward="true" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/scan.c">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="315">
+              <caret line="188" column="36" selection-start-line="188" selection-start-column="36" selection-end-line="188" selection-end-column="36" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/scan.c">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="524">
-              <caret line="355" column="26" selection-start-line="355" selection-start-column="26" selection-end-line="355" selection-end-column="26" />
-              <folding>
-                <element signature="e#94#150#0" />
-                <element signature="e#108#446#0" />
-                <element signature="e#333#380#0" />
-                <element signature="e#440#2289#0" />
-                <element signature="e#2358#2493#1" />
-                <element signature="e#1285#1448#0" />
-                <element signature="e#1450#1607#0" />
-                <element signature="e#1609#1729#0" />
-                <element signature="e#1731#1915#0" />
-                <element signature="e#1917#1971#0" />
-                <element signature="e#3212#3646#1" />
-                <element signature="e#4319#4659#1" />
-                <element signature="e#3217#3684#0" />
-                <element signature="e#5980#7597#1" />
-                <element signature="e#6410#6950#0" />
-                <element signature="e#6586#7172#0" />
-                <element signature="e#6952#6982#0" />
-                <element signature="e#8155#8650#1" />
-                <element signature="e#3948#3988#0" />
-                <element signature="e#7754#7869#1" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/id-list.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="15" selection-start-column="15" selection-end-column="15" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/sample/sample014.mpl">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="375">
-              <caret line="25" column="23" lean-forward="true" selection-start-line="25" selection-start-column="23" selection-end-line="25" selection-end-column="23" />
+            <state relative-caret-position="105">
+              <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
             </state>
           </provider>
         </entry>
@@ -175,9 +143,9 @@
       <list>
         <option value="$PROJECT_DIR$/id-list.c" />
         <option value="$PROJECT_DIR$/cmake-build-debug/token-list.c" />
-        <option value="$PROJECT_DIR$/token-list.c" />
         <option value="$PROJECT_DIR$/sample/sample014.mpl" />
         <option value="$PROJECT_DIR$/token-list.h" />
+        <option value="$PROJECT_DIR$/token-list.c" />
         <option value="$PROJECT_DIR$/scan.c" />
       </list>
     </option>
@@ -282,7 +250,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="63345000" />
+    <option name="totallyTimeSpent" value="64345000" />
   </component>
   <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
@@ -294,10 +262,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="45" y="25" width="1875" height="1175" extended-state="6" />
+    <frame x="45" y="25" width="1875" height="1175" extended-state="7" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18657938" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18657938" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.24986361" />
       <window_info id="Favorites" order="2" side_tool="true" weight="0.32951444" />
       <window_info anchor="bottom" id="Messages" order="0" weight="0.32921028" />
@@ -319,29 +287,6 @@
       <window_info anchor="right" x="0" y="0" width="418" height="975" id="Documentation" order="3" side_tool="true" visible="true" weight="0.32951444" />
       <window_info anchor="right" id="Database" order="4" />
     </layout>
-    <layout-to-restore>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18657938" />
-      <window_info id="Structure" order="1" side_tool="true" weight="0.24986361" />
-      <window_info id="Favorites" order="2" side_tool="true" weight="0.32951444" />
-      <window_info anchor="bottom" id="Messages" order="0" weight="0.32921028" />
-      <window_info anchor="bottom" id="Message" order="1" />
-      <window_info anchor="bottom" id="Find" order="2" />
-      <window_info active="true" anchor="bottom" id="Run" order="3" visible="true" weight="0.32921028" />
-      <window_info anchor="bottom" id="Debug" order="4" weight="0.2911513" />
-      <window_info anchor="bottom" id="Cvs" order="5" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="6" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="7" weight="0.32921028" />
-      <window_info anchor="bottom" id="Database Changes" order="8" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="9" weight="0.32921028" />
-      <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" order="11" show_stripe_button="false" />
-      <window_info anchor="bottom" id="CMake" order="12" weight="0.32921028" />
-      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" x="0" y="0" width="418" height="975" id="Documentation" order="3" side_tool="true" visible="true" weight="0.32951444" />
-      <window_info anchor="right" id="Database" order="4" />
-    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -440,24 +385,17 @@
     <entry file="file://$PROJECT_DIR$/sample/sample14.mpl">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/id-list.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="15" selection-start-column="15" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/sample/sample014.mpl">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="25" column="23" lean-forward="true" selection-start-line="25" selection-start-column="23" selection-end-line="25" selection-end-column="23" />
+        <state relative-caret-position="510">
+          <caret line="34" column="27" selection-start-line="34" selection-start-column="27" selection-end-line="34" selection-end-column="27" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/token-list.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="457">
-          <caret line="113" column="38" selection-start-line="113" selection-start-column="38" selection-end-line="113" selection-end-column="38" />
+        <state relative-caret-position="15">
+          <caret line="42" column="35" selection-start-line="42" selection-start-column="35" selection-end-line="42" selection-end-column="35" />
           <folding>
             <element signature="e#20#39#0" expanded="true" />
           </folding>
@@ -466,40 +404,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/token-list.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="397">
-          <caret line="70" selection-start-line="70" selection-end-line="70" />
-          <folding>
-            <element signature="e#2468#2558#1" />
-          </folding>
+        <state relative-caret-position="150">
+          <caret line="10" column="29" lean-forward="true" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/scan.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="524">
-          <caret line="355" column="26" selection-start-line="355" selection-start-column="26" selection-end-line="355" selection-end-column="26" />
-          <folding>
-            <element signature="e#94#150#0" />
-            <element signature="e#108#446#0" />
-            <element signature="e#333#380#0" />
-            <element signature="e#440#2289#0" />
-            <element signature="e#2358#2493#1" />
-            <element signature="e#1285#1448#0" />
-            <element signature="e#1450#1607#0" />
-            <element signature="e#1609#1729#0" />
-            <element signature="e#1731#1915#0" />
-            <element signature="e#1917#1971#0" />
-            <element signature="e#3212#3646#1" />
-            <element signature="e#4319#4659#1" />
-            <element signature="e#3217#3684#0" />
-            <element signature="e#5980#7597#1" />
-            <element signature="e#6410#6950#0" />
-            <element signature="e#6586#7172#0" />
-            <element signature="e#6952#6982#0" />
-            <element signature="e#8155#8650#1" />
-            <element signature="e#3948#3988#0" />
-            <element signature="e#7754#7869#1" />
-          </folding>
+        <state relative-caret-position="315">
+          <caret line="188" column="36" selection-start-line="188" selection-start-column="36" selection-end-line="188" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/id-list.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
         </state>
       </provider>
     </entry>

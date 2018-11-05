@@ -152,7 +152,6 @@ int skip_separator(char c, FILE *fp) {
     switch (c) {
         case '\t': // 水平タブ
         case '\v': // 垂直タブ
-        case '\f': // 改頁
         case 0x20: // 空白文字
             cbuf = (char) fgetc(fp);
             return 1;
@@ -187,7 +186,7 @@ int skip_separator(char c, FILE *fp) {
 int identify_keyword(const char *tokenstr) {
     int i = 0;
     if (strlen(tokenstr) <= MAXKEYWORDLENGTH) {
-        for (i = 0; i < KEYWORDSIZE; i++) {
+        for (i = 0; i < NUMOFKEYWORD; i++) {
             if (strcmp(tokenstr, key[i].keyword) == 0) {
                 return key[i].keytoken;
             }
@@ -270,7 +269,7 @@ int identify_symbol(char *tokenstr, FILE *fp) {
     }
 }
 
-/* num_attrに名前を格納し、TNUMBERを返す */
+/* num_attrに数字を格納し、TNUMBERを返す */
 int identify_number(const char *tokenstr) {
     long temp = 0;
 
@@ -292,7 +291,7 @@ int identify_string(FILE *fp) {
     char tempbuf[MAXSTRSIZE];
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
-        if (is_check_token_size(i) == -1) {
+        if (is_check_token_size(i+2) == -1) {
             return -1;
         }
         if (cbuf == '\'') {

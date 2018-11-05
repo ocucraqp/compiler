@@ -1,7 +1,7 @@
 #include "token-list.h"
 
 /* keyword list */
-struct KEY key[KEYWORDSIZE] = {
+struct KEY key[NUMOFKEYWORD] = {
         {"and",       TAND},
         {"array",     TARRAY},
         {"begin",     TBEGIN},
