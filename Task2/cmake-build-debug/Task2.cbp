@@ -81,6 +81,15 @@
 		<Unit filename="/home/masaya/ドキュメント/compiler/Task2/main.c">
 			<Option target="Task2"/>
 		</Unit>
+		<Unit filename="/home/masaya/ドキュメント/compiler/Task2/pretty-print.c">
+			<Option target="Task2"/>
+		</Unit>
+		<Unit filename="/home/masaya/ドキュメント/compiler/Task2/pretty-print.h">
+			<Option target="Task2"/>
+		</Unit>
+		<Unit filename="/home/masaya/ドキュメント/compiler/Task2/scan.c">
+			<Option target="Task2"/>
+		</Unit>
 		<Unit filename="/home/masaya/ドキュメント/compiler/Task2/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>

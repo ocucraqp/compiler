@@ -150,6 +150,60 @@ main.c.s:
 	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/main.c.s
 .PHONY : main.c.s
 
+pretty-print.o: pretty-print.c.o
+
+.PHONY : pretty-print.o
+
+# target to build an object file
+pretty-print.c.o:
+	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/pretty-print.c.o
+.PHONY : pretty-print.c.o
+
+pretty-print.i: pretty-print.c.i
+
+.PHONY : pretty-print.i
+
+# target to preprocess a source file
+pretty-print.c.i:
+	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/pretty-print.c.i
+.PHONY : pretty-print.c.i
+
+pretty-print.s: pretty-print.c.s
+
+.PHONY : pretty-print.s
+
+# target to generate assembly for a file
+pretty-print.c.s:
+	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/pretty-print.c.s
+.PHONY : pretty-print.c.s
+
+scan.o: scan.c.o
+
+.PHONY : scan.o
+
+# target to build an object file
+scan.c.o:
+	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/scan.c.o
+.PHONY : scan.c.o
+
+scan.i: scan.c.i
+
+.PHONY : scan.i
+
+# target to preprocess a source file
+scan.c.i:
+	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/scan.c.i
+.PHONY : scan.c.i
+
+scan.s: scan.c.s
+
+.PHONY : scan.s
+
+# target to generate assembly for a file
+scan.c.s:
+	$(MAKE) -f CMakeFiles/Task2.dir/build.make CMakeFiles/Task2.dir/scan.c.s
+.PHONY : scan.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,6 +216,12 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... pretty-print.o"
+	@echo "... pretty-print.i"
+	@echo "... pretty-print.s"
+	@echo "... scan.o"
+	@echo "... scan.i"
+	@echo "... scan.s"
 .PHONY : help
 
 

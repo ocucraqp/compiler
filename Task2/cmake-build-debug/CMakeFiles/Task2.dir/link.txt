@@ -1,1 +1,1 @@
-/usr/bin/cc -g   CMakeFiles/Task2.dir/main.c.o  -o Task2 
+/usr/bin/cc -g   CMakeFiles/Task2.dir/main.c.o CMakeFiles/Task2.dir/scan.c.o CMakeFiles/Task2.dir/pretty-print.c.o  -o Task2 
