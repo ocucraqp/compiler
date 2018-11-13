@@ -58,9 +58,9 @@ int main(int nc, char *np[]) {
 
 #ifdef DEBUG
     if (token = -1) {
-        printf("didn't finished program\n");
-    } else {
         printf("finished\n");
+    } else {
+        printf("didn't finished program\n");
     }
 #endif
 

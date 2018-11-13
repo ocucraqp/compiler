@@ -166,9 +166,9 @@ extern int parse_assignment_statement(FILE *fp);
 
 extern int parse_left_part(FILE *fp);
 
-extern int parse_variabble(FILE *fp);
+extern int parse_variable(FILE *fp);
 
-extern int parse_experssion(FILE *fp);
+extern int parse_expression(FILE *fp);
 
 extern int parse_simple_expression(FILE *fp);
 
@@ -189,7 +189,5 @@ extern int parse_input_statement(FILE *fp);
 extern int parse_output_statement(FILE *fp);
 
 extern int parse_output_format(FILE *fp);
-
-extern int parse_empty_statement(FILE *fp);
 
 #endif //TASK2_PRETTY_PRINT_H
