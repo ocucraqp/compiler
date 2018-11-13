@@ -277,6 +277,7 @@ int identify_number(const char *tokenstr) {
     temp = strtol(tokenstr, NULL, 10);
     if (temp <= 32767) {
         num_attr = (int) temp;
+        sprintf(string_attr, "%d", num_attr);
     } else {
         error("number is bigeer than 32767.");
         return -1;
