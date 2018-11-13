@@ -122,6 +122,8 @@ extern int is_check_token_size(int i);
 
 /* pretty-print.c */
 
+extern int token;
+
 extern int parse_program(FILE *fp);
 
 extern int parse_block(FILE *fp);

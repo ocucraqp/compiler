@@ -44,7 +44,7 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 
 int main(int nc, char *np[]) {
     FILE *fp;
-    char *temp;
+    int is_success = 0;
 
     /* End without argument */
     if (nc < 2) {
@@ -58,8 +58,11 @@ int main(int nc, char *np[]) {
         return EXIT_FAILURE;
     }
 
+    /* Prefetch one token */
+    token = scan(fp);
+
     /* Parse program */
-    parse_program(fp);
+    is_success = parse_program(fp);
 
     end_scan(fp);
 
@@ -67,7 +70,11 @@ int main(int nc, char *np[]) {
     printf("finished\n");
 #endif
 
-    return EXIT_SUCCESS;
+    if (is_success == 1) {
+        return EXIT_SUCCESS;
+    } else {
+        return EXIT_FAILURE;
+    }
 }
 
 /* Display error message */
