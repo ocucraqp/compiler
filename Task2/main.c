@@ -32,16 +32,6 @@ struct KEY key[NUMOFKEYWORD] = {
         {"writeln",   TWRITELN}
 };
 
-/* string of each token */
-char *tokenstr[NUMOFTOKEN + 1] = {
-        "",
-        "NAME", "program", "var", "array", "of", "begin", "end", "if", "then",
-        "else", "procedure", "return", "call", "while", "do", "not", "or",
-        "div", "and", "char", "integer", "boolean", "readln", "writeln", "true",
-        "false", "NUMBER", "STRING", "+", "-", "*", "=", "<>", "<", "<=", ">",
-        ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
-};
-
 int main(int nc, char *np[]) {
     FILE *fp;
     int is_success = 0;
@@ -67,7 +57,11 @@ int main(int nc, char *np[]) {
     end_scan(fp);
 
 #ifdef DEBUG
-    printf("finished\n");
+    if (token = -1) {
+        printf("didn't finished program\n");
+    } else {
+        printf("finished\n");
+    }
 #endif
 
     if (is_success == 1) {
