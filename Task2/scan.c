@@ -277,6 +277,7 @@ int identify_number(const char *tokenstr) {
     temp = strtol(tokenstr, NULL, 10);
     if (temp <= 32767) {
         num_attr = (int) temp;
+        init_char_array(string_attr, MAXSTRSIZE);
         sprintf(string_attr, "%d", num_attr);
     } else {
         error("number is bigeer than 32767.");
@@ -290,6 +291,7 @@ int identify_number(const char *tokenstr) {
 int identify_string(FILE *fp) {
     int i = 0;
     char tempbuf[MAXSTRSIZE];
+    init_char_array(tempbuf, MAXSTRSIZE);
 
     for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
         if (is_check_token_size(i + 1) == -1) {

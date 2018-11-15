@@ -6,10 +6,6 @@
 
 #IncludeRegexTransform: 
 
-/home/masaya/ドキュメント/compiler/Task2/main.c
-pretty-print.h
-/home/masaya/ドキュメント/compiler/Task2/pretty-print.h
-
 /home/masaya/ドキュメント/compiler/Task2/pretty-print.h
 stdlib.h
 -
@@ -17,4 +13,8 @@ stdio.h
 -
 string.h
 -
+
+/home/masaya/ドキュメント/compiler/Task2/scan.c
+pretty-print.h
+/home/masaya/ドキュメント/compiler/Task2/pretty-print.h
 
