@@ -1,3 +1,0 @@
-/home/masaya/ドキュメント/compiler/Task2/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/masaya/ドキュメント/compiler/Task2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/masaya/ドキュメント/compiler/Task2/cmake-build-debug/CMakeFiles/Task2.dir
