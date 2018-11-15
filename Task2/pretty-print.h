@@ -124,6 +124,8 @@ extern int is_check_token_size(int i);
 
 extern int token;
 
+extern int paragraph_number;
+
 extern int parse_program(FILE *fp);
 
 extern int parse_block(FILE *fp);
@@ -189,5 +191,7 @@ extern int parse_input_statement(FILE *fp);
 extern int parse_output_statement(FILE *fp);
 
 extern int parse_output_format(FILE *fp);
+
+extern void make_paragraph();
 
 #endif //TASK2_PRETTY_PRINT_H

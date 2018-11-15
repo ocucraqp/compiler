@@ -1,6 +1,7 @@
 #include "pretty-print.h"
 
 int token = 0;
+int paragraph_number = 0;
 
 /* string of each token */
 char *tokenstr[NUMOFTOKEN + 1] = {
@@ -19,24 +20,24 @@ int parse_program(FILE *fp) {
     token = scan(fp);
 
     if (token != TNAME) { return (error("Program name is not found")); }
-    printf(" %s", string_attr);
+    printf("%s　", string_attr);
     token = scan(fp);
 
     if (token != TSEMI) { return (error("Semicolon is not found")); }
-    printf("%s\n", tokenstr[token]);
+    printf("\b%s\n", tokenstr[token]);
     token = scan(fp);
 
     if (parse_block(fp) == ERROR) { return ERROR; }
 
     if (token != TDOT) { return (error("Period is not found at the end of program")); }
-    printf("%s ", tokenstr[token]);
+    printf("\b%s\n", tokenstr[token]);
     token = scan(fp);
 
     return NORMAL;
 }
 
 int parse_block(FILE *fp) {
-    while (token != TBEGIN) {
+    while ((token == TVAR) || (token == TPROCEDURE)) {
         switch (token) {
             case TVAR:
                 if (parse_variable_declaration(fp) == ERROR) { return ERROR; }
@@ -67,10 +68,12 @@ int parse_variable_declaration(FILE *fp) {
     if (parse_type(fp) == ERROR) { return ERROR; }
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
-    printf("%s ", tokenstr[token]);
+    printf("\b%s\n", tokenstr[token]);
     token = scan(fp);
 
     while (token == TNAME) {
+        printf("\t");
+
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
         if (token != TCOLON) { return (error("Symbol ':' is not found")); }
@@ -80,7 +83,7 @@ int parse_variable_declaration(FILE *fp) {
         if (parse_type(fp) == ERROR) { return ERROR; }
 
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
-        printf("%s ", tokenstr[token]);
+        printf("\b%s\n", tokenstr[token]);
         token = scan(fp);
     }
 
@@ -91,7 +94,7 @@ int parse_variable_names(FILE *fp) {
     if (parse_variable_name(fp) == ERROR) { return ERROR; }
 
     while (token == TCOMMA) {
-        printf("%s ", tokenstr[token]);
+        printf("\b%s ", tokenstr[token]);
         token = scan(fp);
 
         if (parse_variable_name(fp) == ERROR) { return ERROR; }
@@ -141,15 +144,11 @@ int parse_standard_type(FILE *fp) {
 }
 
 int parse_array_type(FILE *fp) {
-    if (token != TARRAY) {
-        return (error("Keyword 'array' is not found"));
-    }
+    if (token != TARRAY) { return (error("Keyword 'array' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (token != TLSQPAREN) {
-        return (error("Symbol '[' is not found"));
-    }
+    if (token != TLSQPAREN) { return (error("Symbol '[' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
@@ -157,15 +156,11 @@ int parse_array_type(FILE *fp) {
     printf("%d ", num_attr);
     token = scan(fp);
 
-    if (token != TRSQPAREN) {
-        return (error("Symbol ']' is not found"));
-    }
+    if (token != TRSQPAREN) { return (error("Symbol ']' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (token != TOF) {
-        return (error("Keyword 'of' is not found"));
-    }
+    if (token != TOF) { return (error("Keyword 'of' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
@@ -175,9 +170,7 @@ int parse_array_type(FILE *fp) {
 }
 
 int parse_subprogram_declaration(FILE *fp) {
-    if (token != TPROCEDURE) {
-        return (error("Keyword 'procedure' is not found"));
-    }
+    if (token != TPROCEDURE) { return (error("Keyword 'procedure' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
@@ -187,10 +180,8 @@ int parse_subprogram_declaration(FILE *fp) {
         if (parse_formal_parameters(fp) == ERROR) { return ERROR; }
     }
 
-    if (token != TSEMI) {
-        return (error("Symbol ';' is not found"));
-    }
-    printf("%s ", tokenstr[token]);
+    if (token != TSEMI) { return (error("Symbol ';' is not found")); }
+    printf("\b%s\n", tokenstr[token]);
     token = scan(fp);
 
     if (token == TVAR) {
@@ -199,10 +190,8 @@ int parse_subprogram_declaration(FILE *fp) {
 
     if (parse_compound_statement(fp) == ERROR) { return ERROR; }
 
-    if (token != TSEMI) {
-        return (error("Symbol ';' is not found"));
-    }
-    printf("%s ", tokenstr[token]);
+    if (token != TSEMI) { return (error("Symbol ';' is not found")); }
+    printf("\b%s\n", tokenstr[token]);
     token = scan(fp);
 
     return NORMAL;
@@ -217,40 +206,32 @@ int parse_procedure_name(FILE *fp) {
 }
 
 int parse_formal_parameters(FILE *fp) {
-    if (token != TLPAREN) {
-        return (error("Symbol '(' is not found at the start of formal parameters"));
-    }
+    if (token != TLPAREN) { return (error("Symbol '(' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
     if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
-    if (token != TCOLON) {
-        return (error("Symbol ':' is not found in formal parameters"));
-    }
+    if (token != TCOLON) { return (error("Symbol ':' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
     if (parse_type(fp) == ERROR) { return ERROR; }
 
     while (token == TSEMI) {
-        printf("%s ", tokenstr[token]);
+        printf("\b%s\n\t", tokenstr[token]);
         token = scan(fp);
 
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
-        if (token != TCOLON) {
-            return (error("Symbol ':' is not found in formal parameters"));
-        }
+        if (token != TCOLON) { return (error("Symbol ':' is not found")); }
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
         if (parse_type(fp) == ERROR) { return ERROR; }
     }
 
-    if (token != TRPAREN) {
-        return (error("Symbol ')' is not found at the end of formal parameters"));
-    }
+    if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
@@ -259,18 +240,26 @@ int parse_formal_parameters(FILE *fp) {
 
 int parse_compound_statement(FILE *fp) {
     if (token != TBEGIN) { return (error("Keyword 'begin' is not found")); }
-    printf("%s ", tokenstr[token]);
+    printf("%s\n", tokenstr[token]);
     token = scan(fp);
+    paragraph_number++;
 
+    make_paragraph();
     if (parse_statement(fp) == ERROR) { return ERROR; }
 
-    while (token != TEND) {
+    while (token == TSEMI) {
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
-        printf("%s ", tokenstr[token]);
+        printf("\b%s\n", tokenstr[token]);
         token = scan(fp);
 
+        make_paragraph();
         if (parse_statement(fp) == ERROR) { return ERROR; }
     }
+
+    if (token != TEND) { return (error("Keyword 'end' is not found")); }
+    paragraph_number--;
+    printf("\n");
+    make_paragraph();
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
@@ -323,16 +312,24 @@ int parse_condition_statement(FILE *fp) {
     if (parse_expression(fp) == ERROR) { return ERROR; }
 
     if (token != TTHEN) { return (error("Keyword 'then is not found")); }
-    printf("%s ", tokenstr[token]);
+    printf("%s\n", tokenstr[token]);
     token = scan(fp);
+    paragraph_number++;
 
+    make_paragraph();
     if (parse_statement(fp) == ERROR) { return ERROR; }
+    paragraph_number--;
 
     if (token == TELSE) {
-        printf("%s ", tokenstr[token]);
+        printf("\n");
+        make_paragraph();
+        printf("%s\n", tokenstr[token]);
         token = scan(fp);
+        paragraph_number++;
 
+        make_paragraph();
         if (parse_statement(fp) == ERROR) { return ERROR; }
+        paragraph_number--;
     }
 
     return NORMAL;
@@ -346,10 +343,13 @@ int parse_iteration_statement(FILE *fp) {
     if (parse_expression(fp) == ERROR) { return ERROR; }
 
     if (token != TDO) { return (error("Keyword 'do' is not found")); }
-    printf("%s ", tokenstr[token]);
+    printf("%s\n", tokenstr[token]);
     token = scan(fp);
+    paragraph_number++;
 
+    make_paragraph();
     if (parse_statement(fp) == ERROR) { return ERROR; }
+    paragraph_number--;
 
     return NORMAL;
 }
@@ -358,6 +358,7 @@ int parse_exit_statement(FILE *fp) {
     if (token != TBREAK) { return (error("Keyword 'break' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
+    paragraph_number--;
 
     return NORMAL;
 }
@@ -387,7 +388,7 @@ int parse_expressions(FILE *fp) {
     if (parse_expression(fp) == ERROR) { return ERROR; }
 
     while (token == TCOMMA) {
-        printf("%s ", tokenstr[token]);
+        printf("\b%s ", tokenstr[token]);
         token = scan(fp);
 
         if (parse_expression(fp) == ERROR) { return ERROR; }
@@ -497,8 +498,8 @@ int parse_factor(FILE *fp) {
             if (parse_variable(fp) == ERROR) { return ERROR; }
             break;
         case TNUMBER:
-        case TTRUE:
         case TFALSE:
+        case TTRUE:
         case TSTRING:
             if (parse_constant(fp) == ERROR) { return ERROR; }
             break;
@@ -549,7 +550,7 @@ int parse_factor(FILE *fp) {
 int parse_constant(FILE *fp) {
     switch (token) {
         case TNUMBER:
-            printf("%d", num_attr);
+            printf("%d ", num_attr);
             token = scan(fp);
             break;
         case TFALSE:
@@ -558,7 +559,7 @@ int parse_constant(FILE *fp) {
             token = scan(fp);
             break;
         case TSTRING:
-            printf("%s ", string_attr);
+            printf("'%s' ", string_attr);
             token = scan(fp);
             break;
         default:
@@ -676,7 +677,7 @@ int parse_output_statement(FILE *fp) {
             token = scan(fp);
             break;
         default:
-            return (error("Keyword 'write', 'wroteln' is not found"));
+            return (error("Keyword 'write', 'writeln' is not found"));
     }
 
     if (token == TLPAREN) {
@@ -700,21 +701,45 @@ int parse_output_statement(FILE *fp) {
 }
 
 int parse_output_format(FILE *fp) {
-    if (token != TSTRING) {
-        if (parse_expression(fp) == ERROR) { return ERROR; }
+    switch (token) {
+        case TSTRING:
+            if (strlen(string_attr) > 1) {
+                printf("'%s' ", string_attr);
+                token = scan(fp);
+                break;
+            }
+        case TPLUS:
+        case TMINUS:
+        case TNAME:
+        case TNUMBER:
+        case TFALSE:
+        case TTRUE:
+        case TLPAREN:
+        case TNOT:
+        case TINTEGER:
+        case TBOOLEAN:
+        case TCHAR:
+            if (parse_expression(fp) == ERROR) { return ERROR; }
 
-        if (token == TCOLON) {
-            printf("%s ", tokenstr[token]);
-            token = scan(fp);
+            if (token == TCOLON) {
+                printf("%s ", tokenstr[token]);
+                token = scan(fp);
 
-            if (token != TNUMBER) { return (error("Number is not found")); }
-            printf("%d ", num_attr);
-            token = scan(fp);
-        }
-    } else {
-        printf("%s ", string_attr);
-        token = scan(fp);
+                if (token != TNUMBER) { return (error("Number is not found")); }
+                printf("%d ", num_attr);
+                token = scan(fp);
+            }
+            break;
+        default:
+            return (error("Output format is not found"));
     }
 
     return NORMAL;
+}
+
+void make_paragraph() {
+    int i = 0;
+    for (i = 0; i < paragraph_number; i++) {
+        printf("\t");
+    }
 }
