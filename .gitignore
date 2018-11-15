@@ -1,8 +1,7 @@
+*/.idea/
+*/cmake-build-debug/
+*/CMakeLists.txt
 */sample/
 */sample_output/
-
 */tex/
-
 *.pdf
-
-*/.idea/
