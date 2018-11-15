@@ -57,7 +57,7 @@ int main(int nc, char *np[]) {
     end_scan(fp);
 
 #ifdef DEBUG
-    if (token = -1) {
+    if (token == -1) {
         printf("finished\n");
     } else {
         printf("didn't finished program\n");
