@@ -10,8 +10,6 @@
 #define NORMAL 0
 #define ERROR 1
 
-#define DEBUG
-
 /* Token */
 #define    TNAME        1    /* Name : Alphabet { Alphabet | Digit } */
 #define    TPROGRAM    2    /* program : Keyword */

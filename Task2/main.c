@@ -56,15 +56,7 @@ int main(int nc, char *np[]) {
 
     end_scan(fp);
 
-#ifdef DEBUG
-    if (token == -1) {
-        printf("finished\n");
-    } else {
-        printf("didn't finished program\n");
-    }
-#endif
-
-    if (is_success == 1) {
+    if (is_success == NORMAL) {
         return EXIT_SUCCESS;
     } else {
         return EXIT_FAILURE;

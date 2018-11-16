@@ -1,11 +1,16 @@
 #include "pretty-print.h"
 
+/* An array that stores
+ * real strings of string, name, and integer */
 char string_attr[MAXSTRSIZE];
 
+/* Variable that stores integer value */
 int num_attr;
 
+/* A prefetched buffer for one character */
 char cbuf = '\0';
 
+/* Variable for storing the current line number */
 int linenum = 0;
 
 /* Call before scanning, open the file, prepare for scanning

@@ -1,6 +1,9 @@
 #include "pretty-print.h"
 
+/* Variable to store the token read by scan() */
 int token = 0;
+
+/* Variable to store the magnitude of the step */
 int paragraph_number = 0;
 
 /* string of each token */
@@ -13,7 +16,6 @@ char *tokenstr[NUMOFTOKEN + 1] = {
         ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
 };
 
-/* */
 int parse_program(FILE *fp) {
     if (token != TPROGRAM) { return (error("Keyword 'program' is not found")); }
     printf("%s ", tokenstr[token]);
@@ -747,6 +749,7 @@ int parse_output_format(FILE *fp) {
     return NORMAL;
 }
 
+/* Stage according to paragraph_number */
 void make_paragraph() {
     int i = 0;
     for (i = 0; i < paragraph_number; i++) {
