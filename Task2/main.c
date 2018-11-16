@@ -44,7 +44,7 @@ int main(int nc, char *np[]) {
 
     /* End if file can not be opened */
     if (init_scan(np[1], &fp) < 0) {
-        fprintf(stderr, "File %s can not open.", np[1]);
+        fprintf(stderr, "File %s can not open.\n", np[1]);
         return EXIT_FAILURE;
     }
 

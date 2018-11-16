@@ -40,10 +40,16 @@ int parse_block(FILE *fp) {
     while ((token == TVAR) || (token == TPROCEDURE)) {
         switch (token) {
             case TVAR:
+                paragraph_number++;
+                make_paragraph();
                 if (parse_variable_declaration(fp) == ERROR) { return ERROR; }
+                paragraph_number--;
                 break;
             case TPROCEDURE:
+                paragraph_number++;
+                make_paragraph();
                 if (parse_subprogram_declaration(fp) == ERROR) { return ERROR; }
+                paragraph_number--;
                 break;
             default:
                 break;
@@ -72,7 +78,8 @@ int parse_variable_declaration(FILE *fp) {
     token = scan(fp);
 
     while (token == TNAME) {
-        printf("\t");
+        paragraph_number++;
+        make_paragraph();
 
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
@@ -85,6 +92,7 @@ int parse_variable_declaration(FILE *fp) {
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
         printf("\b%s\n", tokenstr[token]);
         token = scan(fp);
+        paragraph_number--;
     }
 
     return NORMAL;
@@ -185,9 +193,11 @@ int parse_subprogram_declaration(FILE *fp) {
     token = scan(fp);
 
     if (token == TVAR) {
+        make_paragraph();
         if (parse_variable_declaration(fp) == ERROR) { return ERROR; }
     }
 
+    make_paragraph();
     if (parse_compound_statement(fp) == ERROR) { return ERROR; }
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -219,7 +229,7 @@ int parse_formal_parameters(FILE *fp) {
     if (parse_type(fp) == ERROR) { return ERROR; }
 
     while (token == TSEMI) {
-        printf("\b%s\n\t", tokenstr[token]);
+        printf("\b%s\t", tokenstr[token]);
         token = scan(fp);
 
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
@@ -740,6 +750,6 @@ int parse_output_format(FILE *fp) {
 void make_paragraph() {
     int i = 0;
     for (i = 0; i < paragraph_number; i++) {
-        printf("\t");
+        printf("    ");
     }
 }
