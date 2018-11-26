@@ -65,6 +65,7 @@ int main(int nc, char *np[]) {
 
 /* Display error message */
 int error(char *mes) {
+    fflush(stdout);
     fprintf(stderr, "\nline%d ERROR: %s\n", get_linenum(), mes);
     return (ERROR);
 }
