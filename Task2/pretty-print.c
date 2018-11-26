@@ -6,6 +6,12 @@ int token = 0;
 /* Variable to store the magnitude of the step */
 int paragraph_number = 0;
 
+/* Variable to store the existence of emptystatement */
+int existence_empty_statement = 0;
+
+/* Variable to store whether it is inside iteration */
+int whether_inside_iteration = 0;
+
 /* string of each token */
 char *tokenstr[NUMOFTOKEN + 1] = {
         "",
@@ -22,11 +28,11 @@ int parse_program(FILE *fp) {
     token = scan(fp);
 
     if (token != TNAME) { return (error("Program name is not found")); }
-    printf("%s　", string_attr);
+    printf("%s", string_attr);
     token = scan(fp);
 
     if (token != TSEMI) { return (error("Semicolon is not found")); }
-    printf("\b%s\n", tokenstr[token]);
+    printf("%s\n", tokenstr[token]);
     token = scan(fp);
 
     if (parse_block(fp) == ERROR) { return ERROR; }
@@ -163,7 +169,7 @@ int parse_array_type(FILE *fp) {
     token = scan(fp);
 
     if (token != TNUMBER) { return (error("Number is not found")); }
-    printf("%d ", num_attr);
+    printf("%s ", string_attr);
     token = scan(fp);
 
     if (token != TRSQPAREN) { return (error("Symbol ']' is not found")); }
@@ -270,7 +276,12 @@ int parse_compound_statement(FILE *fp) {
 
     if (token != TEND) { return (error("Keyword 'end' is not found")); }
     paragraph_number--;
-    printf("\n");
+    if (existence_empty_statement == 1) {
+        existence_empty_statement = 0;
+        printf("\r");
+    } else {
+        printf("\n");
+    }
     make_paragraph();
     printf("%s ", tokenstr[token]);
     token = scan(fp);
@@ -310,6 +321,7 @@ int parse_statement(FILE *fp) {
             if (parse_compound_statement(fp) == ERROR) { return ERROR; }
             break;
         default:
+            existence_empty_statement = 1;
             break;
     }
 
@@ -333,7 +345,12 @@ int parse_condition_statement(FILE *fp) {
     paragraph_number--;
 
     if (token == TELSE) {
-        printf("\n");
+        if (existence_empty_statement == 1) {
+            existence_empty_statement = 0;
+            printf("\r");
+        } else {
+            printf("\n");
+        }
         make_paragraph();
         printf("%s\n", tokenstr[token]);
         token = scan(fp);
@@ -358,19 +375,24 @@ int parse_iteration_statement(FILE *fp) {
     printf("%s\n", tokenstr[token]);
     token = scan(fp);
     paragraph_number++;
+    whether_inside_iteration++;
 
     make_paragraph();
     if (parse_statement(fp) == ERROR) { return ERROR; }
     paragraph_number--;
+    whether_inside_iteration--;
 
     return NORMAL;
 }
 
 int parse_exit_statement(FILE *fp) {
     if (token != TBREAK) { return (error("Keyword 'break' is not found")); }
-    printf("%s ", tokenstr[token]);
-    token = scan(fp);
-    paragraph_number--;
+    if (whether_inside_iteration > 0) {
+        printf("%s ", tokenstr[token]);
+        token = scan(fp);
+    } else {
+        return error("Exit statement is not included in iteration statement");
+    }
 
     return NORMAL;
 }
@@ -562,7 +584,7 @@ int parse_factor(FILE *fp) {
 int parse_constant(FILE *fp) {
     switch (token) {
         case TNUMBER:
-            printf("%d ", num_attr);
+            printf("%s ", string_attr);
             token = scan(fp);
             break;
         case TFALSE:
@@ -738,7 +760,7 @@ int parse_output_format(FILE *fp) {
                 token = scan(fp);
 
                 if (token != TNUMBER) { return (error("Number is not found")); }
-                printf("%d ", num_attr);
+                printf("%s ", string_attr);
                 token = scan(fp);
             }
             break;

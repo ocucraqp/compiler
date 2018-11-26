@@ -283,7 +283,7 @@ int identify_number(const char *tokenstr) {
     if (temp <= 32767) {
         num_attr = (int) temp;
         init_char_array(string_attr, MAXSTRSIZE);
-        sprintf(string_attr, "%d", num_attr);
+        snprintf(string_attr, MAXSTRSIZE, "%s", tokenstr);
     } else {
         error("number is bigeer than 32767.");
         return -1;
