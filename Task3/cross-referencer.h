@@ -192,4 +192,16 @@ extern int parse_output_format(FILE *fp);
 
 extern void make_paragraph();
 
+/* cross-referencer.c */
+
+//extern void init_idtab();
+//
+//extern struct ID *search_idtab(char *np);
+//
+//extern void id_countup(char *np);
+//
+//extern void print_idtab();
+//
+//extern void release_idtab();
+
 #endif //TASK3_CROSS_REFERENCER_H
