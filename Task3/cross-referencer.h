@@ -118,7 +118,7 @@ extern void end_scan(FILE *fp);
 
 extern int is_check_token_size(int i);
 
-/* cross-referencer.c */
+/* parse-syntax.c */
 
 extern int token;
 
@@ -194,14 +194,12 @@ extern void make_paragraph();
 
 /* cross-referencer.c */
 
-//extern void init_idtab();
-//
-//extern struct ID *search_idtab(char *np);
-//
-//extern void id_countup(char *np);
-//
-//extern void print_idtab();
-//
-//extern void release_idtab();
+extern void init_idtab();
+
+extern struct ID *search_idtab(char *np);
+
+extern void def_id(char *name, char *procname, int *ispara, struct TYPE *itp);
+
+extern void release_idtab();
 
 #endif //TASK3_CROSS_REFERENCER_H
