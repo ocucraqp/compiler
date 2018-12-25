@@ -22,6 +22,10 @@ char *tokenstr[NUMOFTOKEN + 1] = {
         ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
 };
 
+//char *current_procname;
+
+struct TYPE temp_type;
+
 int parse_program(FILE *fp) {
     if (token != TPROGRAM) { return (error("Keyword 'program' is not found")); }
     printf("%s ", tokenstr[token]);
@@ -45,6 +49,7 @@ int parse_program(FILE *fp) {
 }
 
 int parse_block(FILE *fp) {
+//    current_procname = NULL;
     while ((token == TVAR) || (token == TPROCEDURE)) {
         switch (token) {
             case TVAR:
@@ -69,32 +74,43 @@ int parse_block(FILE *fp) {
 }
 
 int parse_variable_declaration(FILE *fp) {
+    struct NAME *loop_name;
+
     if (token != TVAR) { return (error("Keyword 'var' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
+    init_temp_names();
     if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
     if (token != TCOLON) { return (error("Symbol ':' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
+    init_type(&temp_type);
     if (parse_type(fp) == ERROR) { return ERROR; }
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     printf("\b%s\n", tokenstr[token]);
     token = scan(fp);
 
+    for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
+        def_id(loop_name->name, 0, &temp_type);
+    }
+    release_names();
+
     while (token == TNAME) {
         paragraph_number++;
         make_paragraph();
 
+        init_temp_names();
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
         if (token != TCOLON) { return (error("Symbol ':' is not found")); }
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
+        init_type(&temp_type);
         if (parse_type(fp) == ERROR) { return ERROR; }
 
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -121,6 +137,7 @@ int parse_variable_names(FILE *fp) {
 
 int parse_variable_name(FILE *fp) {
     if (token != TNAME) { return (error("Name is not found")); }
+    temp_names(string_attr);
     printf("%s ", string_attr);
     token = scan(fp);
 
@@ -149,6 +166,7 @@ int parse_standard_type(FILE *fp) {
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
+            temp_type.ttype = token + 100;
             printf("%s ", tokenstr[token]);
             token = scan(fp);
             break;
@@ -181,6 +199,7 @@ int parse_array_type(FILE *fp) {
     token = scan(fp);
 
     if (parse_standard_type(fp) == ERROR) { return ERROR; }
+    temp_type.ttype += 100;
 
     return NORMAL;
 }
@@ -217,6 +236,14 @@ int parse_subprogram_declaration(FILE *fp) {
 
 int parse_procedure_name(FILE *fp) {
     if (token != TNAME) { return (error("Procedure name is not found")); }
+//    if (current_procname != NULL) {
+//        free(current_procname);
+//    }
+//    if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
+//        return error("can not malloc in parse_procedure_name");
+//    }
+//    init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
+//    strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
     printf("%s ", string_attr);
     token = scan(fp);
 

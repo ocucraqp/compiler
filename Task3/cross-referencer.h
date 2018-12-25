@@ -7,6 +7,7 @@
 #include <string.h>
 
 #define MAXSTRSIZE 1024
+#define MAX_IDENTIFIER_SIZE 8
 #define NORMAL 0
 #define ERROR 1
 
@@ -194,11 +195,62 @@ extern void make_paragraph();
 
 /* cross-referencer.c */
 
+extern struct TYPE {
+    int ttype;
+    /* TPINT TPCHAR TPBOOL TPARRAYINT TPARRAYCHAR
+    TPARRAYBOOL TPPROC */
+    int arraysize;
+    /* size of array, if TPARRAY */
+    struct TYPE *paratp;
+    /* pointer to parameter's type list if ttype is TPPROC
+     * paratp is NULL if ttype is not TPROC*/
+} temp_type;
+
+extern struct ID {
+    char *name;
+//    char *procname;
+    /* procedure name within which this name is defined */ /* NULL if global name */
+    struct TYPE *itp;
+    int ispara;
+    /* 1:formal parameter, 0:else(variable) */
+    int deflinenum;
+    struct LINE *irefp;
+    struct ID *nextp;
+} *globalidroot, *localidroot;
+
+/* Pointers to root of global & local symbol tables */
+
+extern struct NAME {
+    char *name;
+    struct NAME *nextnamep;
+} *temp_name_root;
+
+#define TPINT TINTEGER+100
+#define TPCHAR TCHAR+100
+#define TPBOOL TBOOLEAN+100
+#define TPARRAYINT TINTEGER+200
+#define TPARRAYCHAR TCHAR+200
+#define TPARRAYBOOL TBOOLEAN+200
+#define TPPROC 100
+
 extern void init_idtab();
 
-extern struct ID *search_idtab(char *np);
+extern void init_temp_names();
 
-extern void def_id(char *name, char *procname, int *ispara, struct TYPE *itp);
+extern void init_type(struct TYPE *type);
+
+extern struct ID *search_idtab(const char *np);
+
+extern int temp_names(char *name);
+
+extern void release_names();
+
+//extern int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp);
+extern int def_id(const char *name, int ispara, const struct TYPE *itp);
+
+extern int ref_id(const char *name);
+
+extern void print_idtab();
 
 extern void release_idtab();
 

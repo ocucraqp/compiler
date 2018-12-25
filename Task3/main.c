@@ -56,6 +56,9 @@ int main(int nc, char *np[]) {
 
     end_scan(fp);
 
+    print_idtab();
+    release_idtab();
+
     if (is_success == NORMAL) {
         return EXIT_SUCCESS;
     } else {
