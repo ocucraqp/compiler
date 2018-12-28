@@ -253,4 +253,6 @@ extern void print_idtab();
 
 extern void release_idtab();
 
+extern void make_space(int n);
+
 #endif //TASK3_CROSS_REFERENCER_H

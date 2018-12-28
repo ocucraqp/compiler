@@ -136,47 +136,73 @@ int ref_id(const char *name, const char *procname) {
 
 void print_idtab() {    /* Output the registered data */
     struct ID *p;
+    int num_space = 0;
+    char buf[1024];
 
-    printf("Name\tType\t\tDef.\tRef.\n");
+    /* print row name */
+    printf("Name\t\t\t\tType\t\t\t\t\t\t\tDef.\tRef.\n");
+
     for (p = idroot; p != NULL; p = p->nextp) {
+        /* print Name */
         printf("%s", p->name);
+        num_space = 20 - strlen(p->name);
         if (p->procname != NULL) {
             printf(":%s", p->procname);
+            num_space = num_space - 1 - strlen(p->procname);
         }
-        printf("\t");
+        make_space(num_space);
+
+        /* print Type */
         switch (p->itp->ttype) {
             case TPINT:
             case TPCHAR:
             case TPBOOL:
-                printf("%s\t\t", key[p->itp->ttype - 100].keyword);
+                printf("%s", key[p->itp->ttype - 100].keyword);
+                num_space = 32 - strlen(key[p->itp->ttype - 100].keyword);
                 break;
             case TPARRAYINT:
             case TPARRAYCHAR:
             case TPARRAYBOOL:
-                printf("array[%d] of %s\t", p->itp->arraysize, key[p->itp->ttype - 200].keyword);
+                printf("array[%d] of %s", p->itp->arraysize, key[p->itp->ttype - 200].keyword);
+                init_char_array(buf, 1024);
+                snprintf(buf, 1024, "%d", p->itp->arraysize);
+                num_space = 32 - 11 - strlen(buf) - strlen(key[p->itp->ttype - 200].keyword);
                 break;
             case TPPROC:
                 printf("procedure");
+                num_space = 32 - 9;
                 if (p->itp->paratp != NULL) {
                     printf("(%s", key[p->itp->paratp->ttype - 100].keyword);
                     for (p->itp->paratp = p->itp->paratp->paratp;
                          p->itp->paratp != NULL; p->itp->paratp = p->itp->paratp->paratp) {
                         printf(", %s", key[p->itp->paratp->ttype - 100].keyword);
+                        num_space = num_space - 2 - strlen(key[p->itp->paratp->ttype - 100].keyword);
                     }
-                    printf(")\t");
+                    printf(")");
+                    num_space -= 1;
                 }
                 break;
             default:
                 error("Variable has no type");
                 return;
         }
-        printf("%d\t", p->deflinenum);
+        make_space(num_space);
+
+        /* print Def. */
+        init_char_array(buf, 1024);
+        snprintf(buf, 1024, "%d", p->deflinenum);
+        num_space = 5 - strlen(buf);
+        make_space(num_space);
+        printf("%d | ", p->deflinenum);
+
+        /* print Ref. */
         if (p->irefp != NULL) {
             printf("%d", p->irefp->reflinenum);
             for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
                 printf(", %d", p->irefp->reflinenum);
             }
         }
+
         printf("\n");
     }
 }
@@ -192,4 +218,12 @@ void release_idtab() {    /* Release tha data structure */
     }
 
     init_idtab();
+}
+
+void make_space(int n) {
+    int i = 0;
+
+    for (i = 0; i < n; i++) {
+        printf(" ");
+    }
 }
