@@ -157,26 +157,26 @@ void print_idtab() {    /* Output the registered data */
             case TPINT:
             case TPCHAR:
             case TPBOOL:
-                printf("%s", key[p->itp->ttype - 100].keyword);
-                num_space = 32 - strlen(key[p->itp->ttype - 100].keyword);
+                printf("%s", tokenstr[p->itp->ttype - 100]);
+                num_space = 32 - strlen(tokenstr[p->itp->ttype - 100]);
                 break;
             case TPARRAYINT:
             case TPARRAYCHAR:
             case TPARRAYBOOL:
-                printf("array[%d] of %s", p->itp->arraysize, key[p->itp->ttype - 200].keyword);
+                printf("array[%d] of %s", p->itp->arraysize, tokenstr[p->itp->ttype - 200]);
                 init_char_array(buf, 1024);
                 snprintf(buf, 1024, "%d", p->itp->arraysize);
-                num_space = 32 - 11 - strlen(buf) - strlen(key[p->itp->ttype - 200].keyword);
+                num_space = 32 - 11 - strlen(buf) - strlen(tokenstr[p->itp->ttype - 200]);
                 break;
             case TPPROC:
                 printf("procedure");
                 num_space = 32 - 9;
                 if (p->itp->paratp != NULL) {
-                    printf("(%s", key[p->itp->paratp->ttype - 100].keyword);
+                    printf("(%s", tokenstr[p->itp->paratp->ttype - 100]);
                     for (p->itp->paratp = p->itp->paratp->paratp;
                          p->itp->paratp != NULL; p->itp->paratp = p->itp->paratp->paratp) {
-                        printf(", %s", key[p->itp->paratp->ttype - 100].keyword);
-                        num_space = num_space - 2 - strlen(key[p->itp->paratp->ttype - 100].keyword);
+                        printf(", %s", tokenstr[p->itp->paratp->ttype - 100]);
+                        num_space = num_space - 2 - strlen(tokenstr[p->itp->paratp->ttype - 100]);
                     }
                     printf(")");
                     num_space -= 1;

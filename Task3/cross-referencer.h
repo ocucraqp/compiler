@@ -121,6 +121,8 @@ extern int is_check_token_size(int i);
 
 /* parse-syntax.c */
 
+extern char *tokenstr[NUMOFTOKEN + 1];
+
 extern int token;
 
 extern int paragraph_number;
