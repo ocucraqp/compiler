@@ -22,7 +22,7 @@ char *tokenstr[NUMOFTOKEN + 1] = {
         ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
 };
 
-//char *current_procname;
+char *current_procname;
 
 struct TYPE temp_type;
 
@@ -49,8 +49,12 @@ int parse_program(FILE *fp) {
 }
 
 int parse_block(FILE *fp) {
-//    current_procname = NULL;
+    current_procname = NULL;
     while ((token == TVAR) || (token == TPROCEDURE)) {
+        if (current_procname != NULL) {
+            free(current_procname);
+            current_procname = NULL;
+        }
         switch (token) {
             case TVAR:
                 paragraph_number++;
@@ -95,7 +99,7 @@ int parse_variable_declaration(FILE *fp) {
     token = scan(fp);
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-        def_id(loop_name->name, 0, &temp_type);
+        if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
     }
     release_names();
 
@@ -236,14 +240,12 @@ int parse_subprogram_declaration(FILE *fp) {
 
 int parse_procedure_name(FILE *fp) {
     if (token != TNAME) { return (error("Procedure name is not found")); }
-//    if (current_procname != NULL) {
-//        free(current_procname);
-//    }
-//    if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
-//        return error("can not malloc in parse_procedure_name");
-//    }
-//    init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
-//    strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
+
+    if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
+        return error("can not malloc in parse_procedure_name");
+    }
+    init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
+    strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
     printf("%s ", string_attr);
     token = scan(fp);
 

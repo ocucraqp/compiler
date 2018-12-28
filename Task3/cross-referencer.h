@@ -208,7 +208,7 @@ extern struct TYPE {
 
 extern struct ID {
     char *name;
-//    char *procname;
+    char *procname;
     /* procedure name within which this name is defined */ /* NULL if global name */
     struct TYPE *itp;
     int ispara;
@@ -216,7 +216,7 @@ extern struct ID {
     int deflinenum;
     struct LINE *irefp;
     struct ID *nextp;
-} *globalidroot, *localidroot;
+} *idroot;
 
 /* Pointers to root of global & local symbol tables */
 
@@ -239,16 +239,15 @@ extern void init_temp_names();
 
 extern void init_type(struct TYPE *type);
 
-extern struct ID *search_idtab(const char *np);
+extern struct ID *search_idtab(const char *name, const char *procname);
 
 extern int temp_names(char *name);
 
 extern void release_names();
 
-//extern int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp);
-extern int def_id(const char *name, int ispara, const struct TYPE *itp);
+extern int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp);
 
-extern int ref_id(const char *name);
+extern int ref_id(const char *name, const char *procname);
 
 extern void print_idtab();
 

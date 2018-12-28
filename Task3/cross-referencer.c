@@ -5,13 +5,12 @@ struct LINE {
     struct LINE *nextlinep;
 };
 
-struct ID *globalidroot, *localidroot;
+struct ID *idroot;
 
 struct NAME *temp_name_root = NULL;
 
 void init_idtab() {        /* Initialise the table */
-    globalidroot = NULL;
-    localidroot = NULL;
+    idroot = NULL;
 }
 
 void init_temp_names() {
@@ -24,15 +23,21 @@ void init_type(struct TYPE *type) {
     type->paratp = NULL;
 }
 
-struct ID *search_idtab(const char *np) {    /* search the name pointed by np */
+struct ID *search_idtab(const char *name, const char *procname) {    /* search the name pointed by np */
     struct ID *p;
 
-    for (p = globalidroot; p != NULL; p = p->nextp) {
-        if (strncmp(np, p->name, MAX_IDENTIFIER_SIZE) == 0) return (p);
+    for (p = idroot; p != NULL; p = p->nextp) {
+        if (strncmp(name, p->name, MAX_IDENTIFIER_SIZE) == 0) {
+            if (procname != NULL && p->procname != NULL) {
+                if (strncmp(procname, p->procname, MAX_IDENTIFIER_SIZE) == 0) {
+                    return (p);
+                }
+            } else if (procname == NULL && p->procname == NULL) {
+                return (p);
+            }
+        }
     }
-    for (p = localidroot; p != NULL; p = p->nextp) {
-        if (strncmp(np, p->name, MAX_IDENTIFIER_SIZE) == 0) return (p);
-    }
+
     return (NULL);
 }
 
@@ -67,14 +72,13 @@ void release_names() {    /* Release tha data structure */
     init_temp_names();
 }
 
-//int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp)
-int def_id(const char *name, int ispara, const struct TYPE *itp) {
+int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp) {
     struct ID *p;
     char *temp_name;
-//    char *temp_procname;
+    char *temp_procname;
     struct TYPE *temp_itp;
 
-    if ((p = search_idtab(name)) != NULL) {
+    if ((p = search_idtab(name, procname)) != NULL) {
         return error("It is defined in duplicate");
     } else {
         if ((p = (struct ID *) malloc(sizeof(struct ID))) == NULL) {
@@ -83,42 +87,41 @@ int def_id(const char *name, int ispara, const struct TYPE *itp) {
         if ((temp_name = (char *) malloc(MAX_IDENTIFIER_SIZE * sizeof(char))) == NULL) {
             return error("can not malloc-2 in def_id");
         }
-//        if ((temp_procname = (char *) malloc(MAX_IDENTIFIER_SIZE * sizeof(char))) == NULL) {
-//            return error("can not malloc-3 in def_id");
-//        }
+        if ((temp_procname = (char *) malloc(MAX_IDENTIFIER_SIZE * sizeof(char))) == NULL) {
+            return error("can not malloc-3 in def_id");
+        }
         if ((temp_itp = (struct TYPE *) malloc(MAX_IDENTIFIER_SIZE * sizeof(struct TYPE))) == NULL) {
             return error("can not malloc-3 in def_id");
         }
 
         init_char_array(temp_name, MAX_IDENTIFIER_SIZE);
-//        init_char_array(temp_procname, MAX_IDENTIFIER_SIZE);
+        init_char_array(temp_procname, MAX_IDENTIFIER_SIZE);
 
         strncpy(temp_name, name, MAX_IDENTIFIER_SIZE);
-//        strncpy(temp_procname, procname, MAX_IDENTIFIER_SIZE);
+        if (procname != NULL) {
+            strncpy(temp_procname, procname, MAX_IDENTIFIER_SIZE);
+        } else {
+            temp_procname = NULL;
+        }
         *temp_itp = *itp;
 
         p->name = temp_name;
-//        p->procname = temp_procname;
+        p->procname = temp_procname;
         p->itp = temp_itp;
         p->ispara = ispara;
         p->deflinenum = linenum;
         p->irefp = NULL;
-//        if (procname == NULL) {
-        p->nextp = globalidroot;
-        globalidroot = p;
-//        } else {
-//            p->nextp = localidroot;
-//            localidroot = p;
-//        }
+        p->nextp = idroot;
+        idroot = p;
     }
     return NORMAL;
 }
 
-int ref_id(const char *name) {
+int ref_id(const char *name, const char *procname) {
     struct ID *p;
     struct LINE *temp_irefp;
 
-    if ((p = search_idtab(name)) == NULL) {
+    if ((p = search_idtab(name, procname)) == NULL) {
         return error("Variable name not defined.");
     } else {
         if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
@@ -135,11 +138,11 @@ void print_idtab() {    /* Output the registered data */
     struct ID *p;
 
     printf("Name\tType\t\tDef.\tRef.\n");
-    for (p = globalidroot; p != NULL; p = p->nextp) {
+    for (p = idroot; p != NULL; p = p->nextp) {
         printf("%s", p->name);
-//        if (p->procname != NULL) {
-//            printf(":%s", p->procname);
-//        }
+        if (p->procname != NULL) {
+            printf(":%s", p->procname);
+        }
         printf("\t");
         switch (p->itp->ttype) {
             case TPINT:
@@ -168,12 +171,12 @@ void print_idtab() {    /* Output the registered data */
                 return;
         }
         printf("%d\t", p->deflinenum);
-//        if (p->irefp != NULL) {
-//            printf("%d", p->irefp->reflinenum);
-//        }
-//        for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
-//            printf(", %d", p->irefp->reflinenum);
-//        }
+        if (p->irefp != NULL) {
+            printf("%d", p->irefp->reflinenum);
+            for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
+                printf(", %d", p->irefp->reflinenum);
+            }
+        }
         printf("\n");
     }
 }
@@ -181,18 +184,12 @@ void print_idtab() {    /* Output the registered data */
 void release_idtab() {    /* Release tha data structure */
     struct ID *p, *q;
 
-    for (p = globalidroot; p != NULL; p = q) {
+    for (p = idroot; p != NULL; p = q) {
         free(p->name);
-//        free(p->procname);
+        free(p->procname);
         q = p->nextp;
         free(p);
     }
 
-    for (p = localidroot; p != NULL; p = q) {
-        free(p->name);
-//        free(p->procname);
-        q = p->nextp;
-        free(p);
-    }
     init_idtab();
 }
