@@ -94,14 +94,14 @@ int parse_variable_declaration(FILE *fp) {
     init_type(&temp_type);
     if (parse_type(fp) == ERROR) { return ERROR; }
 
-    if (token != TSEMI) { return (error("Symbol ';' is not found")); }
-    printf("\b%s\n", tokenstr[token]);
-    token = scan(fp);
-
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
         if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
     }
     release_names();
+
+    if (token != TSEMI) { return (error("Symbol ';' is not found")); }
+    printf("\b%s\n", tokenstr[token]);
+    token = scan(fp);
 
     while (token == TNAME) {
         paragraph_number++;
