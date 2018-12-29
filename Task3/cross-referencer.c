@@ -140,7 +140,13 @@ void print_idtab() {    /* Output the registered data */
     char buf[1024];
 
     /* print row name */
-    printf("Name\t\t\t\tType\t\t\t\t\t\t\tDef.\tRef.\n");
+    printf("Name");
+    make_space(16);
+    printf("Type");
+    make_space(28);
+    printf("Def.");
+    make_space(4);
+    printf("Ref.\n");
 
     for (p = idroot; p != NULL; p = p->nextp) {
         /* print Name */
