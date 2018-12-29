@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define MAXSTRSIZE 1024
 #define MAX_IDENTIFIER_SIZE 8
@@ -74,7 +75,7 @@ extern struct KEY {
     int keytoken;
 } key[NUMOFKEYWORD];
 
-extern int error(char *mes);
+extern int error(char *mes, ...);
 
 /* scan.c */
 extern int init_scan(char *filename, FILE **fp);

@@ -67,8 +67,15 @@ int main(int nc, char *np[]) {
 }
 
 /* Display error message */
-int error(char *mes) {
+int error(char *mes, ...) {
+    va_list args;
+    char output[1024];
+
+    va_start(args, mes);
+    vsprintf(output, mes, args);
+    va_end(args);
+
     fflush(stdout);
-    fprintf(stderr, "\nline%d ERROR: %s\n", get_linenum(), mes);
+    fprintf(stderr, "\nline%d ERROR: %s\n", get_linenum(), output);
     return (ERROR);
 }

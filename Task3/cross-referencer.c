@@ -122,7 +122,7 @@ int ref_id(const char *name, const char *procname) {
     struct LINE *temp_irefp;
 
     if ((p = search_idtab(name, procname)) == NULL) {
-        return error("Variable name not defined.");
+        return error("Variable %s not defined.", name);
     } else {
         if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
             return error("can not malloc-3 in def_id");
