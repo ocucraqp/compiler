@@ -171,11 +171,22 @@ int parse_type(FILE *fp) {
 }
 
 int parse_standard_type(FILE *fp) {
+    struct TYPE *next_type;
+
     switch (token) {
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
-            temp_type.ttype = token + 100;
+            if (temp_type.ttype == 0) {
+                temp_type.ttype = token + 100;
+            } else {
+                if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
+                    return error("can not malloc in parse_procedure_name");
+                }
+                init_type(next_type);
+                next_type->ttype = token + 100;
+                temp_type.paratp = next_type;
+            }
             printf("%s ", tokenstr[token]);
             token = scan(fp);
             break;
@@ -220,9 +231,13 @@ int parse_subprogram_declaration(FILE *fp) {
 
     if (parse_procedure_name(fp) == ERROR) { return ERROR; }
 
+    init_type(&temp_type);
+    temp_type.ttype = TPPROC;
     if (token == TLPAREN) {
         if (parse_formal_parameters(fp) == ERROR) { return ERROR; }
     }
+
+    if (def_id(current_procname, NULL, 0, &temp_type) == ERROR) { return ERROR; }
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     printf("\b%s\n", tokenstr[token]);

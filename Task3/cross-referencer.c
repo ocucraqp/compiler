@@ -151,10 +151,10 @@ void print_idtab() {    /* Output the registered data */
     for (p = idroot; p != NULL; p = p->nextp) {
         /* print Name */
         printf("%s", p->name);
-        num_space = 20 - (int)strlen(p->name);
+        num_space = 20 - (int) strlen(p->name);
         if (p->procname != NULL) {
             printf(":%s", p->procname);
-            num_space = num_space - 1 - (int)strlen(p->procname);
+            num_space = num_space - 1 - (int) strlen(p->procname);
         }
         make_space(num_space);
 
@@ -164,7 +164,7 @@ void print_idtab() {    /* Output the registered data */
             case TPCHAR:
             case TPBOOL:
                 printf("%s", tokenstr[p->itp->ttype - 100]);
-                num_space = 32 - (int)strlen(tokenstr[p->itp->ttype - 100]);
+                num_space = 32 - (int) strlen(tokenstr[p->itp->ttype - 100]);
                 break;
             case TPARRAYINT:
             case TPARRAYCHAR:
@@ -172,17 +172,18 @@ void print_idtab() {    /* Output the registered data */
                 printf("array[%d] of %s", p->itp->arraysize, tokenstr[p->itp->ttype - 200]);
                 init_char_array(buf, 1024);
                 snprintf(buf, 1024, "%d", p->itp->arraysize);
-                num_space = 32 - 11 - (int)strlen(buf) - (int)strlen(tokenstr[p->itp->ttype - 200]);
+                num_space = 32 - 11 - (int) strlen(buf) - (int) strlen(tokenstr[p->itp->ttype - 200]);
                 break;
             case TPPROC:
                 printf("procedure");
                 num_space = 32 - 9;
                 if (p->itp->paratp != NULL) {
                     printf("(%s", tokenstr[p->itp->paratp->ttype - 100]);
+                    num_space = num_space - 1 - (int) strlen(tokenstr[p->itp->paratp->ttype - 100]);
                     for (p->itp->paratp = p->itp->paratp->paratp;
                          p->itp->paratp != NULL; p->itp->paratp = p->itp->paratp->paratp) {
                         printf(", %s", tokenstr[p->itp->paratp->ttype - 100]);
-                        num_space = num_space - 2 - (int)strlen(tokenstr[p->itp->paratp->ttype - 100]);
+                        num_space = num_space - 2 - (int) strlen(tokenstr[p->itp->paratp->ttype - 100]);
                     }
                     printf(")");
                     num_space -= 1;
@@ -197,7 +198,7 @@ void print_idtab() {    /* Output the registered data */
         /* print Def. */
         init_char_array(buf, 1024);
         snprintf(buf, 1024, "%d", p->deflinenum);
-        num_space = 5 - (int)strlen(buf);
+        num_space = 5 - (int) strlen(buf);
         make_space(num_space);
         printf("%d | ", p->deflinenum);
 
