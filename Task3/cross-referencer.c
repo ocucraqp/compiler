@@ -117,7 +117,7 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
     return NORMAL;
 }
 
-int ref_id(const char *name, const char *procname) {
+int ref_id(const char *name, const char *procname, int refnum) {
     struct ID *p;
     struct LINE *temp_irefp;
 
@@ -128,6 +128,13 @@ int ref_id(const char *name, const char *procname) {
             return error("Variable %s:%s not defined.", name, procname);
         }
     } else {
+        if (refnum >= 0) {
+            if (p->itp->arraysize == 0) {
+                return error("Variable %s is not array type");
+            } else if (refnum > p->itp->arraysize) {
+                return error("The number of subscripts is too large");
+            }
+        }
         if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
             return error("can not malloc-3 in def_id");
         }

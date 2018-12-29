@@ -207,6 +207,10 @@ int parse_array_type(FILE *fp) {
     token = scan(fp);
 
     if (token != TNUMBER) { return (error("Number is not found")); }
+    if (num_attr < 1) {
+        return error("Subscript of array is negative value");
+    }
+    temp_type.arraysize = num_attr;
     printf("%s ", string_attr);
     token = scan(fp);
 
@@ -526,7 +530,11 @@ int parse_left_part(FILE *fp) {
 }
 
 int parse_variable(FILE *fp) {
-    ref_id(string_attr, current_procname);
+    char temp_string[MAXSTRSIZE];
+    int temp_refnum = -1;
+
+    init_char_array(temp_string, MAX_IDENTIFIER_SIZE + 1);
+    strncpy(temp_string, string_attr, MAX_IDENTIFIER_SIZE);
     if (parse_variable_name(fp) == ERROR) { return ERROR; }
 
     if (token == TLSQPAREN) {
@@ -534,6 +542,7 @@ int parse_variable(FILE *fp) {
         token = scan(fp);
 
         if (parse_expression(fp) == ERROR) { return ERROR; }
+        temp_refnum = 1;//todo
 
         if (token != TRSQPAREN) {
             return (error("Symbol ']' is not found at the end of expression"));
@@ -541,6 +550,8 @@ int parse_variable(FILE *fp) {
         printf("%s ", tokenstr[token]);
         token = scan(fp);
     }
+
+    if (ref_id(temp_string, current_procname, temp_refnum) == ERROR) { return ERROR; }
 
     return NORMAL;
 }

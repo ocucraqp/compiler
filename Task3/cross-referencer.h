@@ -250,7 +250,7 @@ extern void release_names();
 
 extern int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp);
 
-extern int ref_id(const char *name, const char *procname);
+extern int ref_id(const char *name, const char *procname, int refnum);
 
 extern void print_idtab();
 
