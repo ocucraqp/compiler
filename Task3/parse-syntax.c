@@ -229,7 +229,7 @@ int parse_subprogram_declaration(FILE *fp) {
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_procedure_name(fp) == ERROR) { return ERROR; }
+    if (parse_procedure_name(fp, 1) == ERROR) { return ERROR; }
 
     init_type(&temp_type);
     temp_type.ttype = TPPROC;
@@ -258,14 +258,17 @@ int parse_subprogram_declaration(FILE *fp) {
     return NORMAL;
 }
 
-int parse_procedure_name(FILE *fp) {
+int parse_procedure_name(FILE *fp, int def_flag) {
     if (token != TNAME) { return (error("Procedure name is not found")); }
 
-    if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
-        return error("can not malloc in parse_procedure_name");
+    /* if def_flag is 1, procname is set */
+    if (def_flag == 1) {
+        if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
+            return error("can not malloc in parse_procedure_name");
+        }
+        init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
+        strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
     }
-    init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
-    strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
     printf("%s ", string_attr);
     token = scan(fp);
 
@@ -273,29 +276,45 @@ int parse_procedure_name(FILE *fp) {
 }
 
 int parse_formal_parameters(FILE *fp) {
+    struct NAME *loop_name;
+
     if (token != TLPAREN) { return (error("Symbol '(' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
+    init_temp_names();
     if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
     if (token != TCOLON) { return (error("Symbol ':' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
+    init_type(&temp_type);
     if (parse_type(fp) == ERROR) { return ERROR; }
+
+    for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
+        if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
+    }
+    release_names();
 
     while (token == TSEMI) {
         printf("\b%s\t", tokenstr[token]);
         token = scan(fp);
 
+        init_temp_names();
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
         if (token != TCOLON) { return (error("Symbol ':' is not found")); }
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
+        init_type(&temp_type);
         if (parse_type(fp) == ERROR) { return ERROR; }
+
+        for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
+            if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
+        }
+        release_names();
     }
 
     if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
@@ -451,7 +470,7 @@ int parse_call_statement(FILE *fp) {
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_procedure_name(fp) == ERROR) { return ERROR; }
+    if (parse_procedure_name(fp, 0) == ERROR) { return ERROR; }
 
     if (token == TLPAREN) {
         printf("%s ", tokenstr[token]);
@@ -507,6 +526,7 @@ int parse_left_part(FILE *fp) {
 }
 
 int parse_variable(FILE *fp) {
+    ref_id(string_attr, current_procname);
     if (parse_variable_name(fp) == ERROR) { return ERROR; }
 
     if (token == TLSQPAREN) {

@@ -122,13 +122,17 @@ int ref_id(const char *name, const char *procname) {
     struct LINE *temp_irefp;
 
     if ((p = search_idtab(name, procname)) == NULL) {
-        return error("Variable %s not defined.", name);
+        if (procname == NULL) {
+            return error("Variable %s not defined.", name);
+        } else {
+            return error("Variable %s:%s not defined.", name, procname);
+        }
     } else {
         if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
             return error("can not malloc-3 in def_id");
         }
-        temp_irefp->reflinenum = 0;
-        temp_irefp->nextlinep = NULL;
+        temp_irefp->reflinenum = linenum;
+        temp_irefp->nextlinep = p->irefp;
         p->irefp = temp_irefp;
     }
     return NORMAL;
