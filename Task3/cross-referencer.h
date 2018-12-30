@@ -146,7 +146,7 @@ extern int parse_array_type(FILE *fp);
 
 extern int parse_subprogram_declaration(FILE *fp);
 
-extern int parse_procedure_name(FILE *fp, int def_flag);
+extern int parse_procedure_name(FILE *fp);
 
 extern int parse_formal_parameters(FILE *fp);
 

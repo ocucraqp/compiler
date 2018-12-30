@@ -118,6 +118,9 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
 }
 
 int ref_id(const char *name, const char *procname, int refnum) {
+    /* If the name is not in procedure compound statement, procname is NULL.
+     * refnum is Element number of array.
+     * Initial refnum is -1. */
     struct ID *p;
     struct LINE *temp_irefp;
 

@@ -238,7 +238,7 @@ int parse_subprogram_declaration(FILE *fp) {
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_procedure_name(fp, 1) == ERROR) { return ERROR; }
+    if (parse_procedure_name(fp) == ERROR) { return ERROR; }
 
     init_type(&temp_type);
     temp_type.ttype = TPPROC;
@@ -267,17 +267,15 @@ int parse_subprogram_declaration(FILE *fp) {
     return NORMAL;
 }
 
-int parse_procedure_name(FILE *fp, int def_flag) {
+int parse_procedure_name(FILE *fp) {
     if (token != TNAME) { return (error("Procedure name is not found")); }
 
-    /* if def_flag is 1, procname is set */
-    if (def_flag == 1) {
-        if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
-            return error("can not malloc in parse_procedure_name");
-        }
-        init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
-        strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
+    if ((current_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
+        return error("can not malloc in parse_procedure_name");
     }
+    init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
+    strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
+
     printf("%s ", string_attr);
     token = scan(fp);
 
@@ -480,7 +478,13 @@ int parse_call_statement(FILE *fp) {
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_procedure_name(fp, 0) == ERROR) { return ERROR; }
+    if (parse_procedure_name(fp) == ERROR) { return ERROR; }
+
+    if (current_procname != NULL) {
+        if (ref_id(current_procname, NULL, -1) == ERROR) { return ERROR; }
+        free(current_procname);
+        current_procname = NULL;
+    }
 
     if (token == TLPAREN) {
         printf("%s ", tokenstr[token]);
