@@ -25,6 +25,7 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 char *current_procname;
 
 struct TYPE temp_type;
+struct TYPE *end_type;
 
 int parse_program(FILE *fp) {
     if (token != TPROGRAM) { return (error("Keyword 'program' is not found")); }
@@ -178,14 +179,18 @@ int parse_standard_type(FILE *fp) {
         case TBOOLEAN:
         case TCHAR:
             if (temp_type.ttype == 0) {
+                /* When temp_type is initial state */
                 temp_type.ttype = token + 100;
+                end_type = &temp_type;
             } else {
+                /* When temo_type is not initial state */
                 if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
                     return error("can not malloc in parse_procedure_name");
                 }
                 init_type(next_type);
                 next_type->ttype = token + 100;
-                temp_type.paratp = next_type;
+                end_type->paratp = next_type;
+                end_type = next_type;
             }
             printf("%s ", tokenstr[token]);
             token = scan(fp);
@@ -281,6 +286,7 @@ int parse_procedure_name(FILE *fp, int def_flag) {
 
 int parse_formal_parameters(FILE *fp) {
     struct NAME *loop_name;
+    struct TYPE *ptype;
 
     if (token != TLPAREN) { return (error("Symbol '(' is not found")); }
     printf("%s ", tokenstr[token]);
@@ -293,11 +299,11 @@ int parse_formal_parameters(FILE *fp) {
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    init_type(&temp_type);
     if (parse_type(fp) == ERROR) { return ERROR; }
+    ptype = temp_type.paratp;
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-        if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
+        if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
     }
     release_names();
 
@@ -312,11 +318,11 @@ int parse_formal_parameters(FILE *fp) {
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
-        init_type(&temp_type);
         if (parse_type(fp) == ERROR) { return ERROR; }
+        ptype = ptype->paratp;
 
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-            if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
+            if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
         }
         release_names();
     }
