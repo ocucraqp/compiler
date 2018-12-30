@@ -547,8 +547,14 @@ int parse_variable(FILE *fp) {
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
-        if (parse_expression(fp) == ERROR) { return ERROR; }
-        temp_refnum = 1;//todo
+        if (token == TNUMBER) {
+            temp_refnum = num_attr;
+            printf("%s ", string_attr);
+            token = scan(fp);
+        } else {
+            if (parse_expression(fp) == ERROR) { return ERROR; }
+            temp_refnum = 1;//todo
+        }
 
         if (token != TRSQPAREN) {
             return (error("Symbol ']' is not found at the end of expression"));

@@ -131,7 +131,7 @@ int ref_id(const char *name, const char *procname, int refnum) {
         if (refnum >= 0) {
             if (p->itp->arraysize == 0) {
                 return error("Variable %s is not array type");
-            } else if (refnum > p->itp->arraysize) {
+            } else if (refnum >= p->itp->arraysize) {
                 return error("The number of subscripts is too large");
             }
         }
