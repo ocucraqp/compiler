@@ -173,6 +173,7 @@ int parse_type(FILE *fp) {
 
 int parse_standard_type(FILE *fp) {
     struct TYPE *next_type;
+    int type_holder = NORMAL;
 
     switch (token) {
         case TINTEGER:
@@ -193,13 +194,12 @@ int parse_standard_type(FILE *fp) {
                 end_type = next_type;
             }
             printf("%s ", tokenstr[token]);
+            type_holder = token + 100;
             token = scan(fp);
-            break;
+            return type_holder;
         default:
             return (error("Standard type is not found"));
     }
-
-    return NORMAL;
 }
 
 int parse_array_type(FILE *fp) {
@@ -299,6 +299,7 @@ int parse_formal_parameters(FILE *fp) {
 
     if (parse_type(fp) == ERROR) { return ERROR; }
     ptype = temp_type.paratp;
+    if (check_standard_type_to_pointer(ptype) == ERROR) { return ERROR; }
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
         if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
@@ -318,6 +319,7 @@ int parse_formal_parameters(FILE *fp) {
 
         if (parse_type(fp) == ERROR) { return ERROR; }
         ptype = ptype->paratp;
+        if (check_standard_type_to_pointer(ptype) == ERROR) { return ERROR; }
 
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
             if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
@@ -405,11 +407,16 @@ int parse_statement(FILE *fp) {
 }
 
 int parse_condition_statement(FILE *fp) {
+    int expression_type_holder = NORMAL;
+
     if (token != TIF) { return (error("Keyword 'if' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_expression(fp) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+    if (expression_type_holder != TPBOOL) {
+        return error("The type of the expression in the condition statement must be boolean");
+    }
 
     if (token != TTHEN) { return (error("Keyword 'then is not found")); }
     printf("%s\n", tokenstr[token]);
@@ -441,11 +448,16 @@ int parse_condition_statement(FILE *fp) {
 }
 
 int parse_iteration_statement(FILE *fp) {
+    int expression_type_holder = NORMAL;
+
     if (token != TWHILE) { return (error("Keyword 'while' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_expression(fp) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+    if (expression_type_holder != TPBOOL) {
+        return error("The type of the expression in the iteration statement must be boolean");
+    }
 
     if (token != TDO) { return (error("Keyword 'do' is not found")); }
     printf("%s\n", tokenstr[token]);
@@ -541,7 +553,7 @@ int parse_left_part(FILE *fp) {
 
 int parse_variable(FILE *fp) {
     char temp_string[MAXSTRSIZE];
-    int temp_refnum = -1;
+    int temp_refnum = -1, type_holder = NORMAL, expression_type_holder = NORMAL;
 
     init_char_array(temp_string, MAX_IDENTIFIER_SIZE + 1);
     strncpy(temp_string, string_attr, MAX_IDENTIFIER_SIZE);
@@ -556,8 +568,13 @@ int parse_variable(FILE *fp) {
             printf("%s ", string_attr);
             token = scan(fp);
         } else {
-            if (parse_expression(fp) == ERROR) { return ERROR; }
-            temp_refnum = 1;//todo
+            if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+            if (expression_type_holder != TPINT) {
+                return error(
+                        "When referring to an array type variable,\n"
+                        "it is necessary to attach an expression of type integer");
+            }
+            temp_refnum = 0;
         }
 
         if (token != TRSQPAREN) {
@@ -567,77 +584,124 @@ int parse_variable(FILE *fp) {
         token = scan(fp);
     }
 
-    if (ref_id(temp_string, current_procname, temp_refnum) == ERROR) { return ERROR; }
+    if ((type_holder = ref_id(temp_string, current_procname, temp_refnum)) == ERROR) { return ERROR; }
 
-    return NORMAL;
+    return type_holder;
 }
 
 int parse_expression(FILE *fp) {
-    if (parse_simple_expression(fp) == ERROR) { return ERROR; }
+    int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL;
+
+    if ((operand1_type = parse_simple_expression(fp)) == ERROR) { return ERROR; }
+    type_holder = operand1_type;
 
     while ((token == TEQUAL) || (token == TNOTEQ) || (token == TLE) || (token == TLEEQ) || (token == TGR) ||
            (token == TGREQ)) {
         if (parse_relational_operator(fp) == ERROR) { return ERROR; }
 
-        if (parse_simple_expression(fp) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_simple_expression(fp)) == ERROR) { return ERROR; }
+        if (operand1_type != operand2_type) {
+            return error("The operands of relational operators have different types");
+        }
+        type_holder = TPBOOL;
     }
 
-    return NORMAL;
+    return type_holder;
 }
 
 int parse_simple_expression(FILE *fp) {
+    int type_holder = NORMAL, pm_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
+
     switch (token) {
         case TPLUS:
-            printf("%s ", tokenstr[token]);
-            token = scan(fp);
-            break;
         case TMINUS:
             printf("%s ", tokenstr[token]);
             token = scan(fp);
+            pm_flag = 1;
             break;
         default:
+            pm_flag = 0;
             break;
     }
 
-    if (parse_term(fp) == ERROR) { return ERROR; }
-
-    while ((token == TPLUS) || (token == TMINUS) || (token == TOR)) {
-        if (parse_additive_operator(fp) == ERROR) { return ERROR; }
-
-        if (parse_term(fp) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_term(fp)) == ERROR) { return ERROR; }
+    if (pm_flag == 1 && operand1_type != TPINT) {
+        return error("The operands of + and - must be of type integer");
     }
 
-    return NORMAL;
+    while ((token == TPLUS) || (token == TMINUS) || (token == TOR)) {
+        switch (token) {
+            case TPLUS:
+            case TMINUS:
+                pm_flag = 1;
+                break;
+            default:
+                pm_flag = 0;
+                break;
+        }
+        if (parse_additive_operator(fp) == ERROR) { return ERROR; }
+
+        if ((operand2_type = parse_term(fp)) == ERROR) { return ERROR; }
+        if (pm_flag == 1 && operand1_type != TPINT && operand1_type == operand2_type) {
+            return error("The operands of '+' and '-' must be of type integer");
+        }
+        if (pm_flag == 0 && operand1_type != TPBOOL && operand1_type == operand2_type) {
+            return error("The operands of 'or' must be of type boolean");
+        }
+    }
+    type_holder = operand1_type;
+
+    return type_holder;
 }
 
 int parse_term(FILE *fp) {
-    if (parse_factor(fp) == ERROR) { return ERROR; }
+    int type_holder = NORMAL, md_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
+
+    if ((operand1_type = parse_factor(fp)) == ERROR) { return ERROR; }
 
     while ((token == TSTAR) || (token == TDIV) || (token == TAND)) {
+        switch (token) {
+            case TSTAR:
+            case TDIV:
+                md_flag = 1;
+                break;
+            default:
+                md_flag = 0;
+                break;
+        }
         if (parse_multiplicative_operator(fp) == ERROR) { return ERROR; }
 
-        if (parse_factor(fp) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_factor(fp)) == ERROR) { return ERROR; }
+        if (md_flag == 1 && operand1_type != TPINT && operand1_type == operand2_type) {
+            return error("The operands of '*' and 'div' must be of type integer");
+        }
+        if (md_flag == 0 && operand1_type != TPBOOL && operand1_type == operand2_type) {
+            return error("The operands of 'and' must be of type boolean");
+        }
     }
+    type_holder = operand1_type;
 
-    return NORMAL;
+    return type_holder;
 }
 
 int parse_factor(FILE *fp) {
+    int type_holder = NORMAL, expression_type_holder = NORMAL;
+
     switch (token) {
         case TNAME:
-            if (parse_variable(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(fp)) == ERROR) { return ERROR; }
             break;
         case TNUMBER:
         case TFALSE:
         case TTRUE:
         case TSTRING:
-            if (parse_constant(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_constant(fp)) == ERROR) { return ERROR; }
             break;
         case TLPAREN:
             printf("%s ", tokenstr[token]);
             token = scan(fp);
 
-            if (parse_expression(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
                 return (error("Symbol ')' is not found at the end of factor"));
@@ -649,12 +713,15 @@ int parse_factor(FILE *fp) {
             printf("%s ", tokenstr[token]);
             token = scan(fp);
 
-            if (parse_factor(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_factor(fp)) == ERROR) { return ERROR; }
+            if (type_holder != TPBOOL) {
+                return error("The operand of 'not' must be of type boolean.");
+            }
             break;
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
-            if (parse_standard_type(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_standard_type(fp)) == ERROR) { return ERROR; }
 
             if (token != TLPAREN) {
                 return (error("Symbol '(' is not found in factor"));
@@ -662,7 +729,8 @@ int parse_factor(FILE *fp) {
             printf("%s ", tokenstr[token]);
             token = scan(fp);
 
-            if (parse_expression(fp) == ERROR) { return ERROR; }
+            if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+            if (check_standard_type(expression_type_holder) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
                 return (error("Symbol ')' is not found at the end of factor"));
@@ -674,29 +742,37 @@ int parse_factor(FILE *fp) {
             return (error("Factor is not found"));
     }
 
-    return NORMAL;
+    return type_holder;
 }
 
 int parse_constant(FILE *fp) {
+    int type_holder = NORMAL;
+
     switch (token) {
         case TNUMBER:
             printf("%s ", string_attr);
             token = scan(fp);
+            type_holder = TPINT;
             break;
         case TFALSE:
         case TTRUE:
             printf("%s ", tokenstr[token]);
             token = scan(fp);
+            type_holder = TPBOOL;
             break;
         case TSTRING:
+            if ((int) strlen(string_attr) != 1) {
+                return error("Constant string length must be 1");
+            }
             printf("'%s' ", string_attr);
             token = scan(fp);
+            type_holder = TPCHAR;
             break;
         default:
             return (error("Constant is not found"));
     }
 
-    return NORMAL;
+    return type_holder;
 }
 
 int parse_multiplicative_operator(FILE *fp) {

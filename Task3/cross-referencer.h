@@ -10,7 +10,7 @@
 #define MAXSTRSIZE 1024
 #define MAX_IDENTIFIER_SIZE 8
 #define NORMAL 0
-#define ERROR 1
+#define ERROR -1
 
 /* Token */
 #define    TNAME        1    /* Name : Alphabet { Alphabet | Digit } */
@@ -257,5 +257,9 @@ extern void print_idtab();
 extern void release_idtab();
 
 extern void make_space(int n);
+
+extern int check_standard_type(int type);
+
+extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
 #endif //TASK3_CROSS_REFERENCER_H
