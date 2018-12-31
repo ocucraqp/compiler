@@ -79,7 +79,7 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
     struct TYPE *temp_itp;
 
     if ((p = search_idtab(name, procname)) != NULL) {
-        return error("It is defined in duplicate");
+        return error("%s is defined in duplicate", name);
     } else {
         if ((p = (struct ID *) malloc(sizeof(struct ID))) == NULL) {
             return error("can not malloc-1 in def_id");
@@ -126,9 +126,9 @@ int ref_id(const char *name, const char *procname, int refnum) {
 
     if ((p = search_idtab(name, procname)) == NULL) {
         if (procname == NULL) {
-            return error("Variable %s not defined.", name);
+            return error("%s is not defined.", name);
         } else {
-            return error("Variable %s:%s not defined.", name, procname);
+            return error("%s:%s is not defined.", name, procname);
         }
     } else {
         if (refnum >= 0) {
@@ -145,7 +145,7 @@ int ref_id(const char *name, const char *procname, int refnum) {
         temp_irefp->nextlinep = p->irefp;
         p->irefp = temp_irefp;
     }
-    return NORMAL;
+    return p->itp->ttype;
 }
 
 void print_idtab() {    /* Output the registered data */
@@ -246,5 +246,27 @@ void make_space(int n) {
 
     for (i = 0; i < n; i++) {
         printf(" ");
+    }
+}
+
+int check_standard_type(int type) {
+    switch (type) {
+        case TPINT:
+        case TPCHAR:
+        case TPBOOL:
+            return NORMAL;
+        default:
+            return error("The type is not a standard type");
+    }
+}
+
+int check_standard_type_to_pointer(struct TYPE *ptype) {
+    switch (ptype->ttype) {
+        case TPINT:
+        case TPCHAR:
+        case TPBOOL:
+            return NORMAL;
+        default:
+            return error("The type is not a standard type");
     }
 }
