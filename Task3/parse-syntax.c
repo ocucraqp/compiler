@@ -566,7 +566,7 @@ int parse_expressions(FILE *fp, struct TYPE *parameter_type) {
         }
     }
 
-    if((*temp_type)->paratp!=NULL){
+    if ((*temp_type)->paratp != NULL) {
         return error("Argument shortage");
     }
 
@@ -582,21 +582,29 @@ int parse_return_statement(FILE *fp) {
 }
 
 int parse_assignment_statement(FILE *fp) {
-    if (parse_left_part(fp) == ERROR) { return ERROR; }
+    int type_holder = NORMAL, expression_type_holder = NORMAL;
+
+    if ((type_holder = parse_left_part(fp)) == ERROR) { return ERROR; }
 
     if (token != TASSIGN) { return (error("Symbol ':=' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
 
-    if (parse_expression(fp) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+
+    if ((type_holder % 100) != (expression_type_holder % 100)) {
+        return error("The type of the expression differs from the left part");
+    }
 
     return NORMAL;
 }
 
 int parse_left_part(FILE *fp) {
-    if (parse_variable(fp) == ERROR) { return ERROR; }
+    int type_holder = NORMAL;
 
-    return NORMAL;
+    if ((type_holder = parse_variable(fp)) == ERROR) { return ERROR; }
+
+    return type_holder;
 }
 
 int parse_variable(FILE *fp) {
