@@ -975,9 +975,12 @@ int parse_output_statement(FILE *fp) {
 }
 
 int parse_output_format(FILE *fp) {
+    int str_length = 0, type_holder = NORMAL;
+
     switch (token) {
         case TSTRING:
-            if (strlen(string_attr) > 1) {
+            str_length = (int) strlen(string_attr);
+            if (str_length == 0 || str_length > 2) {
                 printf("'%s' ", string_attr);
                 token = scan(fp);
                 break;
@@ -993,7 +996,8 @@ int parse_output_format(FILE *fp) {
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
-            if (parse_expression(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+            if (check_standard_type(type_holder) == ERROR) { return ERROR; }
 
             if (token == TCOLON) {
                 printf("%s ", tokenstr[token]);
