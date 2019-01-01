@@ -906,6 +906,7 @@ int parse_relational_operator(FILE *fp) {
 }
 
 int parse_input_statement(FILE *fp) {
+    int type_holder = NORMAL;
     switch (token) {
         case TREAD:
         case TREADLN:
@@ -920,13 +921,19 @@ int parse_input_statement(FILE *fp) {
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
-        if (parse_variable(fp) == ERROR) { return ERROR; }
+        if ((type_holder = parse_variable(fp)) == ERROR) { return ERROR; }
+        if (type_holder != TPINT && type_holder != TPCHAR) {
+            return error("The variable in the input statement is not integer type or char type");
+        }
 
         while (token == TCOMMA) {
             printf("%s ", tokenstr[token]);
             token = scan(fp);
 
-            if (parse_variable(fp) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(fp)) == ERROR) { return ERROR; }
+            if (type_holder != TPINT && type_holder != TPCHAR) {
+                return error("The variable in the input statement is not integer type or char type");
+            }
         }
         if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
         printf("%s ", tokenstr[token]);
