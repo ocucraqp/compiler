@@ -117,7 +117,7 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
     return NORMAL;
 }
 
-int ref_id(const char *name, const char *procname, int refnum) {
+int ref_id(const char *name, const char *procname, int refnum, struct TYPE **parameter_type) {
     /* If the name is not in procedure compound statement, procname is NULL.
      * refnum is Element number of array.
      * Initial refnum is -1. */
@@ -145,6 +145,7 @@ int ref_id(const char *name, const char *procname, int refnum) {
         temp_irefp->nextlinep = p->irefp;
         p->irefp = temp_irefp;
     }
+    *parameter_type = p->itp;
     return p->itp->ttype;
 }
 

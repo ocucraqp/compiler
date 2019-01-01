@@ -65,6 +65,18 @@
 
 #define NUMOFTOKEN    49
 
+extern struct ID {
+    char *name;
+    char *procname;
+    /* procedure name within which this name is defined */ /* NULL if global name */
+    struct TYPE *itp;
+    int ispara;
+    /* 1:formal parameter, 0:else(variable) */
+    int deflinenum;
+    struct LINE *irefp;
+    struct ID *nextp;
+} *idroot;
+
 /* main.c */
 
 #define NUMOFKEYWORD    28
@@ -162,7 +174,7 @@ extern int parse_exit_statement(FILE *fp);
 
 extern int parse_call_statement(FILE *fp);
 
-extern int parse_expressions(FILE *fp);
+extern int parse_expressions(FILE *fp, struct TYPE *parameter_type);
 
 extern int parse_return_statement(FILE *fp);
 
@@ -209,18 +221,6 @@ extern struct TYPE {
      * paratp is NULL if ttype is not TPROC*/
 } temp_type;
 
-extern struct ID {
-    char *name;
-    char *procname;
-    /* procedure name within which this name is defined */ /* NULL if global name */
-    struct TYPE *itp;
-    int ispara;
-    /* 1:formal parameter, 0:else(variable) */
-    int deflinenum;
-    struct LINE *irefp;
-    struct ID *nextp;
-} *idroot;
-
 /* Pointers to root of global & local symbol tables */
 
 extern struct NAME {
@@ -250,7 +250,7 @@ extern void release_names();
 
 extern int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp);
 
-extern int ref_id(const char *name, const char *procname, int refnum);
+extern int ref_id(const char *name, const char *procname, int refnum, struct TYPE **temp_type);
 
 extern void print_idtab();
 

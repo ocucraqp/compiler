@@ -486,6 +486,18 @@ int parse_exit_statement(FILE *fp) {
 }
 
 int parse_call_statement(FILE *fp) {
+    struct TYPE *parameter_type;
+    char *temp_procname;
+    temp_procname == NULL;
+
+    if (current_procname != NULL) {
+        if ((temp_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
+            return error("can not malloc-1 in parse_call_statement");
+        }
+        init_char_array(temp_procname, MAX_IDENTIFIER_SIZE + 1);
+        strncpy(temp_procname, current_procname, MAX_IDENTIFIER_SIZE);
+    }
+
     if (token != TCALL) { return (error("Keyword 'call' is not found")); }
     printf("%s ", tokenstr[token]);
     token = scan(fp);
@@ -493,16 +505,26 @@ int parse_call_statement(FILE *fp) {
     if (parse_procedure_name(fp) == ERROR) { return ERROR; }
 
     if (current_procname != NULL) {
-        if (ref_id(current_procname, NULL, -1) == ERROR) { return ERROR; }
-        free(current_procname);
-        current_procname = NULL;
+        if ((parameter_type = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
+            return error("can not malloc-2 in parse_call_statement");
+        }
+        init_type(parameter_type);
+        if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
+        if (temp_procname == NULL) {
+            current_procname = NULL;
+        } else {
+            init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
+            strncpy(current_procname, temp_procname, MAX_IDENTIFIER_SIZE);
+            free(temp_procname);
+            temp_procname = NULL;
+        }
     }
 
     if (token == TLPAREN) {
         printf("%s ", tokenstr[token]);
         token = scan(fp);
 
-        if (parse_expressions(fp) == ERROR) { return ERROR; }
+        if (parse_expressions(fp, parameter_type) == ERROR) { return ERROR; }
 
         if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
         printf("%s ", tokenstr[token]);
@@ -512,14 +534,40 @@ int parse_call_statement(FILE *fp) {
     return NORMAL;
 }
 
-int parse_expressions(FILE *fp) {
-    if (parse_expression(fp) == ERROR) { return ERROR; }
+int parse_expressions(FILE *fp, struct TYPE *parameter_type) {
+    int type_holder = NORMAL, i = 0;
+    struct TYPE **temp_type;
+    temp_type = &(parameter_type->paratp);
+
+    if ((type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+    i++;
+    if (type_holder != (*temp_type)->ttype) {
+        return error("The type of the 1st argument is incorrect.");
+    }
 
     while (token == TCOMMA) {
         printf("\b%s ", tokenstr[token]);
         token = scan(fp);
 
-        if (parse_expression(fp) == ERROR) { return ERROR; }
+        if ((type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
+        i++;
+        temp_type = &((*temp_type)->paratp);
+        if (type_holder != (*temp_type)->ttype) {
+            switch (i % 10) {
+                case 1:
+                    return error("The type of the %dst argument is incorrect.", i);
+                case 2:
+                    return error("The type of the %dnd argument is incorrect.", i);
+                case 3:
+                    return error("The type of the %drd argument is incorrect.", i);
+                default:
+                    return error("The type of the %dth argument is incorrect.", i);
+            }
+        }
+    }
+
+    if((*temp_type)->paratp!=NULL){
+        return error("Argument shortage");
     }
 
     return NORMAL;
@@ -554,6 +602,7 @@ int parse_left_part(FILE *fp) {
 int parse_variable(FILE *fp) {
     char temp_string[MAXSTRSIZE];
     int temp_refnum = -1, type_holder = NORMAL, expression_type_holder = NORMAL;
+    struct TYPE *parameter_type;
 
     init_char_array(temp_string, MAX_IDENTIFIER_SIZE + 1);
     strncpy(temp_string, string_attr, MAX_IDENTIFIER_SIZE);
@@ -584,7 +633,11 @@ int parse_variable(FILE *fp) {
         token = scan(fp);
     }
 
-    if ((type_holder = ref_id(temp_string, current_procname, temp_refnum)) == ERROR) { return ERROR; }
+    if ((parameter_type = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
+        return error("can not malloc in parse_variable");
+    }
+    init_type(parameter_type);
+    if ((type_holder = ref_id(temp_string, current_procname, temp_refnum, &parameter_type)) == ERROR) { return ERROR; }
 
     return type_holder;
 }
