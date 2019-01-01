@@ -73,13 +73,15 @@ void release_names() {    /* Release tha data structure */
 }
 
 int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp) {
-    struct ID *p;
+    struct ID *p, **pp, **prevpp;
     char *temp_name;
     char *temp_procname;
     struct TYPE *temp_itp;
+    int name_cmp_result = 0, procname_cmp_result = 0;
 
+    /* If it is not already registered name, secure memory and register */
     if ((p = search_idtab(name, procname)) != NULL) {
-        return error("%s is defined in duplicate", name);
+        return error("%s is defined in duplicate", name, procname);
     } else {
         if ((p = (struct ID *) malloc(sizeof(struct ID))) == NULL) {
             return error("can not malloc-1 in def_id");
@@ -94,9 +96,11 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
             return error("can not malloc-3 in def_id");
         }
 
+        /* Initialization of each area */
         init_char_array(temp_name, MAX_IDENTIFIER_SIZE);
         init_char_array(temp_procname, MAX_IDENTIFIER_SIZE);
 
+        /* Assign information */
         strncpy(temp_name, name, MAX_IDENTIFIER_SIZE);
         if (procname != NULL) {
             strncpy(temp_procname, procname, MAX_IDENTIFIER_SIZE);
@@ -105,14 +109,68 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
         }
         *temp_itp = *itp;
 
+        /* Stored in structure */
         p->name = temp_name;
         p->procname = temp_procname;
         p->itp = temp_itp;
         p->ispara = ispara;
         p->deflinenum = linenum;
         p->irefp = NULL;
-        p->nextp = idroot;
-        idroot = p;
+
+        /* Insert in list from name and procname lexicographically */
+        if (idroot != NULL) {
+            for (pp = &idroot; (*pp) != NULL; pp = &((*pp)->nextp)) {
+                name_cmp_result = strcmp(p->name, (*pp)->name);
+                if (name_cmp_result < 0) {
+                    p->nextp = (*pp);
+                    if (pp == &idroot) {
+                        idroot = p;
+                    } else {
+                        (*prevpp)->nextp = p;
+                    }
+                    return NORMAL;
+                } else if (name_cmp_result == 0) {
+                    if (p->procname == NULL) {
+                        p->nextp = (*pp);
+                        if (pp == &idroot) {
+                            idroot = p;
+                        } else {
+                            (*prevpp)->nextp = p;
+                        }
+                        return NORMAL;
+                    } else if ((*pp)->procname == NULL) {
+                        prevpp = &(*pp);
+                        continue;
+                    } else {
+                        procname_cmp_result = strcmp(p->procname, (*pp)->procname);
+                        if (procname_cmp_result < 0) {
+                            p->nextp = (*pp);
+                            if (pp == &idroot) {
+                                idroot = p;
+                            } else {
+                                (*prevpp)->nextp = p;
+                            }
+                            return NORMAL;
+                        } else if (procname_cmp_result == 0) {
+                            return error("%s in %s is defined in duplicate", p->name, p->procname);
+                        } else {
+                            prevpp = &(*pp);
+                            continue;
+                        }
+                    }
+                } else {
+                    prevpp = &(*pp);
+                    continue;
+                }
+            }
+            if ((*pp) != NULL) {
+                (*pp)->nextp = p;
+            } else {
+                (*pp) = p;
+            }
+        } else {
+            idroot = p;
+        }
     }
     return NORMAL;
 }
@@ -151,8 +209,13 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
 
 void print_idtab() {    /* Output the registered data */
     struct ID *p;
-    int num_space = 0;
+    int num_space = 0, i = 0;
     char buf[1024];
+
+    for (i = 0; i < 80; i++) {
+        printf("-");
+    }
+    printf("\n");
 
     /* print row name */
     printf("Name");
@@ -227,6 +290,10 @@ void print_idtab() {    /* Output the registered data */
 
         printf("\n");
     }
+    for (i = 0; i < 80; i++) {
+        printf("-");
+    }
+    printf("\n");
 }
 
 void release_idtab() {    /* Release tha data structure */
