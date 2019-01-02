@@ -24,7 +24,8 @@ void init_type(struct TYPE *type) {
 }
 
 struct ID *search_idtab(const char *name, const char *procname) {    /* search the name pointed by np */
-    struct ID *p;
+    struct ID *p, *p_grobal;
+    p_grobal = NULL;
 
     for (p = idroot; p != NULL; p = p->nextp) {
         if (strncmp(name, p->name, MAX_IDENTIFIER_SIZE) == 0) {
@@ -35,10 +36,17 @@ struct ID *search_idtab(const char *name, const char *procname) {    /* search t
             } else if (procname == NULL && p->procname == NULL) {
                 return (p);
             }
+            if (p->procname == NULL) {
+                p_grobal = idroot;
+            }
         }
     }
 
-    return (NULL);
+    if (p_grobal != NULL) {
+        return (p_grobal);
+    } else {
+        return (NULL);
+    }
 }
 
 int temp_names(char *name) {
