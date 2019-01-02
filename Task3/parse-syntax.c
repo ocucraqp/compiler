@@ -242,6 +242,8 @@ int parse_subprogram_declaration(FILE *fp) {
 
     init_type(&temp_type);
     temp_type.ttype = TPPROC;
+    temp_type.paratp = NULL;
+    end_type = &temp_type;
     if (token == TLPAREN) {
         if (parse_formal_parameters(fp) == ERROR) { return ERROR; }
     }
