@@ -180,7 +180,7 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
      * refnum is Element number of array.
      * Initial refnum is -1. */
     struct ID *p;
-    struct LINE *temp_irefp;
+    struct LINE *temp_irefp, **pp;
 
     if ((p = search_idtab(name, procname)) == NULL) {
         if (procname == NULL) {
@@ -200,8 +200,12 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
             return error("can not malloc-3 in def_id");
         }
         temp_irefp->reflinenum = linenum;
-        temp_irefp->nextlinep = p->irefp;
-        p->irefp = temp_irefp;
+        if (p->irefp != NULL) {
+            for (pp = &(p->irefp); (*pp)->nextlinep != NULL; pp = &((*pp)->nextlinep)) {}
+            (*pp)->nextlinep = temp_irefp;
+        } else {
+            p->irefp = temp_irefp;
+        }
     }
     *parameter_type = p->itp;
     return p->itp->ttype;
