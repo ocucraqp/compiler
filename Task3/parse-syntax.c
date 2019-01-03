@@ -520,7 +520,13 @@ int parse_call_statement(FILE *fp) {
             return error("can not malloc-2 in parse_call_statement");
         }
         init_type(parameter_type);
+        if (token == TEND) {
+            linenum--;
+        }
         if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
+        if (token == TEND) {
+            linenum++;
+        }
         if (temp_procname == NULL) {
             current_procname = NULL;
         } else {
@@ -656,7 +662,14 @@ int parse_variable(FILE *fp) {
         return error("can not malloc in parse_variable");
     }
     init_type(parameter_type);
+    if(token==TEND){
+        linenum--;
+    }
     if ((type_holder = ref_id(temp_string, current_procname, temp_refnum, &parameter_type)) == ERROR) { return ERROR; }
+
+    if(token==TEND){
+        linenum++;
+    }
 
     return type_holder;
 }
