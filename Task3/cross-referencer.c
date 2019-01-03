@@ -23,7 +23,10 @@ void init_type(struct TYPE *type) {
     type->paratp = NULL;
 }
 
-struct ID *search_idtab(const char *name, const char *procname) {    /* search the name pointed by np */
+struct ID *search_idtab(const char *name, const char *procname, int calling_func) {
+    /* search the name pointed by np
+     * calling_func 0 : This function is called by def_id
+     * calling_func 1 : This function is called by ref_id */
     struct ID *p, *p_grobal;
     p_grobal = NULL;
 
@@ -37,12 +40,12 @@ struct ID *search_idtab(const char *name, const char *procname) {    /* search t
                 return (p);
             }
             if (p->procname == NULL) {
-                p_grobal = idroot;
+                p_grobal = p;
             }
         }
     }
 
-    if (p_grobal != NULL) {
+    if (p_grobal != NULL && calling_func == 1) {
         return (p_grobal);
     } else {
         return (NULL);
@@ -88,7 +91,7 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
     int name_cmp_result = 0, procname_cmp_result = 0;
 
     /* If it is not already registered name, secure memory and register */
-    if ((p = search_idtab(name, procname)) != NULL) {
+    if ((p = search_idtab(name, procname, 0)) != NULL) {
         return error("%s is defined in duplicate", name, procname);
     } else {
         if ((p = (struct ID *) malloc(sizeof(struct ID))) == NULL) {
@@ -122,7 +125,7 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
         p->procname = temp_procname;
         p->itp = temp_itp;
         p->ispara = ispara;
-        p->deflinenum = linenum;
+        p->deflinenum = get_linenum();
         p->irefp = NULL;
 
         /* Insert in list from name and procname lexicographically */
@@ -190,7 +193,7 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
     struct ID *p;
     struct LINE *temp_irefp, **pp;
 
-    if ((p = search_idtab(name, procname)) == NULL) {
+    if ((p = search_idtab(name, procname, 1)) == NULL) {
         if (procname == NULL) {
             return error("%s is not defined.", name);
         } else {
@@ -207,7 +210,7 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
         if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
             return error("can not malloc-3 in def_id");
         }
-        temp_irefp->reflinenum = linenum;
+        temp_irefp->reflinenum = get_linenum();
         if (p->irefp != NULL) {
             for (pp = &(p->irefp); (*pp)->nextlinep != NULL; pp = &((*pp)->nextlinep)) {}
             (*pp)->nextlinep = temp_irefp;
@@ -295,6 +298,7 @@ void print_idtab() {    /* Output the registered data */
         /* print Ref. */
         if (p->irefp != NULL) {
             printf("%d", p->irefp->reflinenum);
+
             for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
                 printf(", %d", p->irefp->reflinenum);
             }
@@ -309,13 +313,23 @@ void print_idtab() {    /* Output the registered data */
 }
 
 void release_idtab() {    /* Release tha data structure */
-    struct ID *p, *q;
+    struct ID *pid, *qid;
+    struct TYPE *ptype, *qtype;
+    struct LINE *pline, *qline;
 
-    for (p = idroot; p != NULL; p = q) {
-        free(p->name);
-        free(p->procname);
-        q = p->nextp;
-        free(p);
+    for (pid = idroot; pid != NULL; pid = qid) {
+        free(pid->name);
+        free(pid->procname);
+        for (ptype = pid->itp; ptype != NULL; ptype = qtype) {
+            qtype = ptype->paratp;
+            free(ptype);
+        }
+        for (pline = pid->irefp; pline != NULL; pline = qline) {
+            qline = pline->nextlinep;
+            free(pline);
+        }
+        qid = pid->nextp;
+        free(pid);
     }
 
     init_idtab();

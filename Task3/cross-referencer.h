@@ -242,7 +242,7 @@ extern void init_temp_names();
 
 extern void init_type(struct TYPE *type);
 
-extern struct ID *search_idtab(const char *name, const char *procname);
+extern struct ID *search_idtab(const char *name, const char *procname, int calling_func);
 
 extern int temp_names(char *name);
 

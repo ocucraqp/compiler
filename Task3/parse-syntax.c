@@ -186,7 +186,7 @@ int parse_standard_type(FILE *fp) {
             } else {
                 /* When temo_type is not initial state */
                 if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
-                    return error("can not malloc in parse_procedure_name");
+                    return error("can not malloc in parse_standard_type");
                 }
                 init_type(next_type);
                 next_type->ttype = token + 100;
@@ -286,7 +286,7 @@ int parse_procedure_name(FILE *fp) {
 
 int parse_formal_parameters(FILE *fp) {
     struct NAME *loop_name;
-    struct TYPE *ptype;
+    struct TYPE *ptype, *next_type;
 
     if (token != TLPAREN) { return (error("Symbol '(' is not found")); }
     printf("%s ", tokenstr[token]);
@@ -305,6 +305,15 @@ int parse_formal_parameters(FILE *fp) {
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
         if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
+        if (loop_name->nextnamep != NULL) {
+            if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
+                return error("can not malloc in parse_formal_parameters");
+            }
+            init_type(next_type);
+            next_type->ttype = ptype->ttype;
+            ptype->paratp = next_type;
+            ptype = next_type;
+        }
     }
     release_names();
 
