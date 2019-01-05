@@ -157,10 +157,11 @@ int parse_variable_declaration(FILE *fp) {
     init_type(&temp_type);
     if (parse_type(fp) == ERROR) { return ERROR; }
 
+    /* Define id as many as name */
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
         if (def_id(loop_name->name, current_procname, &temp_type) == ERROR) { return ERROR; }
     }
-    init_deflinenum();
+    release_vallinenum();
     release_names();
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -171,6 +172,7 @@ int parse_variable_declaration(FILE *fp) {
         paragraph_number++;
         make_paragraph();
 
+        /* Repeat */
         init_temp_names();
         if (parse_variable_names(fp) == ERROR) { return ERROR; }
 
@@ -184,7 +186,7 @@ int parse_variable_declaration(FILE *fp) {
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
             if (def_id(loop_name->name, current_procname, &temp_type) == ERROR) { return ERROR; }
         }
-        init_deflinenum();
+        release_vallinenum();
         release_names();
 
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -211,10 +213,11 @@ int parse_variable_names(FILE *fp) {
 
 int parse_variable_name(FILE *fp) {
     if (token != TNAME) { return (error("Name is not found")); }
-    temp_names(string_attr);
+    if (temp_names(string_attr) == ERROR) { return ERROR; }
     printf("%s ", string_attr);
-    if (save_deflinenum() == ERROR) { return ERROR; }
-    reflinenum = get_linenum();
+
+    if (save_vallinenum() == ERROR) { return ERROR; }
+
     token = scan(fp);
 
     return NORMAL;
@@ -315,7 +318,7 @@ int parse_subprogram_declaration(FILE *fp) {
     }
 
     if (def_id(current_procname, NULL, &temp_type) == ERROR) { return ERROR; }
-    init_deflinenum();
+    release_vallinenum();
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     printf("\b%s\n", tokenstr[token]);
@@ -346,8 +349,7 @@ int parse_procedure_name(FILE *fp) {
     strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
 
     printf("%s ", string_attr);
-    if (save_deflinenum() == ERROR) { return ERROR; };
-    reflinenum = get_linenum();
+    if (save_vallinenum() == ERROR) { return ERROR; };
     token = scan(fp);
 
     return NORMAL;
@@ -384,7 +386,7 @@ int parse_formal_parameters(FILE *fp) {
             ptype = next_type;
         }
     }
-    init_deflinenum();
+    release_vallinenum();
     release_names();
 
     while (token == TSEMI) {
@@ -405,7 +407,7 @@ int parse_formal_parameters(FILE *fp) {
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
             if (def_id(loop_name->name, current_procname, ptype) == ERROR) { return ERROR; }
         }
-        init_deflinenum();
+        release_vallinenum();
         release_names();
     }
 
@@ -592,6 +594,7 @@ int parse_call_statement(FILE *fp) {
         }
         init_type(parameter_type);
         if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
+        release_vallinenum();
         if (temp_procname == NULL) {
             current_procname = NULL;
         } else {
@@ -732,6 +735,7 @@ int parse_variable(FILE *fp) {
     init_type(parameter_type);
     if ((type_holder = ref_id(temp_name_root->name, current_procname, temp_refnum, &parameter_type)) ==
         ERROR) { return ERROR; }
+    release_vallinenum();
 
     release_names();
     return type_holder;

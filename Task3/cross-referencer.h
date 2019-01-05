@@ -96,7 +96,7 @@ extern struct TYPE {
 extern struct LINE {
     int linenum;
     struct LINE *nextlinep;
-} *deflinenumroot;
+} *vallinenumroot;
 
 extern struct ID {
     char *name;
@@ -143,8 +143,6 @@ extern int token;
 extern int parse_program(FILE *fp);
 
 /* cross-referencer.c */
-extern int reflinenum;
-
 extern char *current_procname;
 
 extern struct TYPE temp_type;
@@ -152,11 +150,15 @@ extern struct TYPE *end_type;
 
 extern void init_temp_names();
 
-extern void init_type(struct TYPE *type);
-
 extern int temp_names(char *name);
 
 extern void release_names();
+
+extern void init_type(struct TYPE *type);
+
+extern int save_vallinenum();
+
+extern void release_vallinenum();
 
 extern int def_id(const char *name, const char *procname, const struct TYPE *itp);
 
@@ -169,9 +171,5 @@ extern void release_idtab();
 extern int check_standard_type(int type);
 
 extern int check_standard_type_to_pointer(struct TYPE *ptype);
-
-extern void init_deflinenum();
-
-extern int save_deflinenum();
 
 #endif //TASK3_CROSS_REFERENCER_H

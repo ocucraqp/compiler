@@ -6,11 +6,8 @@ struct ID *idroot = NULL;
 /* Root of the list of currently loaded names */
 struct NAME *temp_name_root = NULL;
 
-/* Variable to store the line referencing the name */
-int reflinenum = 0;
-
 /* Structure that stores the line that defined the name */
-struct LINE *deflinenumroot;
+struct LINE *vallinenumroot;
 
 /* Procedure name of compound statement or call statement currently being read */
 char *current_procname;
@@ -30,42 +27,7 @@ void init_temp_names() {
     temp_name_root = NULL;
 }
 
-void init_type(struct TYPE *type) {
-    type->ttype = 0;
-    type->arraysize = 0;
-    type->paratp = NULL;
-}
-
-struct ID *search_idtab(const char *name, const char *procname, int calling_func) {
-    /* search the name pointed by np
-     * calling_func 0 : This function is called by def_id
-     * calling_func 1 : This function is called by ref_id */
-    struct ID *p, *p_grobal;
-    p_grobal = NULL;
-
-    for (p = idroot; p != NULL; p = p->nextp) {
-        if (strncmp(name, p->name, MAX_IDENTIFIER_SIZE) == 0) {
-            if (procname != NULL && p->procname != NULL) {
-                if (strncmp(procname, p->procname, MAX_IDENTIFIER_SIZE) == 0) {
-                    return (p);
-                }
-            } else if (procname == NULL && p->procname == NULL) {
-                return (p);
-            }
-            if (p->procname == NULL) {
-                p_grobal = p;
-            }
-        }
-    }
-
-    if (p_grobal != NULL && calling_func == 1) {
-        return (p_grobal);
-    } else {
-        return (NULL);
-    }
-}
-
-int temp_names(char *name) {
+int temp_names(char *name) { /* Store name in list format */
     struct NAME *pname;
     char *temp_name;
 
@@ -96,7 +58,73 @@ void release_names() {    /* Release tha data structure */
     init_temp_names();
 }
 
+void init_type(struct TYPE *type) {
+    type->ttype = 0;
+    type->arraysize = 0;
+    type->paratp = NULL;
+}
+
+int save_vallinenum() { /* Store line numbers in list format */
+    struct LINE *temp_vallinenum;
+
+    if ((temp_vallinenum = (struct LINE *) malloc(sizeof(struct LINE))) == NULL) {
+        return error("can not malloc in save_vallinenum");
+    }
+
+    temp_vallinenum->linenum = get_linenum();
+    temp_vallinenum->nextlinep = vallinenumroot;
+    vallinenumroot = temp_vallinenum;
+
+    return NORMAL;
+}
+
+void release_vallinenum() { /* Release tha data structure */
+    struct LINE *pline, *qline;
+
+    if (vallinenumroot == NULL) {
+        for (pline = vallinenumroot; pline != NULL; pline = qline) {
+            qline = pline->nextlinep;
+            free(pline);
+            pline == NULL;
+        }
+    }
+}
+
+struct ID *search_idtab(const char *name, const char *procname, int calling_func) {
+    /* search the id pointed by name and procname
+     * calling_func 0 : This function is called by def_id
+     * calling_func 1 : This function is called by ref_id */
+    struct ID *p, *p_grobal;
+    p_grobal = NULL;
+
+    /* Look for matching variables in order from the root */
+    for (p = idroot; p != NULL; p = p->nextp) {
+        if (strncmp(name, p->name, MAX_IDENTIFIER_SIZE) == 0) {
+            /* When the name match */
+            if (procname != NULL && p->procname != NULL) {
+                if (strncmp(procname, p->procname, MAX_IDENTIFIER_SIZE) == 0) {
+                    /* When the procname match */
+                    return (p);
+                }
+            } else if (procname == NULL && p->procname == NULL) {
+                return (p);
+            }
+            if (p->procname == NULL) {
+                p_grobal = p;
+            }
+        }
+    }
+
+    if (p_grobal != NULL && calling_func == 1) {
+        /* If there is no local variable reference global variable */
+        return (p_grobal);
+    } else {
+        return (NULL);
+    }
+}
+
 int def_id(const char *name, const char *procname, const struct TYPE *itp) {
+    /* Define id */
     struct ID *p, **pp, **prevpp;
     char *temp_name;
     char *temp_procname;
@@ -138,11 +166,11 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp) {
         p->name = temp_name;
         p->procname = temp_procname;
         p->itp = temp_itp;
-        if (deflinenumroot != NULL) {
-            p->deflinenum = deflinenumroot->linenum;
-            pline = deflinenumroot->nextlinep;
-            free(deflinenumroot);
-            deflinenumroot = pline;
+        if (vallinenumroot != NULL) {
+            p->deflinenum = vallinenumroot->linenum;
+            pline = vallinenumroot->nextlinep;
+            free(vallinenumroot);
+            vallinenumroot = pline;
         }
         p->irefp = NULL;
 
@@ -207,17 +235,21 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp) {
 int ref_id(const char *name, const char *procname, int refnum, struct TYPE **parameter_type) {
     /* If the name is not in procedure compound statement, procname is NULL.
      * refnum is Element number of array.
-     * Initial refnum is -1. */
+     * Initial refnum is -1.
+     * parameter_type is used to check arguments */
     struct ID *p;
     struct LINE *temp_irefp, **pp;
 
+
     if ((p = search_idtab(name, procname, 1)) == NULL) {
+        /* Display error if id is not registered */
         if (procname == NULL) {
             return error("%s is not defined.", name);
         } else {
             return error("%s:%s is not defined.", name, procname);
         }
     } else {
+        /* Confirm element size when expression is attached */
         if (refnum >= 0) {
             if (p->itp->arraysize == 0) {
                 return error("Variable %s is not array type");
@@ -225,10 +257,12 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
                 return error("The number of subscripts is too large");
             }
         }
+
+        /* Save reference row */
         if ((temp_irefp = (struct LINE *) malloc(sizeof(struct LINE))) == NULL) {
             return error("can not malloc in ref_id");
         }
-        temp_irefp->linenum = reflinenum;
+        temp_irefp->linenum = vallinenumroot->linenum;
         temp_irefp->nextlinep = NULL;
         if (p->irefp != NULL) {
             for (pp = &(p->irefp); (*pp)->nextlinep != NULL; pp = &((*pp)->nextlinep)) {}
@@ -237,7 +271,9 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
             p->irefp = temp_irefp;
         }
     }
+
     *parameter_type = p->itp;
+
     return p->itp->ttype;
 }
 
@@ -354,14 +390,6 @@ void release_idtab() {    /* Release tha data structure */
     idroot = NULL;
 }
 
-void make_space(int n) {
-    int i = 0;
-
-    for (i = 0; i < n; i++) {
-        printf(" ");
-    }
-}
-
 int check_standard_type(int type) {
     switch (type) {
         case TPINT:
@@ -384,29 +412,10 @@ int check_standard_type_to_pointer(struct TYPE *ptype) {
     }
 }
 
+void make_space(int n) {
+    int i = 0;
 
-void init_deflinenum() {
-    struct LINE *pline, *qline;
-
-    if (deflinenumroot == NULL) {
-        for (pline = deflinenumroot; pline != NULL; pline = qline) {
-            qline = pline->nextlinep;
-            free(pline);
-            pline == NULL;
-        }
+    for (i = 0; i < n; i++) {
+        printf(" ");
     }
-}
-
-int save_deflinenum() {
-    struct LINE *temp_deflinenum;
-
-    if ((temp_deflinenum = (struct LINE *) malloc(sizeof(struct LINE))) == NULL) {
-        return error("can not malloc in save_deflinenum");
-    }
-
-    temp_deflinenum->linenum = get_linenum();
-    temp_deflinenum->nextlinep = deflinenumroot;
-    deflinenumroot = temp_deflinenum;
-
-    return NORMAL;
 }
