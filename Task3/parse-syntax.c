@@ -12,9 +12,6 @@ int existence_empty_statement = 0;
 /* Variable to store whether it is inside iteration */
 int whether_inside_iteration = 0;
 
-/* Variable to store the line referencing the name */
-int reflinenum = 0;
-
 /* string of each token */
 char *tokenstr[NUMOFTOKEN + 1] = {
         "",
@@ -25,10 +22,72 @@ char *tokenstr[NUMOFTOKEN + 1] = {
         ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
 };
 
-char *current_procname;
+/* prototype declaration */
+int parse_block(FILE *fp);
 
-struct TYPE temp_type;
-struct TYPE *end_type;
+int parse_variable_declaration(FILE *fp);
+
+int parse_variable_names(FILE *fp);
+
+int parse_variable_name(FILE *fp);
+
+int parse_type(FILE *fp);
+
+int parse_standard_type(FILE *fp);
+
+int parse_array_type(FILE *fp);
+
+int parse_subprogram_declaration(FILE *fp);
+
+int parse_procedure_name(FILE *fp);
+
+int parse_formal_parameters(FILE *fp);
+
+int parse_compound_statement(FILE *fp);
+
+int parse_statement(FILE *fp);
+
+int parse_condition_statement(FILE *fp);
+
+int parse_iteration_statement(FILE *fp);
+
+int parse_exit_statement(FILE *fp);
+
+int parse_call_statement(FILE *fp);
+
+int parse_expressions(FILE *fp, struct TYPE *parameter_type);
+
+int parse_return_statement(FILE *fp);
+
+int parse_assignment_statement(FILE *fp);
+
+int parse_left_part(FILE *fp);
+
+int parse_variable(FILE *fp);
+
+int parse_expression(FILE *fp);
+
+int parse_simple_expression(FILE *fp);
+
+int parse_term(FILE *fp);
+
+int parse_factor(FILE *fp);
+
+int parse_constant(FILE *fp);
+
+int parse_multiplicative_operator(FILE *fp);
+
+int parse_additive_operator(FILE *fp);
+
+int parse_relational_operator(FILE *fp);
+
+int parse_input_statement(FILE *fp);
+
+int parse_output_statement(FILE *fp);
+
+int parse_output_format(FILE *fp);
+
+void make_paragraph();
 
 int parse_program(FILE *fp) {
     if (token != TPROGRAM) { return (error("Keyword 'program' is not found")); }
@@ -99,7 +158,7 @@ int parse_variable_declaration(FILE *fp) {
     if (parse_type(fp) == ERROR) { return ERROR; }
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-        if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
+        if (def_id(loop_name->name, current_procname, &temp_type) == ERROR) { return ERROR; }
     }
     init_deflinenum();
     release_names();
@@ -123,7 +182,7 @@ int parse_variable_declaration(FILE *fp) {
         if (parse_type(fp) == ERROR) { return ERROR; }
 
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-            if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
+            if (def_id(loop_name->name, current_procname, &temp_type) == ERROR) { return ERROR; }
         }
         init_deflinenum();
         release_names();
@@ -255,7 +314,7 @@ int parse_subprogram_declaration(FILE *fp) {
         if (parse_formal_parameters(fp) == ERROR) { return ERROR; }
     }
 
-    if (def_id(current_procname, NULL, 0, &temp_type) == ERROR) { return ERROR; }
+    if (def_id(current_procname, NULL, &temp_type) == ERROR) { return ERROR; }
     init_deflinenum();
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -314,7 +373,7 @@ int parse_formal_parameters(FILE *fp) {
     if (check_standard_type_to_pointer(ptype) == ERROR) { return ERROR; }
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-        if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
+        if (def_id(loop_name->name, current_procname, ptype) == ERROR) { return ERROR; }
         if (loop_name->nextnamep != NULL) {
             if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
                 return error("can not malloc in parse_formal_parameters");
@@ -344,7 +403,7 @@ int parse_formal_parameters(FILE *fp) {
         if (check_standard_type_to_pointer(ptype) == ERROR) { return ERROR; }
 
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-            if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
+            if (def_id(loop_name->name, current_procname, ptype) == ERROR) { return ERROR; }
         }
         init_deflinenum();
         release_names();
@@ -636,12 +695,10 @@ int parse_left_part(FILE *fp) {
 }
 
 int parse_variable(FILE *fp) {
-    char temp_string[MAXSTRSIZE];
     int temp_refnum = -1, type_holder = NORMAL, expression_type_holder = NORMAL;
     struct TYPE *parameter_type;
 
-    init_char_array(temp_string, MAX_IDENTIFIER_SIZE + 1);
-    strncpy(temp_string, string_attr, MAX_IDENTIFIER_SIZE);
+    init_temp_names();
     if (parse_variable_name(fp) == ERROR) { return ERROR; }
 
     if (token == TLSQPAREN) {
@@ -673,8 +730,10 @@ int parse_variable(FILE *fp) {
         return error("can not malloc in parse_variable");
     }
     init_type(parameter_type);
-    if ((type_holder = ref_id(temp_string, current_procname, temp_refnum, &parameter_type)) == ERROR) { return ERROR; }
+    if ((type_holder = ref_id(temp_name_root->name, current_procname, temp_refnum, &parameter_type)) ==
+        ERROR) { return ERROR; }
 
+    release_names();
     return type_holder;
 }
 

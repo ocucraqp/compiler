@@ -1,14 +1,30 @@
 #include "cross-referencer.h"
 
-struct LINE *deflinenumroot;
+/* Root of ID list */
+struct ID *idroot = NULL;
 
-struct ID *idroot;
-
+/* Root of the list of currently loaded names */
 struct NAME *temp_name_root = NULL;
 
-void init_idtab() {        /* Initialise the table */
-    idroot = NULL;
-}
+/* Variable to store the line referencing the name */
+int reflinenum = 0;
+
+/* Structure that stores the line that defined the name */
+struct LINE *deflinenumroot;
+
+/* Procedure name of compound statement or call statement currently being read */
+char *current_procname;
+
+/* Structure that holds the type of the currently loaded name */
+struct TYPE temp_type;
+
+/* Pointer to end of list of type */
+struct TYPE *end_type;
+
+/* prototype declaration */
+struct ID *search_idtab(const char *name, const char *procname, int calling_func);
+
+void make_space(int n);
 
 void init_temp_names() {
     temp_name_root = NULL;
@@ -80,7 +96,7 @@ void release_names() {    /* Release tha data structure */
     init_temp_names();
 }
 
-int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp) {
+int def_id(const char *name, const char *procname, const struct TYPE *itp) {
     struct ID *p, **pp, **prevpp;
     char *temp_name;
     char *temp_procname;
@@ -122,7 +138,6 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
         p->name = temp_name;
         p->procname = temp_procname;
         p->itp = temp_itp;
-        p->ispara = ispara;
         if (deflinenumroot != NULL) {
             p->deflinenum = deflinenumroot->linenum;
             pline = deflinenumroot->nextlinep;
@@ -321,7 +336,6 @@ void release_idtab() {    /* Release tha data structure */
     struct TYPE *ptype, *qtype;
     struct LINE *pline, *qline;
 
-    //todo free後NULL
     for (pid = idroot; pid != NULL; pid = qid) {
         free(pid->name);
         free(pid->procname);
@@ -337,7 +351,7 @@ void release_idtab() {    /* Release tha data structure */
         free(pid);
     }
 
-    init_idtab();
+    idroot = NULL;
 }
 
 void make_space(int n) {

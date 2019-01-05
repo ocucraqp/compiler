@@ -1,17 +1,40 @@
 #include "cross-referencer.h"
 
+/* Variable that stores integer value */
+int num_attr;
+
 /* An array that stores
  * real strings of string, name, and integer */
 char string_attr[MAXSTRSIZE];
-
-/* Variable that stores integer value */
-int num_attr;
 
 /* A prefetched buffer for one character */
 char cbuf = '\0';
 
 /* Variable for storing the current line number */
 int linenum = 0;
+
+/* prototype declaration */
+int is_check_alphabet(char c);
+
+int is_check_number(char c);
+
+int is_check_symbol(char c);
+
+int skip_separator(char c, FILE *fp);
+
+int identify_keyword(const char *tokenstr);
+
+int identify_name(const char *tokenstr);
+
+int identify_number(const char *tokenstr);
+
+int identify_symbol(char *tokenstr, FILE *fp);
+
+int identify_string(FILE *fp);
+
+int skip_comment(FILE *fp, int sep_type);
+
+int is_check_token_size(int i);
 
 /* Call before scanning, open the file, prepare for scanning
  * Success:0 Failed:-1 */

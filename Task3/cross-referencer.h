@@ -11,6 +11,8 @@
 #define MAX_IDENTIFIER_SIZE 8
 #define NORMAL 0
 #define ERROR -1
+#define NUMOFKEYWORD    28
+#define MAXKEYWORDLENGTH    9
 
 /* Token */
 #define    TNAME        1    /* Name : Alphabet { Alphabet | Digit } */
@@ -65,157 +67,20 @@
 
 #define NUMOFTOKEN    49
 
-extern struct ID {
-    char *name;
-    char *procname;
-    /* procedure name within which this name is defined */ /* NULL if global name */
-    struct TYPE *itp;
-    int ispara;
-    /* 1:formal parameter, 0:else(variable) */
-    int deflinenum;
-    struct LINE *irefp;
-    struct ID *nextp;
-} *idroot;
+/* Type */
+#define TPINT TINTEGER+100
+#define TPCHAR TCHAR+100
+#define TPBOOL TBOOLEAN+100
+#define TPARRAYINT TINTEGER+200
+#define TPARRAYCHAR TCHAR+200
+#define TPARRAYBOOL TBOOLEAN+200
+#define TPPROC 100
 
-struct LINE {
-    int linenum;
-    struct LINE *nextlinep;
-} *deflinenumroot;
-
-extern int reflinenum;
-
-/* main.c */
-
-#define NUMOFKEYWORD    28
-#define MAXKEYWORDLENGTH    9
-
+/* Structure */
 extern struct KEY {
     char *keyword;
     int keytoken;
 } key[NUMOFKEYWORD];
-
-extern int error(char *mes, ...);
-
-/* scan.c */
-extern int init_scan(char *filename, FILE **fp);
-
-extern int scan(FILE *fp);
-
-extern void init_int_array(int *array, int arraylength);
-
-extern void init_char_array(char *array, int arraylength);
-
-extern int is_check_alphabet(char c);
-
-extern int is_check_number(char c);
-
-extern int is_check_symbol(char c);
-
-extern int skip_separator(char c, FILE *fp);
-
-extern int identify_keyword(const char *tokenstr);
-
-extern int identify_name(const char *tokenstr);
-
-extern int identify_number(const char *tokenstr);
-
-extern int identify_symbol(char *tokenstr, FILE *fp);
-
-extern int identify_string(FILE *fp);
-
-extern int skip_comment(FILE *fp, int sep_type);
-
-extern int num_attr;
-
-extern char string_attr[MAXSTRSIZE];
-
-extern char cbuf;
-
-extern int linenum;
-
-extern int get_linenum(void);
-
-extern void end_scan(FILE *fp);
-
-extern int is_check_token_size(int i);
-
-/* parse-syntax.c */
-
-extern char *tokenstr[NUMOFTOKEN + 1];
-
-extern int token;
-
-extern int paragraph_number;
-
-extern int parse_program(FILE *fp);
-
-extern int parse_block(FILE *fp);
-
-extern int parse_variable_declaration(FILE *fp);
-
-extern int parse_variable_names(FILE *fp);
-
-extern int parse_variable_name(FILE *fp);
-
-extern int parse_type(FILE *fp);
-
-extern int parse_standard_type(FILE *fp);
-
-extern int parse_array_type(FILE *fp);
-
-extern int parse_subprogram_declaration(FILE *fp);
-
-extern int parse_procedure_name(FILE *fp);
-
-extern int parse_formal_parameters(FILE *fp);
-
-extern int parse_compound_statement(FILE *fp);
-
-extern int parse_statement(FILE *fp);
-
-extern int parse_condition_statement(FILE *fp);
-
-extern int parse_iteration_statement(FILE *fp);
-
-extern int parse_exit_statement(FILE *fp);
-
-extern int parse_call_statement(FILE *fp);
-
-extern int parse_expressions(FILE *fp, struct TYPE *parameter_type);
-
-extern int parse_return_statement(FILE *fp);
-
-extern int parse_assignment_statement(FILE *fp);
-
-extern int parse_left_part(FILE *fp);
-
-extern int parse_variable(FILE *fp);
-
-extern int parse_expression(FILE *fp);
-
-extern int parse_simple_expression(FILE *fp);
-
-extern int parse_term(FILE *fp);
-
-extern int parse_factor(FILE *fp);
-
-extern int parse_constant(FILE *fp);
-
-extern int parse_multiplicative_operator(FILE *fp);
-
-extern int parse_additive_operator(FILE *fp);
-
-extern int parse_relational_operator(FILE *fp);
-
-extern int parse_input_statement(FILE *fp);
-
-extern int parse_output_statement(FILE *fp);
-
-extern int parse_output_format(FILE *fp);
-
-extern void make_paragraph();
-
-/* cross-referencer.c */
 
 extern struct TYPE {
     int ttype;
@@ -228,42 +93,78 @@ extern struct TYPE {
      * paratp is NULL if ttype is not TPROC*/
 } temp_type;
 
-/* Pointers to root of global & local symbol tables */
+extern struct LINE {
+    int linenum;
+    struct LINE *nextlinep;
+} *deflinenumroot;
+
+extern struct ID {
+    char *name;
+    char *procname;
+    /* procedure name within which this name is defined */ /* NULL if global name */
+    struct TYPE *itp;
+    int deflinenum;
+    struct LINE *irefp;
+    struct ID *nextp;
+} *idroot;
 
 extern struct NAME {
     char *name;
     struct NAME *nextnamep;
 } *temp_name_root;
 
-#define TPINT TINTEGER+100
-#define TPCHAR TCHAR+100
-#define TPBOOL TBOOLEAN+100
-#define TPARRAYINT TINTEGER+200
-#define TPARRAYCHAR TCHAR+200
-#define TPARRAYBOOL TBOOLEAN+200
-#define TPPROC 100
+/* main.c */
+extern int error(char *mes, ...);
 
-extern void init_idtab();
+/* scan.c */
+extern int num_attr;
+
+extern char string_attr[MAXSTRSIZE];
+
+extern int linenum;
+
+extern int init_scan(char *filename, FILE **fp);
+
+extern int scan(FILE *fp);
+
+extern void init_int_array(int *array, int arraylength);
+
+extern void init_char_array(char *array, int arraylength);
+
+extern int get_linenum(void);
+
+extern void end_scan(FILE *fp);
+
+/* parse-syntax.c */
+extern char *tokenstr[NUMOFTOKEN + 1];
+
+extern int token;
+
+extern int parse_program(FILE *fp);
+
+/* cross-referencer.c */
+extern int reflinenum;
+
+extern char *current_procname;
+
+extern struct TYPE temp_type;
+extern struct TYPE *end_type;
 
 extern void init_temp_names();
 
 extern void init_type(struct TYPE *type);
 
-extern struct ID *search_idtab(const char *name, const char *procname, int calling_func);
-
 extern int temp_names(char *name);
 
 extern void release_names();
 
-extern int def_id(const char *name, const char *procname, int ispara, const struct TYPE *itp);
+extern int def_id(const char *name, const char *procname, const struct TYPE *itp);
 
 extern int ref_id(const char *name, const char *procname, int refnum, struct TYPE **temp_type);
 
 extern void print_idtab();
 
 extern void release_idtab();
-
-extern void make_space(int n);
 
 extern int check_standard_type(int type);
 

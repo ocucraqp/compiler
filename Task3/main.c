@@ -54,9 +54,13 @@ int main(int nc, char *np[]) {
     /* Parse program */
     is_success = parse_program(fp);
 
+    /* end scan */
     end_scan(fp);
 
+    /* Display cross reference table */
     print_idtab();
+
+    /* Release id table */
     release_idtab();
 
     if (is_success == NORMAL) {
@@ -66,7 +70,8 @@ int main(int nc, char *np[]) {
     }
 }
 
-/* Display error message */
+/* Display error message
+ * The arguments are the same as for printf () */
 int error(char *mes, ...) {
     va_list args;
     char output[1024];
