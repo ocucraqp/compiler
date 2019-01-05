@@ -77,6 +77,13 @@ extern struct ID {
     struct ID *nextp;
 } *idroot;
 
+struct LINE {
+    int linenum;
+    struct LINE *nextlinep;
+} *deflinenumroot;
+
+extern int reflinenum;
+
 /* main.c */
 
 #define NUMOFKEYWORD    28
@@ -261,5 +268,9 @@ extern void make_space(int n);
 extern int check_standard_type(int type);
 
 extern int check_standard_type_to_pointer(struct TYPE *ptype);
+
+extern void init_deflinenum();
+
+extern int save_deflinenum();
 
 #endif //TASK3_CROSS_REFERENCER_H

@@ -12,6 +12,9 @@ int existence_empty_statement = 0;
 /* Variable to store whether it is inside iteration */
 int whether_inside_iteration = 0;
 
+/* Variable to store the line referencing the name */
+int reflinenum = 0;
+
 /* string of each token */
 char *tokenstr[NUMOFTOKEN + 1] = {
         "",
@@ -98,6 +101,7 @@ int parse_variable_declaration(FILE *fp) {
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
         if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
     }
+    init_deflinenum();
     release_names();
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -121,6 +125,7 @@ int parse_variable_declaration(FILE *fp) {
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
             if (def_id(loop_name->name, current_procname, 0, &temp_type) == ERROR) { return ERROR; }
         }
+        init_deflinenum();
         release_names();
 
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -149,6 +154,8 @@ int parse_variable_name(FILE *fp) {
     if (token != TNAME) { return (error("Name is not found")); }
     temp_names(string_attr);
     printf("%s ", string_attr);
+    if (save_deflinenum() == ERROR) { return ERROR; }
+    reflinenum = get_linenum();
     token = scan(fp);
 
     return NORMAL;
@@ -249,6 +256,7 @@ int parse_subprogram_declaration(FILE *fp) {
     }
 
     if (def_id(current_procname, NULL, 0, &temp_type) == ERROR) { return ERROR; }
+    init_deflinenum();
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     printf("\b%s\n", tokenstr[token]);
@@ -279,6 +287,8 @@ int parse_procedure_name(FILE *fp) {
     strncpy(current_procname, string_attr, MAX_IDENTIFIER_SIZE);
 
     printf("%s ", string_attr);
+    if (save_deflinenum() == ERROR) { return ERROR; };
+    reflinenum = get_linenum();
     token = scan(fp);
 
     return NORMAL;
@@ -315,6 +325,7 @@ int parse_formal_parameters(FILE *fp) {
             ptype = next_type;
         }
     }
+    init_deflinenum();
     release_names();
 
     while (token == TSEMI) {
@@ -335,6 +346,7 @@ int parse_formal_parameters(FILE *fp) {
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
             if (def_id(loop_name->name, current_procname, 0, ptype) == ERROR) { return ERROR; }
         }
+        init_deflinenum();
         release_names();
     }
 
@@ -520,13 +532,7 @@ int parse_call_statement(FILE *fp) {
             return error("can not malloc-2 in parse_call_statement");
         }
         init_type(parameter_type);
-        if (token == TEND) {
-            linenum--;
-        }
         if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
-        if (token == TEND) {
-            linenum++;
-        }
         if (temp_procname == NULL) {
             current_procname = NULL;
         } else {
@@ -667,14 +673,7 @@ int parse_variable(FILE *fp) {
         return error("can not malloc in parse_variable");
     }
     init_type(parameter_type);
-    if (token == TEND) {
-        linenum--;
-    }
     if ((type_holder = ref_id(temp_string, current_procname, temp_refnum, &parameter_type)) == ERROR) { return ERROR; }
-
-    if (token == TEND) {
-        linenum++;
-    }
 
     return type_holder;
 }

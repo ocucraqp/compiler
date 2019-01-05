@@ -1,9 +1,6 @@
 #include "cross-referencer.h"
 
-struct LINE {
-    int reflinenum;
-    struct LINE *nextlinep;
-};
+struct LINE *deflinenumroot;
 
 struct ID *idroot;
 
@@ -89,6 +86,7 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
     char *temp_procname;
     struct TYPE *temp_itp;
     int name_cmp_result = 0, procname_cmp_result = 0;
+    struct LINE *pline;
 
     /* If it is not already registered name, secure memory and register */
     if ((p = search_idtab(name, procname, 0)) != NULL) {
@@ -125,7 +123,12 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
         p->procname = temp_procname;
         p->itp = temp_itp;
         p->ispara = ispara;
-        p->deflinenum = get_linenum();
+        if (deflinenumroot != NULL) {
+            p->deflinenum = deflinenumroot->linenum;
+            pline = deflinenumroot->nextlinep;
+            free(deflinenumroot);
+            deflinenumroot = pline;
+        }
         p->irefp = NULL;
 
         /* Insert in list from name and procname lexicographically */
@@ -207,10 +210,11 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
                 return error("The number of subscripts is too large");
             }
         }
+        //todo MAX_IDENTIFIER_SIZEいらない？
         if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
             return error("can not malloc-3 in def_id");
         }
-        temp_irefp->reflinenum = get_linenum();
+        temp_irefp->linenum = reflinenum;
         if (p->irefp != NULL) {
             for (pp = &(p->irefp); (*pp)->nextlinep != NULL; pp = &((*pp)->nextlinep)) {}
             (*pp)->nextlinep = temp_irefp;
@@ -297,10 +301,10 @@ void print_idtab() {    /* Output the registered data */
 
         /* print Ref. */
         if (p->irefp != NULL) {
-            printf("%d", p->irefp->reflinenum);
+            printf("%d", p->irefp->linenum);
 
             for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
-                printf(", %d", p->irefp->reflinenum);
+                printf(", %d", p->irefp->linenum);
             }
         }
 
@@ -317,6 +321,7 @@ void release_idtab() {    /* Release tha data structure */
     struct TYPE *ptype, *qtype;
     struct LINE *pline, *qline;
 
+    //todo free後NULL
     for (pid = idroot; pid != NULL; pid = qid) {
         free(pid->name);
         free(pid->procname);
@@ -363,4 +368,31 @@ int check_standard_type_to_pointer(struct TYPE *ptype) {
         default:
             return error("The type is not a standard type");
     }
+}
+
+
+void init_deflinenum() {
+    struct LINE *pline, *qline;
+
+    if (deflinenumroot == NULL) {
+        for (pline = deflinenumroot; pline != NULL; pline = qline) {
+            qline = pline->nextlinep;
+            free(pline);
+            pline == NULL;
+        }
+    }
+}
+
+int save_deflinenum() {
+    struct LINE *temp_deflinenum;
+
+    if ((temp_deflinenum = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
+        return error("can not malloc in save_deflinenum");
+    }
+
+    temp_deflinenum->linenum = get_linenum();
+    temp_deflinenum->nextlinep=deflinenumroot;
+    deflinenumroot=temp_deflinenum;
+
+    return NORMAL;
 }
