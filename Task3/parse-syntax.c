@@ -554,7 +554,12 @@ int parse_call_statement(FILE *fp) {
 int parse_expressions(FILE *fp, struct TYPE *parameter_type) {
     int type_holder = NORMAL, i = 0;
     struct TYPE **temp_type;
-    temp_type = &(parameter_type->paratp);
+
+    if (parameter_type->paratp == NULL) {
+        return error("There are unnecessary arguments.");
+    } else {
+        temp_type = &(parameter_type->paratp);
+    }
 
     if ((type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
     i++;
@@ -662,12 +667,12 @@ int parse_variable(FILE *fp) {
         return error("can not malloc in parse_variable");
     }
     init_type(parameter_type);
-    if(token==TEND){
+    if (token == TEND) {
         linenum--;
     }
     if ((type_holder = ref_id(temp_string, current_procname, temp_refnum, &parameter_type)) == ERROR) { return ERROR; }
 
-    if(token==TEND){
+    if (token == TEND) {
         linenum++;
     }
 
