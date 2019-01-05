@@ -101,8 +101,8 @@ int def_id(const char *name, const char *procname, int ispara, const struct TYPE
         if ((temp_procname = (char *) malloc(MAX_IDENTIFIER_SIZE * sizeof(char))) == NULL) {
             return error("can not malloc-3 in def_id");
         }
-        if ((temp_itp = (struct TYPE *) malloc(MAX_IDENTIFIER_SIZE * sizeof(struct TYPE))) == NULL) {
-            return error("can not malloc-3 in def_id");
+        if ((temp_itp = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
+            return error("can not malloc-4 in def_id");
         }
 
         /* Initialization of each area */
@@ -210,11 +210,11 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
                 return error("The number of subscripts is too large");
             }
         }
-        //todo MAX_IDENTIFIER_SIZEいらない？
-        if ((temp_irefp = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
-            return error("can not malloc-3 in def_id");
+        if ((temp_irefp = (struct LINE *) malloc(sizeof(struct LINE))) == NULL) {
+            return error("can not malloc in ref_id");
         }
         temp_irefp->linenum = reflinenum;
+        temp_irefp->nextlinep = NULL;
         if (p->irefp != NULL) {
             for (pp = &(p->irefp); (*pp)->nextlinep != NULL; pp = &((*pp)->nextlinep)) {}
             (*pp)->nextlinep = temp_irefp;
@@ -386,13 +386,13 @@ void init_deflinenum() {
 int save_deflinenum() {
     struct LINE *temp_deflinenum;
 
-    if ((temp_deflinenum = (struct LINE *) malloc((MAX_IDENTIFIER_SIZE * sizeof(struct LINE)) + 1)) == NULL) {
+    if ((temp_deflinenum = (struct LINE *) malloc(sizeof(struct LINE))) == NULL) {
         return error("can not malloc in save_deflinenum");
     }
 
     temp_deflinenum->linenum = get_linenum();
-    temp_deflinenum->nextlinep=deflinenumroot;
-    deflinenumroot=temp_deflinenum;
+    temp_deflinenum->nextlinep = deflinenumroot;
+    deflinenumroot = temp_deflinenum;
 
     return NORMAL;
 }
