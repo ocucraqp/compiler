@@ -589,20 +589,27 @@ int parse_call_statement(FILE *fp) {
     if (parse_procedure_name(fp) == ERROR) { return ERROR; }
 
     if (current_procname != NULL) {
-        if ((parameter_type = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
-            return error("can not malloc-2 in parse_call_statement");
-        }
-        init_type(parameter_type);
-        if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
-        release_vallinenum();
-        if (temp_procname == NULL) {
-            current_procname = NULL;
+        /* If current_procname and temp_procname are the same, it is judged as a recursive call */
+        if (strncmp(current_procname, temp_procname, MAX_IDENTIFIER_SIZE) != 0) {
+            if ((parameter_type = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
+                return error("can not malloc-2 in parse_call_statement");
+            }
+            init_type(parameter_type);
+            if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
+            release_vallinenum();
+            if (temp_procname == NULL) {
+                current_procname = NULL;
+            } else {
+                init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
+                strncpy(current_procname, temp_procname, MAX_IDENTIFIER_SIZE);
+                free(temp_procname);
+                temp_procname = NULL;
+            }
         } else {
-            init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
-            strncpy(current_procname, temp_procname, MAX_IDENTIFIER_SIZE);
-            free(temp_procname);
-            temp_procname = NULL;
+            return error("Recursive calls are not allowed");
         }
+    } else {
+        return error("Procedure name is not found");
     }
 
     if (token == TLPAREN) {
