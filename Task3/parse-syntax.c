@@ -135,6 +135,10 @@ int parse_block(FILE *fp) {
                 break;
         }
     }
+    if (current_procname != NULL) {
+        free(current_procname);
+        current_procname = NULL;
+    }
     if (parse_compound_statement(fp) == ERROR) { return ERROR; }
 
     return NORMAL;
@@ -590,7 +594,7 @@ int parse_call_statement(FILE *fp) {
 
     if (current_procname != NULL) {
         /* If current_procname and temp_procname are the same, it is judged as a recursive call */
-        if(temp_procname != NULL) {
+        if (temp_procname != NULL) {
             if (strncmp(current_procname, temp_procname, MAX_IDENTIFIER_SIZE) == 0) {
                 return error("Recursive calls are not allowed");
             }
@@ -708,9 +712,11 @@ int parse_left_part(FILE *fp) {
 int parse_variable(FILE *fp) {
     int temp_refnum = -1, type_holder = NORMAL, expression_type_holder = NORMAL;
     struct TYPE *parameter_type;
+    struct NAME *temp_valname;
 
     init_temp_names();
     if (parse_variable_name(fp) == ERROR) { return ERROR; }
+    temp_valname = temp_name_root;
 
     if (token == TLSQPAREN) {
         printf("%s ", tokenstr[token]);
@@ -722,11 +728,6 @@ int parse_variable(FILE *fp) {
             token = scan(fp);
         } else {
             if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
-            if (expression_type_holder != TPINT) {
-                return error(
-                        "When referring to an array type variable,\n"
-                        "it is necessary to attach an expression of type integer");
-            }
             temp_refnum = 0;
         }
 
@@ -741,11 +742,25 @@ int parse_variable(FILE *fp) {
         return error("can not malloc in parse_variable");
     }
     init_type(parameter_type);
-    if ((type_holder = ref_id(temp_name_root->name, current_procname, temp_refnum, &parameter_type)) ==
+    if ((type_holder = ref_id(temp_valname->name, current_procname, temp_refnum, &parameter_type)) ==
         ERROR) { return ERROR; }
     release_vallinenum();
-
     release_names();
+
+    if (expression_type_holder != NORMAL) {
+        if (expression_type_holder == TPINT) {
+            if (type_holder > 200) {
+                type_holder -= 100;
+            } else {
+                return error("When an expression is attached, the type of variable name must be array type");
+            }
+        } else {
+            return error(
+                    "When referring to an array type variable,\n"
+                    "it is necessary to attach an expression of type integer");
+        }
+    }
+
     return type_holder;
 }
 

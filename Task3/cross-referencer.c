@@ -139,10 +139,10 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp) {
         if ((p = (struct ID *) malloc(sizeof(struct ID))) == NULL) {
             return error("can not malloc-1 in def_id");
         }
-        if ((temp_name = (char *) malloc(MAX_IDENTIFIER_SIZE * sizeof(char))) == NULL) {
+        if ((temp_name = (char *) malloc((MAX_IDENTIFIER_SIZE + 1) * sizeof(char))) == NULL) {
             return error("can not malloc-2 in def_id");
         }
-        if ((temp_procname = (char *) malloc(MAX_IDENTIFIER_SIZE * sizeof(char))) == NULL) {
+        if ((temp_procname = (char *) malloc((MAX_IDENTIFIER_SIZE + 1) * sizeof(char))) == NULL) {
             return error("can not malloc-3 in def_id");
         }
         if ((temp_itp = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
@@ -150,8 +150,8 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp) {
         }
 
         /* Initialization of each area */
-        init_char_array(temp_name, MAX_IDENTIFIER_SIZE);
-        init_char_array(temp_procname, MAX_IDENTIFIER_SIZE);
+        init_char_array(temp_name, MAX_IDENTIFIER_SIZE + 1);
+        init_char_array(temp_procname, MAX_IDENTIFIER_SIZE + 1);
 
         /* Assign information */
         strncpy(temp_name, name, MAX_IDENTIFIER_SIZE);
