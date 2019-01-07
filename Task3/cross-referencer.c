@@ -279,90 +279,114 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
 
 void print_idtab() {    /* Output the registered data */
     struct ID *p;
-    int num_space = 0, i = 0;
+    int num_space = 0, i = 0, loop_paranum = 0, loop_refnum = 0;
     char buf[1024];
 
-    for (i = 0; i < 80; i++) {
-        printf("-");
-    }
-    printf("\n");
-
-    /* print row name */
-    printf("Name");
-    make_space(16);
-    printf("Type");
-    make_space(28);
-    printf("Def.");
-    make_space(4);
-    printf("Ref.\n");
-
-    for (p = idroot; p != NULL; p = p->nextp) {
-        /* print Name */
-        printf("%s", p->name);
-        num_space = 20 - (int) strlen(p->name);
-        if (p->procname != NULL) {
-            printf(":%s", p->procname);
-            num_space = num_space - 1 - (int) strlen(p->procname);
+    if (idroot == NULL) {
+        printf("There is no defined name");
+    } else {
+        for (i = 0; i < 80; i++) {
+            printf("-");
         }
-        make_space(num_space);
-
-        /* print Type */
-        switch (p->itp->ttype) {
-            case TPINT:
-            case TPCHAR:
-            case TPBOOL:
-                printf("%s", tokenstr[p->itp->ttype - 100]);
-                num_space = 32 - (int) strlen(tokenstr[p->itp->ttype - 100]);
-                break;
-            case TPARRAYINT:
-            case TPARRAYCHAR:
-            case TPARRAYBOOL:
-                printf("array[%d] of %s", p->itp->arraysize, tokenstr[p->itp->ttype - 200]);
-                init_char_array(buf, 1024);
-                snprintf(buf, 1024, "%d", p->itp->arraysize);
-                num_space = 32 - 11 - (int) strlen(buf) - (int) strlen(tokenstr[p->itp->ttype - 200]);
-                break;
-            case TPPROC:
-                printf("procedure");
-                num_space = 32 - 9;
-                if (p->itp->paratp != NULL) {
-                    printf("(%s", tokenstr[p->itp->paratp->ttype - 100]);
-                    num_space = num_space - 1 - (int) strlen(tokenstr[p->itp->paratp->ttype - 100]);
-                    for (p->itp->paratp = p->itp->paratp->paratp;
-                         p->itp->paratp != NULL; p->itp->paratp = p->itp->paratp->paratp) {
-                        printf(", %s", tokenstr[p->itp->paratp->ttype - 100]);
-                        num_space = num_space - 2 - (int) strlen(tokenstr[p->itp->paratp->ttype - 100]);
-                    }
-                    printf(")");
-                    num_space -= 1;
-                }
-                break;
-            default:
-                error("Variable has no type");
-                return;
-        }
-        make_space(num_space);
-
-        /* print Def. */
-        init_char_array(buf, 1024);
-        snprintf(buf, 1024, "%d", p->deflinenum);
-        num_space = 5 - (int) strlen(buf);
-        make_space(num_space);
-        printf("%d | ", p->deflinenum);
-
-        /* print Ref. */
-        if (p->irefp != NULL) {
-            printf("%d", p->irefp->linenum);
-
-            for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
-                printf(", %d", p->irefp->linenum);
-            }
-        }
-
         printf("\n");
-    }
-    for (i = 0; i < 80; i++) {
-        printf("-");
+
+        /* print row name */
+        printf("Name");
+        make_space(16);
+        printf("Type");
+        make_space(28);
+        printf("Def.");
+        make_space(4);
+        printf("Ref.\n");
+
+        for (p = idroot; p != NULL; p = p->nextp) {
+            /* print Name */
+            printf("%s", p->name);
+            num_space = 20 - (int) strlen(p->name);
+            if (p->procname != NULL) {
+                printf(":%s", p->procname);
+                num_space = num_space - 1 - (int) strlen(p->procname);
+            }
+            make_space(num_space);
+
+            /* print Type */
+            switch (p->itp->ttype) {
+                case TPINT:
+                case TPCHAR:
+                case TPBOOL:
+                    printf("%s", tokenstr[p->itp->ttype - 100]);
+                    num_space = 32 - (int) strlen(tokenstr[p->itp->ttype - 100]);
+                    break;
+                case TPARRAYINT:
+                case TPARRAYCHAR:
+                case TPARRAYBOOL:
+                    printf("array[%d] of %s", p->itp->arraysize, tokenstr[p->itp->ttype - 200]);
+                    init_char_array(buf, 1024);
+                    snprintf(buf, 1024, "%d", p->itp->arraysize);
+                    num_space = 32 - 11 - (int) strlen(buf) - (int) strlen(tokenstr[p->itp->ttype - 200]);
+                    break;
+                case TPPROC:
+                    printf("procedure");
+                    num_space = 32 - 9;
+                    if (p->itp->paratp != NULL) {
+                        printf("(%s", tokenstr[p->itp->paratp->ttype - 100]);
+                        loop_paranum++;
+                        num_space = num_space - 1 - (int) strlen(tokenstr[p->itp->paratp->ttype - 100]);
+                        for (p->itp->paratp = p->itp->paratp->paratp;
+                             p->itp->paratp != NULL; p->itp->paratp = p->itp->paratp->paratp) {
+                            printf(",");
+                            loop_paranum++;
+                            if (loop_paranum > 2) {
+                                printf("\n");
+                                make_space(30);
+                                loop_paranum -= 2;
+                                num_space = 32 - 9;
+                            }
+                            printf(" %s", tokenstr[p->itp->paratp->ttype - 100]);
+                            num_space = num_space - 2 - (int) strlen(tokenstr[p->itp->paratp->ttype - 100]);
+                        }
+                        printf(")");
+                        loop_paranum = 0;
+                        num_space -= 1;
+                    }
+                    break;
+                default:
+                    error("Variable has no type");
+                    return;
+            }
+
+            make_space(num_space);
+
+            /* print Def. */
+            init_char_array(buf, 1024);
+            snprintf(buf, 1024, "%d", p->deflinenum);
+            num_space = 5 - (int) strlen(buf);
+            make_space(num_space);
+            printf("%d | ", p->deflinenum);
+
+            /* print Ref. */
+            if (p->irefp != NULL) {
+                printf("%d", p->irefp->linenum);
+                loop_refnum++;
+
+                for (p->irefp = p->irefp->nextlinep; p->irefp != NULL; p->irefp = p->irefp->nextlinep) {
+                    printf(",");
+                    loop_refnum++;
+                    if (loop_refnum > 5) {
+                        printf("\n");
+                        make_space(60);
+                        loop_refnum -= 5;
+                    }
+                    printf(" %d", p->irefp->linenum);
+                }
+                loop_refnum = 0;
+            }
+
+            printf("\n");
+        }
+        for (i = 0; i < 80; i++) {
+            printf("-");
+        }
     }
     printf("\n");
 }
