@@ -630,6 +630,7 @@ int parse_variable(FILE *fp) {
 
         if (token == TNUMBER) {
             temp_refnum = num_attr;
+            expression_type_holder = TPINT;
             token = scan(fp);
         } else {
             if ((expression_type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
@@ -678,7 +679,7 @@ int parse_expression(FILE *fp) {
         if (parse_relational_operator(fp) == ERROR) { return ERROR; }
 
         if ((operand2_type = parse_simple_expression(fp)) == ERROR) { return ERROR; }
-        if (operand1_type != operand2_type) {
+        if ((operand1_type % 100) != (operand2_type % 100)) {
             return error("The operands of relational operators have different types");
         }
         type_holder = TPBOOL;
@@ -719,10 +720,10 @@ int parse_simple_expression(FILE *fp) {
         if (parse_additive_operator(fp) == ERROR) { return ERROR; }
 
         if ((operand2_type = parse_term(fp)) == ERROR) { return ERROR; }
-        if (pm_flag == 1 && operand1_type != TPINT && operand1_type == operand2_type) {
+        if (pm_flag == 1 && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '+' and '-' must be of type integer");
         }
-        if (pm_flag == 0 && operand1_type != TPBOOL && operand1_type == operand2_type) {
+        if (pm_flag == 0 && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
             return error("The operands of 'or' must be of type boolean");
         }
     }
@@ -749,10 +750,10 @@ int parse_term(FILE *fp) {
         if (parse_multiplicative_operator(fp) == ERROR) { return ERROR; }
 
         if ((operand2_type = parse_factor(fp)) == ERROR) { return ERROR; }
-        if (md_flag == 1 && operand1_type != TPINT && operand1_type == operand2_type) {
+        if (md_flag == 1 && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
-        if (md_flag == 0 && operand1_type != TPBOOL && operand1_type == operand2_type) {
+        if (md_flag == 0 && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
             return error("The operands of 'and' must be of type boolean");
         }
     }
