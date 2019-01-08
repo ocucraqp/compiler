@@ -1,5 +1,5 @@
-#ifndef TASK3_CROSS_REFERENCER_H
-#define TASK3_CROSS_REFERENCER_H
+#ifndef TASK4_COMPILER_H
+#define TASK4_COMPILER_H
 
 /* cross-referencer.h  */
 #include <stdlib.h>
@@ -172,4 +172,4 @@ extern int check_standard_type(int type);
 
 extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
-#endif //TASK3_CROSS_REFERENCER_H
+#endif //TASK4_COMPILER_H

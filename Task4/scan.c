@@ -1,4 +1,4 @@
-#include "cross-referencer.h"
+#include "compiler.h"
 
 /* Variable that stores integer value */
 int num_attr;

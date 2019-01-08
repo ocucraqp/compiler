@@ -1,4 +1,4 @@
-#include "cross-referencer.h"
+#include "compiler.h"
 
 /* Variable to store the token read by scan() */
 int token = 0;
