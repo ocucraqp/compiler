@@ -1,4 +1,4 @@
-#include "cross-referencer.h"
+#include "compiler.h"
 
 /* keyword list */
 struct KEY key[NUMOFKEYWORD] = {

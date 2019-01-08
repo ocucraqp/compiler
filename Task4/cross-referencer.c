@@ -1,4 +1,4 @@
-#include "cross-referencer.h"
+#include "compiler.h"
 
 /* Root of ID list */
 struct ID *idroot = NULL;
