@@ -43,6 +43,7 @@ int init_scan(char *filename, FILE **fp) {
     *fp = fopen(filename, "r");
 
     if (*fp == NULL) {
+        fprintf(stderr, "\nERROR: File %s can not open.\n", filename);
         return -1;
     }
 
@@ -374,7 +375,7 @@ int get_linenum(void) {
 /* Close the call file after scanning */
 void end_scan(FILE *fp) {
     if (fclose(fp) == EOF) {
-        error("File can not close.");
+        fprintf(stderr, "\nERROR: Input file can not close.\n");
     };
 }
 
