@@ -172,4 +172,9 @@ extern int check_standard_type(int type);
 
 extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
+/* compiler.c */
+int init_outputfile(char *inputfilename, FILE **fp);
+
+void end_output(FILE *fp);
+
 #endif //TASK4_COMPILER_H

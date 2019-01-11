@@ -33,7 +33,7 @@ struct KEY key[NUMOFKEYWORD] = {
 };
 
 int main(int nc, char *np[]) {
-    FILE *fp;
+    FILE *inputfp, *outputfp;
     int is_success = 0;
 
     /* End without argument */
@@ -42,26 +42,33 @@ int main(int nc, char *np[]) {
         return EXIT_FAILURE;
     }
 
-    /* End if file can not be opened */
-    if (init_scan(np[1], &fp) < 0) {
-        fprintf(stderr, "File %s can not open.\n", np[1]);
+    /* End if input file can not be opened */
+    if (init_scan(np[1], &inputfp) < 0) {
         return EXIT_FAILURE;
     }
 
     /* Prefetch one token */
-    token = scan(fp);
+    token = scan(inputfp);
 
     /* Parse program */
-    is_success = parse_program(fp);
+    is_success = parse_program(inputfp);
 
     /* end scan */
-    end_scan(fp);
+    end_scan(inputfp);
 
     /* Display cross reference table */
     print_idtab();
 
     /* Release id table */
     release_idtab();
+
+    /* End if output file can not be opened */
+    if (init_outputfile(np[1], &outputfp) < 0) {
+        return EXIT_FAILURE;
+    }
+
+    /* end output */
+    end_output(outputfp);
 
     if (is_success == NORMAL) {
         return EXIT_SUCCESS;
