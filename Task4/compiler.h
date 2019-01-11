@@ -140,7 +140,7 @@ extern char *tokenstr[NUMOFTOKEN + 1];
 
 extern int token;
 
-extern int parse_program(FILE *fp);
+extern int parse_program(FILE *inputfp, FILE *outputfp);
 
 /* cross-referencer.c */
 extern char *current_procname;
@@ -174,6 +174,8 @@ extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
 /* compiler.c */
 int init_outputfile(char *inputfilename, FILE **fp);
+
+void command_start(FILE *fp, char *program_name);
 
 void end_output(FILE *fp);
 
