@@ -20,6 +20,10 @@ int init_outputfile(char *inputfilename, FILE **fp) {
 
 }
 
+void command_start(FILE *fp, char *program_name){
+    fprintf(fp, "$$%s    START\n", program_name);
+}
+
 /* Close the call file after output */
 void end_output(FILE *fp) {
     if (fclose(fp) == EOF) {

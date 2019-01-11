@@ -47,11 +47,16 @@ int main(int nc, char *np[]) {
         return EXIT_FAILURE;
     }
 
+    /* End if output file can not be opened */
+    if (init_outputfile(np[1], &outputfp) < 0) {
+        return EXIT_FAILURE;
+    }
+
     /* Prefetch one token */
     token = scan(inputfp);
 
     /* Parse program */
-    is_success = parse_program(inputfp);
+    is_success = parse_program(inputfp, outputfp);
 
     /* end scan */
     end_scan(inputfp);
@@ -61,11 +66,6 @@ int main(int nc, char *np[]) {
 
     /* Release id table */
     release_idtab();
-
-    /* End if output file can not be opened */
-    if (init_outputfile(np[1], &outputfp) < 0) {
-        return EXIT_FAILURE;
-    }
 
     /* end output */
     end_output(outputfp);
