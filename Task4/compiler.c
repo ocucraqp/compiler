@@ -2,6 +2,9 @@
 
 int labelnum = 0;
 
+/* prototype declaration */
+int create_newlabel(char **labelname);
+
 int init_outputfile(char *inputfilename, FILE **fp) {
     char *outputfilename;
     char outputfilename_extension[32];
@@ -30,26 +33,32 @@ void end_output(FILE *fp) {
 }
 
 /* Create a new label from lebelnum */
-void create_newlabel(char **labelname) {
+int create_newlabel(char **labelname) {
     char newlabel[LABELSIZE];
 
     labelnum++;
+    if (labelnum > 9999) {
+        return error("Too many labels");
+    }
     snprintf(newlabel, LABELSIZE, "L%04d", labelnum);
     *labelname = newlabel;
+    return NORMAL;
 }
 
 /* Generate code at program start */
-void command_start(FILE *fp, char *program_name) {
+int command_start(FILE *fp, char *program_name) {
     char *labelname = "L0000";
 
-    //program start
+    /* program start */
     fprintf(fp, "$$%s    START\n", program_name);
-    //Initialize gr 0 to 0
-    fprintf(fp, "    LAD     gr0,0\n");
-    //Call a label indicating compound statement of main program
-    create_newlabel(&labelname);
-    fprintf(fp, "    CALL    %s\n", labelname);
-    //End processing
-    fprintf(fp, "    CALL    FLUSH\n");
-    fprintf(fp, "    SVC     0\n");
+    /* Initialize gr 0 to 0 */
+    fprintf(fp, "        LAD     gr0,0\n");
+    /* Call a label indicating compound statement of main program */
+    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
+    fprintf(fp, "        CALL    %s\n", labelname);
+    /* End processing */
+    fprintf(fp, "        CALL    FLUSH\n");
+    fprintf(fp, "        SVC     0\n");
+
+    return NORMAL;
 }

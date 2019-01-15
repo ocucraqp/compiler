@@ -123,7 +123,7 @@ struct ID *search_idtab(const char *name, const char *procname, int calling_func
     }
 }
 
-int def_id(const char *name, const char *procname, const struct TYPE *itp) {
+int def_id(const char *name, const char *procname, const struct TYPE *itp, FILE *outputfp) {
     /* Define id */
     struct ID *p, **pp, **prevpp;
     char *temp_name;
@@ -173,6 +173,27 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp) {
             vallinenumroot = pline;
         }
         p->irefp = NULL;
+
+        /* id_label output */
+        fprintf(outputfp, "$%s", p->name);
+        if (p->procname != NULL) {
+            fprintf(outputfp, "%%%s", p->procname);
+        }
+        switch (p->itp->ttype) {
+            case TPINT:
+            case TPCHAR:
+            case TPBOOL:
+                fprintf(outputfp, "    DC      0");
+                break;
+            case TPARRAYINT:
+            case TPARRAYCHAR:
+            case TPARRAYBOOL:
+                fprintf(outputfp, "    DS      %d", p->itp->arraysize);
+                break;
+            default:
+                break;
+        }
+        fprintf(outputfp, "\n");
 
         /* Insert in list from name and procname lexicographically */
         if (idroot != NULL) {
@@ -229,6 +250,7 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp) {
             idroot = p;
         }
     }
+
     return NORMAL;
 }
 

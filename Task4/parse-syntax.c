@@ -144,7 +144,7 @@ int parse_variable_declaration(FILE *inputfp, FILE *outputfp) {
 
     /* Define id as many as name */
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-        if (def_id(loop_name->name, current_procname, &temp_type) == ERROR) { return ERROR; }
+        if (def_id(loop_name->name, current_procname, &temp_type, outputfp) == ERROR) { return ERROR; }
     }
     release_vallinenum();
     release_names();
@@ -164,7 +164,7 @@ int parse_variable_declaration(FILE *inputfp, FILE *outputfp) {
         if (parse_type(inputfp, outputfp) == ERROR) { return ERROR; }
 
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-            if (def_id(loop_name->name, current_procname, &temp_type) == ERROR) { return ERROR; }
+            if (def_id(loop_name->name, current_procname, &temp_type, outputfp) == ERROR) { return ERROR; }
         }
         release_vallinenum();
         release_names();
@@ -283,7 +283,7 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
         if (parse_formal_parameters(inputfp, outputfp) == ERROR) { return ERROR; }
     }
 
-    if (def_id(current_procname, NULL, &temp_type) == ERROR) { return ERROR; }
+    if (def_id(current_procname, NULL, &temp_type, outputfp) == ERROR) { return ERROR; }
     release_vallinenum();
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
@@ -334,7 +334,7 @@ int parse_formal_parameters(FILE *inputfp, FILE *outputfp) {
     if (check_standard_type_to_pointer(ptype) == ERROR) { return ERROR; }
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-        if (def_id(loop_name->name, current_procname, ptype) == ERROR) { return ERROR; }
+        if (def_id(loop_name->name, current_procname, ptype, outputfp) == ERROR) { return ERROR; }
         if (loop_name->nextnamep != NULL) {
             if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
                 return error("can not malloc in parse_formal_parameters");
@@ -362,7 +362,7 @@ int parse_formal_parameters(FILE *inputfp, FILE *outputfp) {
         if (check_standard_type_to_pointer(ptype) == ERROR) { return ERROR; }
 
         for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
-            if (def_id(loop_name->name, current_procname, ptype) == ERROR) { return ERROR; }
+            if (def_id(loop_name->name, current_procname, ptype, outputfp) == ERROR) { return ERROR; }
         }
         release_vallinenum();
         release_names();

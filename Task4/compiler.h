@@ -161,7 +161,7 @@ extern int save_vallinenum();
 
 extern void release_vallinenum();
 
-extern int def_id(const char *name, const char *procname, const struct TYPE *itp);
+extern int def_id(const char *name, const char *procname, const struct TYPE *itp, FILE *outputfp);
 
 extern int ref_id(const char *name, const char *procname, int refnum, struct TYPE **temp_type);
 
@@ -176,8 +176,8 @@ extern int check_standard_type_to_pointer(struct TYPE *ptype);
 /* compiler.c */
 int init_outputfile(char *inputfilename, FILE **fp);
 
-void command_start(FILE *fp, char *program_name);
-
 void end_output(FILE *fp);
+
+int command_start(FILE *fp, char *program_name);
 
 #endif //TASK4_COMPILER_H
