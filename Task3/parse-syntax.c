@@ -563,17 +563,21 @@ int parse_expressions(FILE *fp, struct TYPE *parameter_type) {
         if ((type_holder = parse_expression(fp)) == ERROR) { return ERROR; }
         i++;
         temp_type = &((*temp_type)->paratp);
-        if (type_holder != (*temp_type)->ttype) {
-            switch (i % 10) {
-                case 1:
-                    return error("The type of the %dst argument is incorrect.", i);
-                case 2:
-                    return error("The type of the %dnd argument is incorrect.", i);
-                case 3:
-                    return error("The type of the %drd argument is incorrect.", i);
-                default:
-                    return error("The type of the %dth argument is incorrect.", i);
+        if ((*temp_type) != NULL) {
+            if (type_holder != (*temp_type)->ttype) {
+                switch (i % 10) {
+                    case 1:
+                        return error("The type of the %dst argument is incorrect.", i);
+                    case 2:
+                        return error("The type of the %dnd argument is incorrect.", i);
+                    case 3:
+                        return error("The type of the %drd argument is incorrect.", i);
+                    default:
+                        return error("The type of the %dth argument is incorrect.", i);
+                }
             }
+        } else {
+            return error("Too many arguments.");
         }
     }
 
