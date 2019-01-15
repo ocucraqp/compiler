@@ -13,6 +13,7 @@
 #define ERROR -1
 #define NUMOFKEYWORD    28
 #define MAXKEYWORDLENGTH    9
+#define LABELSIZE 6
 
 /* Token */
 #define    TNAME        1    /* Name : Alphabet { Alphabet | Digit } */
