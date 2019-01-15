@@ -58,6 +58,9 @@ int main(int nc, char *np[]) {
     /* Parse program */
     is_success = parse_program(inputfp, outputfp);
 
+    /* Add necessary processing */
+    output_pl(outputfp);
+
     /* end scan */
     end_scan(inputfp);
 

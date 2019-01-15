@@ -295,6 +295,7 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
         if (parse_variable_declaration(inputfp, outputfp) == ERROR) { return ERROR; }
     }
 
+    /* output label of sub proc id */
     if ((p = search_idtab(current_procname, NULL, 1)) == NULL) {
         return error("%s is not defined.", current_procname);
     } else {
@@ -938,6 +939,8 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
 }
 
 int parse_output_statement(FILE *inputfp, FILE *outputfp) {
+    int is_ln = token;
+
     switch (token) {
         case TWRITE:
         case TWRITELN:
@@ -959,6 +962,11 @@ int parse_output_statement(FILE *inputfp, FILE *outputfp) {
         }
         if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
         token = scan(inputfp);
+    }
+
+    if (is_ln == TWRITELN) {
+        fprintf(outputfp, "        CALL    WRITELN\n");
+        on_pl_flag(PLWRITELINE);
     }
 
     return NORMAL;
