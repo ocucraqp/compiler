@@ -270,6 +270,8 @@ int parse_array_type(FILE *inputfp, FILE *outputfp) {
 }
 
 int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
+    struct ID *p;
+
     if (token != TPROCEDURE) { return (error("Keyword 'procedure' is not found")); }
     token = scan(inputfp);
 
@@ -291,6 +293,12 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
 
     if (token == TVAR) {
         if (parse_variable_declaration(inputfp, outputfp) == ERROR) { return ERROR; }
+    }
+
+    if ((p = search_idtab(current_procname, NULL, 1)) == NULL) {
+        return error("%s is not defined.", current_procname);
+    } else {
+        create_id_label(p, outputfp);
     }
 
     if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }

@@ -45,6 +45,42 @@ int create_newlabel(char **labelname) {
     return NORMAL;
 }
 
+int create_id_label(struct ID *p, FILE *outputfp) {
+    /* id_label output */
+    if (p != NULL) {
+        if (p->name != NULL) {
+            fprintf(outputfp, "$%s", p->name);
+        } else {
+            return error("Output id name is not fount");
+        }
+        if (p->procname != NULL) {
+            fprintf(outputfp, "%%%s", p->procname);
+        }
+        if (p->itp != NULL) {
+            switch (p->itp->ttype) {
+                case TPINT:
+                case TPCHAR:
+                case TPBOOL:
+                    fprintf(outputfp, "    DC      0");
+                    break;
+                case TPARRAYINT:
+                case TPARRAYCHAR:
+                case TPARRAYBOOL:
+                    fprintf(outputfp, "    DS      %d", p->itp->arraysize);
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            return error("Output id type is not fount");
+        }
+        fprintf(outputfp, "\n");
+        return NORMAL;
+    } else {
+        return error("Output id is not found");
+    }
+}
+
 /* Generate code at program start */
 int command_start(FILE *fp, char *program_name) {
     char *labelname = "L0000";
