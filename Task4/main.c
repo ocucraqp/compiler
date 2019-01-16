@@ -58,6 +58,9 @@ int main(int nc, char *np[]) {
     /* Parse program */
     is_success = parse_program(inputfp, outputfp);
 
+    /* Add labels and data such as character strings */
+    output_label_buf(outputfp);
+
     /* Add necessary processing */
     output_pl(outputfp);
 

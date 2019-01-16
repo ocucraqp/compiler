@@ -2,10 +2,11 @@
 
 int labelnum = 0;
 
-int pl_flag[NUMOFPL];
+int pl_flag[NUMOFPL + 1];
+
+char label_buf[MAX_OUTPUT_BUF_SIZE];
 
 /* prototype declaration */
-int create_newlabel(char **labelname);
 
 /* Call before output, open the file,
  * Success:0 Failed:-1 */
@@ -39,7 +40,11 @@ void end_output(FILE *fp) {
 
 /* Create a new label from lebelnum */
 int create_newlabel(char **labelname) {
-    char newlabel[LABELSIZE];
+    char *newlabel;
+
+    if ((newlabel = (char *) malloc((LABELSIZE + 1) * sizeof(char))) == NULL) {
+        return error("can not malloc in create_newlabel");
+    }
 
     labelnum++;
     if (labelnum > 9999) {
@@ -67,12 +72,12 @@ int create_id_label(struct ID *p, FILE *outputfp) {
                 case TPINT:
                 case TPCHAR:
                 case TPBOOL:
-                    fprintf(outputfp, "    DC      0");
+                    fprintf(outputfp, "\tDC\t0");
                     break;
                 case TPARRAYINT:
                 case TPARRAYCHAR:
                 case TPARRAYBOOL:
-                    fprintf(outputfp, "    DS      %d", p->itp->arraysize);
+                    fprintf(outputfp, "\tDS\t%d", p->itp->arraysize);
                     break;
                 default:
                     break;
@@ -89,21 +94,60 @@ int create_id_label(struct ID *p, FILE *outputfp) {
 
 /* Generate code at program start */
 int command_start(FILE *fp, char *program_name) {
-    char *labelname = "L0000";
+    char *labelname = NULL;
 
     /* program start */
-    fprintf(fp, "$$%s    START\n", program_name);
+    fprintf(fp, "$$%s\tSTART\n", program_name);
     /* Initialize gr 0 to 0 */
-    fprintf(fp, "        LAD     gr0,0\n");
+    fprintf(fp, "\tLAD \tgr0, 0\n");
     /* Call a label indicating compound statement of main program */
     if (create_newlabel(&labelname) == ERROR) { return ERROR; }
-    fprintf(fp, "        CALL    %s\n", labelname);
+    fprintf(fp, "\tCALL\t%s\n", labelname);
     /* End processing */
-    fprintf(fp, "        CALL    FLUSH\n");
+    fprintf(fp, "\tCALL\tFLUSH\n");
     on_pl_flag(PLFLUSH);
-    fprintf(fp, "        SVC     0\n");
+    fprintf(fp, "\tSVC \t0\n");
+
+    free(labelname);
+    labelname = NULL;
 
     return NORMAL;
+}
+
+int command_process_arguments(FILE *outputfp, struct ID *p) {
+    //todo
+}
+
+/* Generate code for outputting character string */
+int command_write_string(FILE *outputfp, char *string) {
+    char *labelname = NULL;
+    char output_buf_add[MAX_OUTPUT_BUF_SIZE];
+
+    /* Create a label and call WRITESTR */
+    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
+    fprintf(outputfp, "\tLAD \tgr1, %s\n", labelname);
+    fprintf(outputfp, "\tLD  \tgr2, gr0\n");
+    fprintf(outputfp, "\tCALL\tWRITESTR\n");
+    on_pl_flag(PLWRITESTR);
+
+    /* Define string at label location */
+    init_char_array(output_buf_add, MAX_OUTPUT_BUF_SIZE);
+    snprintf(output_buf_add, MAX_OUTPUT_BUF_SIZE, "%s\tDC  \t'%s'\n", labelname, string);
+    if ((strlen(label_buf) + strlen(output_buf_add)) >= MAX_OUTPUT_BUF_SIZE) {
+        return error("Over BUF_SIZE for output");
+    } else {
+        strcat(label_buf, output_buf_add);
+    }
+
+    free(labelname);
+    labelname = NULL;
+
+    return NORMAL;
+}
+
+/* Add label_buf to outputfp */
+void output_label_buf(FILE *outputfp) {
+    fprintf(outputfp, "%s", label_buf);
 }
 
 /* Output Processing label */

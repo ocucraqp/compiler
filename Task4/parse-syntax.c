@@ -300,6 +300,7 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
         return error("%s is not defined.", current_procname);
     } else {
         create_id_label(p, outputfp);
+        command_process_arguments(outputfp, p);
     }
 
     if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }
@@ -965,7 +966,7 @@ int parse_output_statement(FILE *inputfp, FILE *outputfp) {
     }
 
     if (is_ln == TWRITELN) {
-        fprintf(outputfp, "        CALL    WRITELN\n");
+        fprintf(outputfp, "\tCALL\tWRITELN\n");
         on_pl_flag(PLWRITELINE);
     }
 
@@ -979,8 +980,11 @@ int parse_output_format(FILE *inputfp, FILE *outputfp) {
         case TSTRING:
             str_length = (int) strlen(string_attr);
             if (str_length == 0 || str_length > 2) {
+                command_write_string(outputfp, string_attr);
                 token = scan(inputfp);
                 break;
+            } else {
+                return error("The length of the character string in output format must be other than 1");
             }
         case TPLUS:
         case TMINUS:

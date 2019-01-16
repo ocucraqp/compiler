@@ -9,6 +9,7 @@
 
 #define MAXSTRSIZE          1024
 #define MAX_IDENTIFIER_SIZE 8
+#define MAX_OUTPUT_BUF_SIZE 2048
 #define NORMAL              0
 #define ERROR               -1
 #define NUMOFKEYWORD        28
@@ -214,9 +215,17 @@ int init_outputfile(char *inputfilename, FILE **fp);
 
 void end_output(FILE *fp);
 
+int create_newlabel(char **labelname);
+
 int create_id_label(struct ID *p, FILE *outputfp);
 
 int command_start(FILE *fp, char *program_name);
+
+int command_process_arguments(FILE *outputfp, struct ID *p);
+
+int command_write_string(FILE *outputfp, char *string);
+
+void output_label_buf(FILE *outputfp);
 
 void output_pl(FILE *outputfp);
 
