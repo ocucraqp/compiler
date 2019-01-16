@@ -114,8 +114,22 @@ int command_start(FILE *fp, char *program_name) {
     return NORMAL;
 }
 
-int command_process_arguments(FILE *outputfp, struct ID *p) {
-    //todo
+/* Generate code to process arguments */
+int command_process_arguments(FILE *outputfp) {
+    struct PARAID **paraidp, *tempp;
+    paraidp = &(paraidroot.nextparaidp);
+
+    fprintf(outputfp, "\tPOP \tgr2\n");
+    while ((*paraidp) != NULL) {
+        fprintf(outputfp, "\tPOP \tgr1\n");
+        fprintf(outputfp, "\tST  \tgr1, $%s%%%s\n",
+                (*paraidp)->paraidp->name, (*paraidp)->paraidp->procname);
+        tempp = (*paraidp);
+        paraidp = &((*paraidp)->nextparaidp);
+        free(tempp);
+        tempp = NULL;
+    }
+    fprintf(outputfp, "\tPUSH\t0, gr2\n");
 }
 
 /* Generate code for outputting character string */

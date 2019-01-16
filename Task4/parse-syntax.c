@@ -16,6 +16,9 @@ char *tokenstr[NUMOFTOKEN + 1] = {
         ">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read", "write", "break"
 };
 
+/* Structure for creating a list of dummy argument IDs */
+struct PARAID paraidroot, *paraidend;
+
 /* prototype declaration */
 int parse_block(FILE *inputfp, FILE *outputfp);
 
@@ -281,6 +284,9 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
     temp_type.ttype = TPPROC;
     temp_type.paratp = NULL;
     end_type = &temp_type;
+    paraidroot.paraidp = NULL;
+    paraidroot.nextparaidp = NULL;
+    paraidend = &paraidroot;
     if (token == TLPAREN) {
         if (parse_formal_parameters(inputfp, outputfp) == ERROR) { return ERROR; }
     }
@@ -300,7 +306,7 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
         return error("%s is not defined.", current_procname);
     } else {
         create_id_label(p, outputfp);
-        command_process_arguments(outputfp, p);
+        command_process_arguments(outputfp);
     }
 
     if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }
@@ -329,6 +335,8 @@ int parse_procedure_name(FILE *inputfp, FILE *outputfp) {
 int parse_formal_parameters(FILE *inputfp, FILE *outputfp) {
     struct NAME *loop_name;
     struct TYPE *ptype, *next_type;
+    struct ID *p;
+    struct PARAID *paraidp;
 
     if (token != TLPAREN) { return (error("Symbol '(' is not found")); }
     token = scan(inputfp);
@@ -345,9 +353,22 @@ int parse_formal_parameters(FILE *inputfp, FILE *outputfp) {
 
     for (loop_name = temp_name_root; loop_name != NULL; loop_name = loop_name->nextnamep) {
         if (def_id(loop_name->name, current_procname, ptype, outputfp) == ERROR) { return ERROR; }
+
+        if ((p = search_idtab(loop_name->name, current_procname, 1)) == NULL) {
+            return error("%s is not defined.", current_procname);
+        } else {
+            if ((paraidp = (struct PARAID *) malloc(sizeof(struct PARAID))) == NULL) {
+                return error("can not malloc-1 in parse_formal_parameters");
+            }
+            paraidp->paraidp = p;
+            paraidp->nextparaidp = NULL;
+            paraidend->nextparaidp = paraidp;
+            paraidend = paraidp;
+        }
+
         if (loop_name->nextnamep != NULL) {
             if ((next_type = (struct TYPE *) malloc((sizeof(struct TYPE)))) == NULL) {
-                return error("can not malloc in parse_formal_parameters");
+                return error("can not malloc-2 in parse_formal_parameters");
             }
             init_type(next_type);
             next_type->ttype = ptype->ttype;
@@ -966,7 +987,7 @@ int parse_output_statement(FILE *inputfp, FILE *outputfp) {
     }
 
     if (is_ln == TWRITELN) {
-        fprintf(outputfp, "\tCALL\tWRITELN\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
         on_pl_flag(PLWRITELINE);
     }
 

@@ -149,6 +149,11 @@ extern struct NAME {
     struct NAME *nextnamep;
 } *temp_name_root;
 
+extern struct PARAID {
+    struct ID *paraidp;
+    struct PARAID *nextparaidp;
+} paraidroot, *paraidend;
+
 /* main.c */
 extern int error(char *mes, ...);
 
@@ -221,7 +226,7 @@ int create_id_label(struct ID *p, FILE *outputfp);
 
 int command_start(FILE *fp, char *program_name);
 
-int command_process_arguments(FILE *outputfp, struct ID *p);
+int command_process_arguments(FILE *outputfp);
 
 int command_write_string(FILE *outputfp, char *string);
 
