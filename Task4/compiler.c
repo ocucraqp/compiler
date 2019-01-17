@@ -133,6 +133,18 @@ int command_process_arguments(FILE *outputfp) {
 }
 
 /* Generate code for outputting character string */
+void command_read_int(FILE *outputfp, char *name, char *procname) {
+    /* Create a label and call READINT */
+    fprintf(outputfp, "\tLD  \tgr1, $%s", name);
+    if (procname != NULL) {
+        fprintf(outputfp, "%%%s", procname);
+    }
+    fprintf(outputfp, "\n");
+    fprintf(outputfp, "\tCALL\tREADINT\n");
+    on_pl_flag(PLREADINT);
+}
+
+/* Generate code for outputting character string */
 int command_write_string(FILE *outputfp, char *string) {
     char *labelname = NULL;
     char output_buf_add[MAX_OUTPUT_BUF_SIZE];

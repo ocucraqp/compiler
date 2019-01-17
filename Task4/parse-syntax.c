@@ -19,6 +19,9 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 /* Structure for creating a list of dummy argument IDs */
 struct PARAID paraidroot, *paraidend;
 
+/* Hold variable names for labels */
+char label_valname[MAX_IDENTIFIER_SIZE * 2 + 3];
+
 /* prototype declaration */
 int parse_block(FILE *inputfp, FILE *outputfp);
 
@@ -660,6 +663,7 @@ int parse_variable(FILE *inputfp, FILE *outputfp) {
     init_temp_names();
     if (parse_variable_name(inputfp, outputfp) == ERROR) { return ERROR; }
     temp_valname = temp_name_root;
+    strcpy(label_valname, temp_name_root->name);
 
     if (token == TLSQPAREN) {
         token = scan(inputfp);
@@ -927,6 +931,8 @@ int parse_relational_operator(FILE *inputfp, FILE *outputfp) {
 }
 
 int parse_input_statement(FILE *inputfp, FILE *outputfp) {
+    int is_ln = token;
+
     int type_holder = NORMAL;
     switch (token) {
         case TREAD:
@@ -943,6 +949,10 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
         if ((type_holder = parse_variable(inputfp, outputfp)) == ERROR) { return ERROR; }
         if (type_holder != TPINT && type_holder != TPCHAR) {
             return error("The variable in the input statement is not integer type or char type");
+        } else if (type_holder == TPINT) {
+            command_read_int(outputfp, label_valname, current_procname);
+        } else if (type_holder == TPCHAR) {
+            //todo
         }
 
         while (token == TCOMMA) {
@@ -951,10 +961,19 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
             if ((type_holder = parse_variable(inputfp, outputfp)) == ERROR) { return ERROR; }
             if (type_holder != TPINT && type_holder != TPCHAR) {
                 return error("The variable in the input statement is not integer type or char type");
+            } else if (type_holder == TPINT) {
+                command_read_int(outputfp, label_valname, current_procname);
+            } else if (type_holder == TPCHAR) {
+                //todo
             }
         }
         if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
         token = scan(inputfp);
+    }
+
+    if (is_ln == TREADLN) {
+        fprintf(outputfp, "\tCALL\tREADLINE\n");
+        on_pl_flag(PLREADLINE);
     }
 
     return NORMAL;

@@ -228,6 +228,8 @@ int command_start(FILE *fp, char *program_name);
 
 int command_process_arguments(FILE *outputfp);
 
+void command_read_int(FILE *outputfp, char *name, char *procname);
+
 int command_write_string(FILE *outputfp, char *string);
 
 void output_label_buf(FILE *outputfp);
