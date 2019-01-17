@@ -317,6 +317,8 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     token = scan(inputfp);
 
+    fprintf(outputfp, "\tRET\n");
+
     return NORMAL;
 }
 
