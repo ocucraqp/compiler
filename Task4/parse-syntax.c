@@ -783,7 +783,7 @@ int parse_term(FILE *inputfp, FILE *outputfp) {
         switch (token) {
             case TSTAR:
             case TDIV:
-                md_flag = 1;
+                md_flag = token;
                 break;
             default:
                 md_flag = 0;
@@ -792,7 +792,7 @@ int parse_term(FILE *inputfp, FILE *outputfp) {
         if (parse_multiplicative_operator(inputfp, outputfp) == ERROR) { return ERROR; }
 
         if ((operand2_type = parse_factor(inputfp, outputfp)) == ERROR) { return ERROR; }
-        if (md_flag == 1 && (operand1_type != TPINT || operand2_type != TPINT)) {
+        if (md_flag != 1 && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
         if (md_flag == 0 && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
@@ -1046,7 +1046,10 @@ int parse_output_format(FILE *inputfp, FILE *outputfp) {
                 token = scan(inputfp);
 
                 if (token != TNUMBER) { return (error("Number is not found")); }
+                command_write_expression(outputfp, type_holder, num_attr);
                 token = scan(inputfp);
+            } else {
+                command_write_expression(outputfp, type_holder, 0);
             }
             break;
         default:

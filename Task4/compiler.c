@@ -146,6 +146,29 @@ void command_read_int(FILE *outputfp, char *name, char *procname) {
     on_pl_flag(PLREADINT);
 }
 
+void command_write_expression(FILE *outputfp, int type, int length) {
+    if (length > 0) {
+        fprintf(outputfp, "\tLD  \tgr2, %d\n", length);
+    } else {
+        fprintf(outputfp, "\tLD  \tgr2, gr0\n");
+    }
+    fprintf(outputfp, "\tCALL\t");
+    switch (type) {
+        case TPINT:
+            fprintf(outputfp, "WRITEINT\n");
+            on_pl_flag(PLWRITEINT);
+            break;
+        case TPCHAR:
+            fprintf(outputfp, "WRITECHAR\n");
+            on_pl_flag(PLWRITECHAR);
+            break;
+        case TPBOOL:
+            fprintf(outputfp, "WRITEBOOL\n");
+            on_pl_flag(PLWRITEBOOL);
+            break;
+    }
+};
+
 /* Generate code for outputting character string */
 int command_write_string(FILE *outputfp, char *string) {
     char *labelname = NULL;
