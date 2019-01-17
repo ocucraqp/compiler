@@ -19,9 +19,6 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 /* Structure for creating a list of dummy argument IDs */
 struct PARAID paraidroot, *paraidend;
 
-/* Hold variable names for labels */
-char label_valname[MAX_IDENTIFIER_SIZE * 2 + 3];
-
 /* prototype declaration */
 int parse_block(FILE *inputfp, FILE *outputfp);
 
@@ -665,7 +662,6 @@ int parse_variable(FILE *inputfp, FILE *outputfp) {
     init_temp_names();
     if (parse_variable_name(inputfp, outputfp) == ERROR) { return ERROR; }
     temp_valname = temp_name_root;
-    strcpy(label_valname, temp_name_root->name);
 
     if (token == TLSQPAREN) {
         token = scan(inputfp);
@@ -691,6 +687,9 @@ int parse_variable(FILE *inputfp, FILE *outputfp) {
     init_type(parameter_type);
     if ((type_holder = ref_id(temp_valname->name, current_procname, temp_refnum, &parameter_type)) ==
         ERROR) { return ERROR; }
+    if (command_variable(outputfp, temp_valname->name, current_procname) == ERROR) {
+        return ERROR;
+    }
     release_vallinenum();
     release_names();
 
@@ -724,6 +723,7 @@ int parse_expression(FILE *inputfp, FILE *outputfp) {
         if ((operand1_type % 100) != (operand2_type % 100)) {
             return error("The operands of relational operators have different types");
         }
+        command_expression(outputfp);
         type_holder = TPBOOL;
     }
 
@@ -750,24 +750,17 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp) {
     }
 
     while ((token == TPLUS) || (token == TMINUS) || (token == TOR)) {
-        switch (token) {
-            case TPLUS:
-            case TMINUS:
-                pm_flag = 1;
-                break;
-            default:
-                pm_flag = 0;
-                break;
-        }
+        pm_flag = token;
         if (parse_additive_operator(inputfp, outputfp) == ERROR) { return ERROR; }
 
         if ((operand2_type = parse_term(inputfp, outputfp)) == ERROR) { return ERROR; }
-        if (pm_flag == 1 && (operand1_type != TPINT || operand2_type != TPINT)) {
+        if (pm_flag != TOR && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '+' and '-' must be of type integer");
         }
-        if (pm_flag == 0 && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
+        if (pm_flag == TOR && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
             return error("The operands of 'or' must be of type boolean");
         }
+        command_simple_expression(outputfp, pm_flag);
     }
     type_holder = operand1_type;
 
@@ -780,24 +773,17 @@ int parse_term(FILE *inputfp, FILE *outputfp) {
     if ((operand1_type = parse_factor(inputfp, outputfp)) == ERROR) { return ERROR; }
 
     while ((token == TSTAR) || (token == TDIV) || (token == TAND)) {
-        switch (token) {
-            case TSTAR:
-            case TDIV:
-                md_flag = token;
-                break;
-            default:
-                md_flag = 0;
-                break;
-        }
+        md_flag = token;
         if (parse_multiplicative_operator(inputfp, outputfp) == ERROR) { return ERROR; }
 
         if ((operand2_type = parse_factor(inputfp, outputfp)) == ERROR) { return ERROR; }
-        if (md_flag != 1 && (operand1_type != TPINT || operand2_type != TPINT)) {
+        if (md_flag != TAND && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
-        if (md_flag == 0 && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
+        if (md_flag == TAND && (operand1_type != TPBOOL || operand2_type != TPBOOL)) {
             return error("The operands of 'and' must be of type boolean");
         }
+        command_term(outputfp, md_flag);
     }
     type_holder = operand1_type;
 
@@ -952,7 +938,7 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
         if (type_holder != TPINT && type_holder != TPCHAR) {
             return error("The variable in the input statement is not integer type or char type");
         } else if (type_holder == TPINT) {
-            command_read_int(outputfp, label_valname, current_procname);
+            command_read_int(outputfp);
         } else if (type_holder == TPCHAR) {
             //todo
         }
@@ -964,7 +950,7 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
             if (type_holder != TPINT && type_holder != TPCHAR) {
                 return error("The variable in the input statement is not integer type or char type");
             } else if (type_holder == TPINT) {
-                command_read_int(outputfp, label_valname, current_procname);
+                command_read_int(outputfp);
             } else if (type_holder == TPCHAR) {
                 //todo
             }

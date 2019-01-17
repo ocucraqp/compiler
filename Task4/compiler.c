@@ -135,17 +135,73 @@ int command_process_arguments(FILE *outputfp) {
 }
 
 /* Generate code for outputting character string */
-void command_read_int(FILE *outputfp, char *name, char *procname) {
-    /* Create a label and call READINT */
-    fprintf(outputfp, "\tLD  \tgr1, $%s", name);
-    if (procname != NULL) {
-        fprintf(outputfp, "%%%s", procname);
+int command_variable(FILE *outputfp, char *name, char *procname) {
+    struct ID *p;
+
+    if ((p = search_idtab(name, procname, 1)) == NULL) {
+        return error("%s is not defined.", current_procname);
+    }
+
+    fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);
+    if (p->procname != NULL) {
+        fprintf(outputfp, "%%%s", p->procname);
     }
     fprintf(outputfp, "\n");
+
+    return NORMAL;
+}
+
+/* Generate code to calculate expression */
+void command_expression(FILE *outputfp) {
+    fprintf(outputfp, "\tPOP \tgr2\n");
+    fprintf(outputfp, "\tCPA \tgr2, gr1\n");
+};
+
+/* Generate code to calculate simple expression */
+void command_simple_expression(FILE *outputfp, int opr) {
+    fprintf(outputfp, "\tPOP \tgr2\n");
+    fprintf(outputfp, "\tPOP \tgr1\n");
+    switch (opr) {
+        case TPLUS:
+            fprintf(outputfp, "\tADDA");
+            break;
+        case TMINUS:
+            fprintf(outputfp, "\tSUBA");
+            break;
+        case TOR:
+            fprintf(outputfp, "\tOR  ");
+            break;
+    }
+    fprintf(outputfp, "\tgr1, gr2\n");
+    fprintf(outputfp, "PUSH\t0, gr1\n");
+};
+
+/* Generate code to calculate terms */
+void command_term(FILE *outputfp, int opr) {
+    fprintf(outputfp, "\tPOP \tgr2\n");
+    fprintf(outputfp, "\tPOP \tgr1\n");
+    switch (opr) {
+        case TSTAR:
+            fprintf(outputfp, "\tMULA");
+            break;
+        case TDIV:
+            fprintf(outputfp, "\tDIVA");
+            break;
+        case TAND:
+            fprintf(outputfp, "\tAND ");
+            break;
+    }
+    fprintf(outputfp, "\tgr1, gr2\n");
+    fprintf(outputfp, "PUSH\t0, gr1\n");
+};
+
+/* Generate code for outputting character string */
+void command_read_int(FILE *outputfp) {
     fprintf(outputfp, "\tCALL\tREADINT\n");
     on_pl_flag(PLREADINT);
 }
 
+/* Generate code when output specification is expression */
 void command_write_expression(FILE *outputfp, int type, int length) {
     if (length > 0) {
         fprintf(outputfp, "\tLD  \tgr2, %d\n", length);

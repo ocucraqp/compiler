@@ -228,7 +228,15 @@ int command_start(FILE *fp, char *program_name);
 
 int command_process_arguments(FILE *outputfp);
 
-void command_read_int(FILE *outputfp, char *name, char *procname);
+int command_variable(FILE *outputfp, char *name, char *procname);
+
+void command_expression(FILE *outputfp);
+
+void command_simple_expression(FILE *outputfp, int opr);
+
+void command_term(FILE *outputfp, int opr);
+
+void command_read_int(FILE *outputfp);
 
 void command_write_expression(FILE *outputfp, int type, int length);
 
