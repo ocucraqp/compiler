@@ -134,6 +134,15 @@ int command_process_arguments(FILE *outputfp) {
     }
 }
 
+/* Generate code of if statement */
+int command_condition_statement(FILE *outputfp, char **if_labelname) {
+    if (create_newlabel(if_labelname) == ERROR) { return ERROR; }
+    fprintf(outputfp, "\tPOP \tgr1\n");
+    fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+    fprintf(outputfp, "\tJZE \t%s\n", *if_labelname);
+
+};
+
 /* Generate code for outputting character string */
 int command_variable(FILE *outputfp, char *name, char *procname) {
     struct ID *p;
@@ -142,7 +151,12 @@ int command_variable(FILE *outputfp, char *name, char *procname) {
         return error("%s is not defined.", current_procname);
     }
 
-    fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);
+    //todo
+    if (p->ispara == 1) {
+        fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);
+    } else {
+        fprintf(outputfp, "\tLAD \tgr1, $%s", p->name);
+    }
     if (p->procname != NULL) {
         fprintf(outputfp, "%%%s", p->procname);
     }
@@ -194,6 +208,13 @@ void command_term(FILE *outputfp, int opr) {
     fprintf(outputfp, "\tgr1, gr2\n");
     fprintf(outputfp, "PUSH\t0, gr1\n");
 };
+
+/* Generate code indicating constant
+ * Argument is the value of the constant
+ * true = 0; false = 1;*/
+void command_constant_num(FILE *ouputfp, int num) {
+    fprintf(ouputfp, "\tLAD \tgr1, %d\n", num);
+}
 
 /* Generate code for outputting character string */
 void command_read_int(FILE *outputfp) {

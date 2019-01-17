@@ -139,6 +139,8 @@ extern struct ID {
     char *procname;
     /* procedure name within which this name is defined */ /* NULL if global name */
     struct TYPE *itp;
+    int ispara;
+    /* 1:formal parameter, 0:else(variable) */
     int deflinenum;
     struct LINE *irefp;
     struct ID *nextp;
@@ -203,7 +205,7 @@ extern void release_vallinenum();
 
 struct ID *search_idtab(const char *name, const char *procname, int calling_func);
 
-extern int def_id(const char *name, const char *procname, const struct TYPE *itp, FILE *outputfp);
+extern int def_id(const char *name, const char *procname, const struct TYPE *itp, int ispara, FILE *outputfp);
 
 extern int ref_id(const char *name, const char *procname, int refnum, struct TYPE **temp_type);
 
@@ -228,6 +230,8 @@ int command_start(FILE *fp, char *program_name);
 
 int command_process_arguments(FILE *outputfp);
 
+int command_condition_statement(FILE *outputfp, char **if_labelname);
+
 int command_variable(FILE *outputfp, char *name, char *procname);
 
 void command_expression(FILE *outputfp);
@@ -235,6 +239,8 @@ void command_expression(FILE *outputfp);
 void command_simple_expression(FILE *outputfp, int opr);
 
 void command_term(FILE *outputfp, int opr);
+
+void command_constant_num(FILE *ouputfp, int num);
 
 void command_read_int(FILE *outputfp);
 

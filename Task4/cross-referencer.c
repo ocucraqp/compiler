@@ -121,7 +121,7 @@ struct ID *search_idtab(const char *name, const char *procname, int calling_func
     }
 }
 
-int def_id(const char *name, const char *procname, const struct TYPE *itp, FILE *outputfp) {
+int def_id(const char *name, const char *procname, const struct TYPE *itp, int ispara, FILE *outputfp) {
     /* Define id */
     struct ID *p, **pp, **prevpp;
     char *temp_name;
@@ -170,6 +170,7 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp, FILE 
             free(vallinenumroot);
             vallinenumroot = pline;
         }
+        p->ispara = ispara;
         p->irefp = NULL;
 
         /* id_label output */
