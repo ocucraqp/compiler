@@ -33,6 +33,7 @@ int init_outputfile(char *inputfilename, FILE **fp) {
 
 /* Close the call file after output */
 void end_output(FILE *fp) {
+    fprintf(fp, "\tEND\n");
     if (fclose(fp) == EOF) {
         fprintf(stderr, "\nERROR: Output file can not close.\n");
     };
@@ -93,23 +94,19 @@ int create_id_label(struct ID *p, FILE *outputfp) {
 }
 
 /* Generate code at program start */
-int command_start(FILE *fp, char *program_name) {
-    char *labelname = NULL;
+int command_start(FILE *fp, char *program_name, char **labelname) {
 
     /* program start */
     fprintf(fp, "$$%s\tSTART\n", program_name);
     /* Initialize gr 0 to 0 */
     fprintf(fp, "\tLAD \tgr0, 0\n");
     /* Call a label indicating compound statement of main program */
-    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
-    fprintf(fp, "\tCALL\t%s\n", labelname);
+    if (create_newlabel(labelname) == ERROR) { return ERROR; }
+    fprintf(fp, "\tCALL\t%s\n", *labelname);
     /* End processing */
     fprintf(fp, "\tCALL\tFLUSH\n");
     on_pl_flag(PLFLUSH);
     fprintf(fp, "\tSVC \t0\n");
-
-    free(labelname);
-    labelname = NULL;
 
     return NORMAL;
 }
@@ -174,26 +171,27 @@ void command_expression(FILE *outputfp) {
 /* Generate code to calculate simple expression */
 void command_simple_expression(FILE *outputfp, int opr) {
     fprintf(outputfp, "\tPOP \tgr2\n");
-    fprintf(outputfp, "\tPOP \tgr1\n");
     switch (opr) {
         case TPLUS:
-            fprintf(outputfp, "\tADDA");
+            fprintf(outputfp, "\tADDA\tgr1, gr2\n");
             break;
         case TMINUS:
-            fprintf(outputfp, "\tSUBA");
+            fprintf(outputfp, "\tSUBA\tgr2, gr1\n");
             break;
         case TOR:
-            fprintf(outputfp, "\tOR  ");
+            fprintf(outputfp, "\tOR  \tgr1, gr2\n");
             break;
     }
-    fprintf(outputfp, "\tgr1, gr2\n");
-    fprintf(outputfp, "PUSH\t0, gr1\n");
+    fprintf(outputfp, "\tJOV \tEOVF\n");
+    if (opr == TMINUS) {
+        fprintf(outputfp, "\tLD  \tgr1, gr2\n");
+    }
+    on_pl_flag(PLEROV);
 };
 
 /* Generate code to calculate terms */
 void command_term(FILE *outputfp, int opr) {
     fprintf(outputfp, "\tPOP \tgr2\n");
-    fprintf(outputfp, "\tPOP \tgr1\n");
     switch (opr) {
         case TSTAR:
             fprintf(outputfp, "\tMULA");
@@ -206,7 +204,7 @@ void command_term(FILE *outputfp, int opr) {
             break;
     }
     fprintf(outputfp, "\tgr1, gr2\n");
-    fprintf(outputfp, "PUSH\t0, gr1\n");
+    fprintf(outputfp, "\tJOV \tEOVF\n");
 };
 
 /* Generate code indicating constant

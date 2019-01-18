@@ -218,6 +218,8 @@ extern int check_standard_type(int type);
 extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
 /* compiler.c */
+extern char label_buf[MAX_OUTPUT_BUF_SIZE];
+
 int init_outputfile(char *inputfilename, FILE **fp);
 
 void end_output(FILE *fp);
@@ -226,7 +228,7 @@ int create_newlabel(char **labelname);
 
 int create_id_label(struct ID *p, FILE *outputfp);
 
-int command_start(FILE *fp, char *program_name);
+int command_start(FILE *fp, char *program_name, char **labelname);
 
 int command_process_arguments(FILE *outputfp);
 

@@ -20,7 +20,7 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 struct PARAID paraidroot, *paraidend;
 
 /* prototype declaration */
-int parse_block(FILE *inputfp, FILE *outputfp);
+int parse_block(FILE *inputfp, FILE *outputfp, char *start_labelname);
 
 int parse_variable_declaration(FILE *inputfp, FILE *outputfp);
 
@@ -60,15 +60,15 @@ int parse_assignment_statement(FILE *inputfp, FILE *outputfp);
 
 int parse_left_part(FILE *inputfp, FILE *outputfp);
 
-int parse_variable(FILE *inputfp, FILE *outputfp);
+int parse_variable(FILE *inputfp, FILE *outputfp, int is_call);
 
-int parse_expression(FILE *inputfp, FILE *outputfp);
+int parse_expression(FILE *inputfp, FILE *outputfp, int is_call);
 
-int parse_simple_expression(FILE *inputfp, FILE *outputfp);
+int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call);
 
-int parse_term(FILE *inputfp, FILE *outputfp);
+int parse_term(FILE *inputfp, FILE *outputfp, int is_call);
 
-int parse_factor(FILE *inputfp, FILE *outputfp);
+int parse_factor(FILE *inputfp, FILE *outputfp, int is_call);
 
 int parse_constant(FILE *inputfp, FILE *outputfp);
 
@@ -85,17 +85,19 @@ int parse_output_statement(FILE *inputfp, FILE *outputfp);
 int parse_output_format(FILE *inputfp, FILE *outputfp);
 
 int parse_program(FILE *inputfp, FILE *outputfp) {
+    char *start_labelname = NULL;
+
     if (token != TPROGRAM) { return (error("Keyword 'program' is not found")); }
     token = scan(inputfp);
 
     if (token != TNAME) { return (error("Program name is not found")); }
-    command_start(outputfp, string_attr);
+    command_start(outputfp, string_attr, &start_labelname);
     token = scan(inputfp);
 
     if (token != TSEMI) { return (error("Semicolon is not found")); }
     token = scan(inputfp);
 
-    if (parse_block(inputfp, outputfp) == ERROR) { return ERROR; }
+    if (parse_block(inputfp, outputfp, start_labelname) == ERROR) { return ERROR; }
 
     if (token != TDOT) { return (error("Period is not found at the end of program")); }
     token = scan(inputfp);
@@ -103,7 +105,7 @@ int parse_program(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_block(FILE *inputfp, FILE *outputfp) {
+int parse_block(FILE *inputfp, FILE *outputfp, char *start_labelname) {
     current_procname = NULL;
     while ((token == TVAR) || (token == TPROCEDURE)) {
         if (current_procname != NULL) {
@@ -125,7 +127,12 @@ int parse_block(FILE *inputfp, FILE *outputfp) {
         free(current_procname);
         current_procname = NULL;
     }
+
+    fprintf(outputfp, "%s\n", start_labelname);
+
     if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+
+    fprintf(outputfp, "\tRET\n");
 
     return NORMAL;
 }
@@ -471,7 +478,7 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp) {
     if (token != TIF) { return (error("Keyword 'if' is not found")); }
     token = scan(inputfp);
 
-    if ((expression_type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
     if (expression_type_holder != TPBOOL) {
         return error("The type of the expression in the condition statement must be boolean");
     }
@@ -507,7 +514,7 @@ int parse_iteration_statement(FILE *inputfp, FILE *outputfp) {
     if (create_newlabel(&(while_labelname[0])) == ERROR) { return ERROR; }
     fprintf(outputfp, "%s\n", while_labelname[0]);
 
-    if ((expression_type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
     if (expression_type_holder != TPBOOL) {
         return error("The type of the expression in the iteration statement must be boolean");
     }
@@ -531,6 +538,7 @@ int parse_iteration_statement(FILE *inputfp, FILE *outputfp) {
     if (parse_statement(inputfp, outputfp) == ERROR) { return ERROR; }
     whether_inside_iteration--;
 
+    fprintf(outputfp, "\tJUMP\t%s\n", while_labelname[0]);
     fprintf(outputfp, "%s\n", while_labelname[1]);
 
     return NORMAL;
@@ -549,15 +557,16 @@ int parse_exit_statement(FILE *inputfp, FILE *outputfp) {
 
 int parse_call_statement(FILE *inputfp, FILE *outputfp) {
     struct TYPE *parameter_type;
-    char *temp_procname;
-    temp_procname == NULL;
+    char *call_procname;
+    char temp_procname[MAX_IDENTIFIER_SIZE + 1];
+    call_procname == NULL;
 
     if (current_procname != NULL) {
-        if ((temp_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
+        if ((call_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
             return error("can not malloc-1 in parse_call_statement");
         }
-        init_char_array(temp_procname, MAX_IDENTIFIER_SIZE + 1);
-        strncpy(temp_procname, current_procname, MAX_IDENTIFIER_SIZE);
+        init_char_array(call_procname, MAX_IDENTIFIER_SIZE + 1);
+        strncpy(call_procname, current_procname, MAX_IDENTIFIER_SIZE);
     }
 
     if (token != TCALL) { return (error("Keyword 'call' is not found")); }
@@ -567,8 +576,8 @@ int parse_call_statement(FILE *inputfp, FILE *outputfp) {
 
     if (current_procname != NULL) {
         /* If current_procname and temp_procname are the same, it is judged as a recursive call */
-        if (temp_procname != NULL) {
-            if (strncmp(current_procname, temp_procname, MAX_IDENTIFIER_SIZE) == 0) {
+        if (call_procname != NULL) {
+            if (strncmp(current_procname, call_procname, MAX_IDENTIFIER_SIZE) == 0) {
                 return error("Recursive calls are not allowed");
             }
         }
@@ -578,13 +587,15 @@ int parse_call_statement(FILE *inputfp, FILE *outputfp) {
         init_type(parameter_type);
         if (ref_id(current_procname, NULL, -1, &parameter_type) == ERROR) { return ERROR; }
         release_vallinenum();
-        if (temp_procname == NULL) {
+        strncpy(temp_procname, current_procname, MAX_IDENTIFIER_SIZE + 1);
+        if (call_procname == NULL) {
+            free(current_procname);
             current_procname = NULL;
         } else {
             init_char_array(current_procname, MAX_IDENTIFIER_SIZE + 1);
-            strncpy(current_procname, temp_procname, MAX_IDENTIFIER_SIZE);
-            free(temp_procname);
-            temp_procname = NULL;
+            strncpy(current_procname, call_procname, MAX_IDENTIFIER_SIZE);
+            free(call_procname);
+            call_procname = NULL;
         }
     } else {
         return error("Procedure name is not found");
@@ -599,6 +610,8 @@ int parse_call_statement(FILE *inputfp, FILE *outputfp) {
         token = scan(inputfp);
     }
 
+    fprintf(outputfp, "\tCALL\t$%s\n", temp_procname);
+
     return NORMAL;
 }
 
@@ -612,7 +625,7 @@ int parse_expressions(FILE *inputfp, FILE *outputfp, struct TYPE *parameter_type
         temp_type = &(parameter_type->paratp);
     }
 
-    if ((type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((type_holder = parse_expression(inputfp, outputfp, 1)) == ERROR) { return ERROR; }
     i++;
     if (type_holder != (*temp_type)->ttype) {
         return error("The type of the 1st argument is incorrect.");
@@ -621,7 +634,7 @@ int parse_expressions(FILE *inputfp, FILE *outputfp, struct TYPE *parameter_type
     while (token == TCOMMA) {
         token = scan(inputfp);
 
-        if ((type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+        if ((type_holder = parse_expression(inputfp, outputfp, 1)) == ERROR) { return ERROR; }
         i++;
         temp_type = &((*temp_type)->paratp);
         if ((*temp_type) != NULL) {
@@ -641,6 +654,8 @@ int parse_expressions(FILE *inputfp, FILE *outputfp, struct TYPE *parameter_type
             return error("Too many arguments.");
         }
     }
+
+    fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
     if ((*temp_type)->paratp != NULL) {
         return error("Argument shortage");
@@ -666,7 +681,7 @@ int parse_assignment_statement(FILE *inputfp, FILE *outputfp) {
     if (token != TASSIGN) { return (error("Symbol ':=' is not found")); }
     token = scan(inputfp);
 
-    if ((expression_type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
 
     if ((type_holder % 100) != (expression_type_holder % 100)) {
         return error("The type of the expression differs from the left part");
@@ -681,12 +696,12 @@ int parse_assignment_statement(FILE *inputfp, FILE *outputfp) {
 int parse_left_part(FILE *inputfp, FILE *outputfp) {
     int type_holder = NORMAL;
 
-    if ((type_holder = parse_variable(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((type_holder = parse_variable(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
 
     return type_holder;
 }
 
-int parse_variable(FILE *inputfp, FILE *outputfp) {
+int parse_variable(FILE *inputfp, FILE *outputfp, int is_call) {
     int temp_refnum = -1, type_holder = NORMAL, expression_type_holder = NORMAL;
     struct TYPE *parameter_type;
     struct NAME *temp_valname;
@@ -703,7 +718,7 @@ int parse_variable(FILE *inputfp, FILE *outputfp) {
             expression_type_holder = TPINT;
             token = scan(inputfp);
         } else {
-            if ((expression_type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
             temp_refnum = 0;
         }
 
@@ -741,10 +756,10 @@ int parse_variable(FILE *inputfp, FILE *outputfp) {
     return type_holder;
 }
 
-int parse_expression(FILE *inputfp, FILE *outputfp) {
+int parse_expression(FILE *inputfp, FILE *outputfp, int is_call) {
     int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    if ((operand1_type = parse_simple_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_simple_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
     type_holder = operand1_type;
 
     while ((token == TEQUAL) || (token == TNOTEQ) || (token == TLE) || (token == TLEEQ) || (token == TGR) ||
@@ -754,7 +769,7 @@ int parse_expression(FILE *inputfp, FILE *outputfp) {
         fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_simple_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_simple_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
         if ((operand1_type % 100) != (operand2_type % 100)) {
             return error("The operands of relational operators have different types");
         }
@@ -765,7 +780,7 @@ int parse_expression(FILE *inputfp, FILE *outputfp) {
     return type_holder;
 }
 
-int parse_simple_expression(FILE *inputfp, FILE *outputfp) {
+int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call) {
     int type_holder = NORMAL, pm_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
     switch (token) {
@@ -779,7 +794,7 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp) {
             break;
     }
 
-    if ((operand1_type = parse_term(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_term(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
     if (pm_flag == 1 && operand1_type != TPINT) {
         return error("The operands of + and - must be of type integer");
     }
@@ -788,7 +803,10 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp) {
         pm_flag = token;
         if (parse_additive_operator(inputfp, outputfp) == ERROR) { return ERROR; }
 
-        if ((operand2_type = parse_term(inputfp, outputfp)) == ERROR) { return ERROR; }
+        fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
+        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+
+        if ((operand2_type = parse_term(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
         if (pm_flag != TOR && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '+' and '-' must be of type integer");
         }
@@ -802,16 +820,22 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp) {
     return type_holder;
 }
 
-int parse_term(FILE *inputfp, FILE *outputfp) {
+int parse_term(FILE *inputfp, FILE *outputfp, int is_call) {
+    char *labelname = NULL;
+    char output_buf_add[MAX_OUTPUT_BUF_SIZE];
+
     int type_holder = NORMAL, md_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    if ((operand1_type = parse_factor(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_factor(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
 
     while ((token == TSTAR) || (token == TDIV) || (token == TAND)) {
         md_flag = token;
         if (parse_multiplicative_operator(inputfp, outputfp) == ERROR) { return ERROR; }
 
-        if ((operand2_type = parse_factor(inputfp, outputfp)) == ERROR) { return ERROR; }
+        fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
+        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+
+        if ((operand2_type = parse_factor(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
         if (md_flag != TAND && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
@@ -819,18 +843,32 @@ int parse_term(FILE *inputfp, FILE *outputfp) {
             return error("The operands of 'and' must be of type boolean");
         }
         command_term(outputfp, md_flag);
+
+        if (is_call == 1) {
+            create_newlabel(&labelname);
+            fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
+            fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
+            fprintf(outputfp, "\tPUSH\t0, gr2\n");
+            init_char_array(output_buf_add, MAX_OUTPUT_BUF_SIZE);
+            snprintf(output_buf_add, MAX_OUTPUT_BUF_SIZE, "%s\tDC  \t0\n", labelname);
+            if ((strlen(label_buf) + strlen(output_buf_add)) >= MAX_OUTPUT_BUF_SIZE) {
+                return error("Over BUF_SIZE for output");
+            } else {
+                strcat(label_buf, output_buf_add);
+            }
+        }
     }
     type_holder = operand1_type;
 
     return type_holder;
 }
 
-int parse_factor(FILE *inputfp, FILE *outputfp) {
+int parse_factor(FILE *inputfp, FILE *outputfp, int is_call) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
 
     switch (token) {
         case TNAME:
-            if ((type_holder = parse_variable(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
             break;
         case TNUMBER:
         case TFALSE:
@@ -841,7 +879,7 @@ int parse_factor(FILE *inputfp, FILE *outputfp) {
         case TLPAREN:
             token = scan(inputfp);
 
-            if ((type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
                 return (error("Symbol ')' is not found at the end of factor"));
@@ -851,7 +889,7 @@ int parse_factor(FILE *inputfp, FILE *outputfp) {
         case TNOT:
             token = scan(inputfp);
 
-            if ((type_holder = parse_factor(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_factor(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
             if (type_holder != TPBOOL) {
                 return error("The operand of 'not' must be of type boolean.");
             }
@@ -866,7 +904,7 @@ int parse_factor(FILE *inputfp, FILE *outputfp) {
             }
             token = scan(inputfp);
 
-            if ((expression_type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
             if (check_standard_type(expression_type_holder) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
@@ -976,7 +1014,7 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
     if (token == TLPAREN) {
         token = scan(inputfp);
 
-        if ((type_holder = parse_variable(inputfp, outputfp)) == ERROR) { return ERROR; }
+        if ((type_holder = parse_variable(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
         if (type_holder != TPINT && type_holder != TPCHAR) {
             return error("The variable in the input statement is not integer type or char type");
         } else if (type_holder == TPINT) {
@@ -988,7 +1026,7 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
         while (token == TCOMMA) {
             token = scan(inputfp);
 
-            if ((type_holder = parse_variable(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
             if (type_holder != TPINT && type_holder != TPCHAR) {
                 return error("The variable in the input statement is not integer type or char type");
             } else if (type_holder == TPINT) {
@@ -1049,7 +1087,7 @@ int parse_output_format(FILE *inputfp, FILE *outputfp) {
     switch (token) {
         case TSTRING:
             str_length = (int) strlen(string_attr);
-            if (str_length == 0 || str_length > 2) {
+            if (str_length == 0 || str_length >= 2) {
                 command_write_string(outputfp, string_attr);
                 token = scan(inputfp);
                 break;
@@ -1067,7 +1105,7 @@ int parse_output_format(FILE *inputfp, FILE *outputfp) {
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
-            if ((type_holder = parse_expression(inputfp, outputfp)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
             if (check_standard_type(type_holder) == ERROR) { return ERROR; }
 
             if (token == TCOLON) {
