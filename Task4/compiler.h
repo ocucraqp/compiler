@@ -234,7 +234,7 @@ int command_process_arguments(FILE *outputfp);
 
 int command_condition_statement(FILE *outputfp, char **if_labelname);
 
-int command_variable(FILE *outputfp, char *name, char *procname);
+int command_variable(FILE *outputfp, char *name, char *procname, int is_incall);
 
 void command_expression(FILE *outputfp);
 

@@ -140,19 +140,19 @@ int command_condition_statement(FILE *outputfp, char **if_labelname) {
 
 };
 
-/* Generate code for outputting character string */
-int command_variable(FILE *outputfp, char *name, char *procname) {
+/* Generate code for outputting character string
+ * When this function is called in a call statement,
+ * it reads the address to gr1 */
+int command_variable(FILE *outputfp, char *name, char *procname, int is_incall) {
     struct ID *p;
 
     if ((p = search_idtab(name, procname, 1)) == NULL) {
         return error("%s is not defined.", current_procname);
     }
-
-    //todo
-    if (p->ispara == 1) {
-        fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);
+    if (is_incall == 1) {
+        fprintf(outputfp, "\tLAD  \tgr1, $%s", p->name);
     } else {
-        fprintf(outputfp, "\tLAD \tgr1, $%s", p->name);
+        fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);
     }
     if (p->procname != NULL) {
         fprintf(outputfp, "%%%s", p->procname);
@@ -212,7 +212,7 @@ void command_term(FILE *outputfp, int opr) {
  * true = 1; false = 0;*/
 void command_constant_num(FILE *ouputfp, int num) {
     if (num == 0) {
-        fprintf(ouputfp, "\tLAD \tgr1, gr0\n");
+        fprintf(ouputfp, "\tLD 　\tgr1, gr0\n");
     } else {
         fprintf(ouputfp, "\tLAD \tgr1, %d\n", num);
     }

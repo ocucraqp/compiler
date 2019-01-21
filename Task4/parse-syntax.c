@@ -40,13 +40,13 @@ int parse_procedure_name(FILE *inputfp, FILE *outputfp);
 
 int parse_formal_parameters(FILE *inputfp, FILE *outputfp);
 
-int parse_compound_statement(FILE *inputfp, FILE *outputfp);
+int parse_compound_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
-int parse_statement(FILE *inputfp, FILE *outputfp);
+int parse_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
-int parse_condition_statement(FILE *inputfp, FILE *outputfp);
+int parse_condition_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
-int parse_iteration_statement(FILE *inputfp, FILE *outputfp);
+int parse_iteration_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
 int parse_exit_statement(FILE *inputfp, FILE *outputfp);
 
@@ -56,7 +56,7 @@ int parse_expressions(FILE *inputfp, FILE *outputfp, struct TYPE *parameter_type
 
 int parse_return_statement(FILE *inputfp, FILE *outputfp);
 
-int parse_assignment_statement(FILE *inputfp, FILE *outputfp);
+int parse_assignment_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
 int parse_left_part(FILE *inputfp, FILE *outputfp);
 
@@ -130,7 +130,7 @@ int parse_block(FILE *inputfp, FILE *outputfp, char *start_labelname) {
 
     fprintf(outputfp, "%s\n", start_labelname);
 
-    if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+    if (parse_compound_statement(inputfp, outputfp, 0) == ERROR) { return ERROR; }
 
     fprintf(outputfp, "\tRET\n");
 
@@ -316,7 +316,7 @@ int parse_subprogram_declaration(FILE *inputfp, FILE *outputfp) {
         command_process_arguments(outputfp);
     }
 
-    if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+    if (parse_compound_statement(inputfp, outputfp, 1) == ERROR) { return ERROR; }
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     token = scan(inputfp);
@@ -414,17 +414,17 @@ int parse_formal_parameters(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_compound_statement(FILE *inputfp, FILE *outputfp) {
+int parse_compound_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     if (token != TBEGIN) { return (error("Keyword 'begin' is not found")); }
     token = scan(inputfp);
 
-    if (parse_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+    if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
 
     while (token == TSEMI) {
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
         token = scan(inputfp);
 
-        if (parse_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+        if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
     }
 
     if (token != TEND) { return (error("Keyword 'end' is not found")); }
@@ -433,16 +433,16 @@ int parse_compound_statement(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_statement(FILE *inputfp, FILE *outputfp) {
+int parse_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     switch (token) {
         case TNAME:
-            if (parse_assignment_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+            if (parse_assignment_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
             break;
         case TIF:
-            if (parse_condition_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+            if (parse_condition_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
             break;
         case TWHILE:
-            if (parse_iteration_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+            if (parse_iteration_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
             break;
         case TBREAK:
             if (parse_exit_statement(inputfp, outputfp) == ERROR) { return ERROR; }
@@ -462,7 +462,7 @@ int parse_statement(FILE *inputfp, FILE *outputfp) {
             if (parse_output_statement(inputfp, outputfp) == ERROR) { return ERROR; }
             break;
         case TBEGIN:
-            if (parse_compound_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+            if (parse_compound_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
             break;
         default:
             break;
@@ -471,7 +471,7 @@ int parse_statement(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_condition_statement(FILE *inputfp, FILE *outputfp) {
+int parse_condition_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int expression_type_holder = NORMAL;
     char *if_labelname = NULL, *else_labelname = NULL;
 
@@ -486,7 +486,7 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp) {
 
     if (token != TTHEN) { return (error("Keyword 'then is not found")); }
     token = scan(inputfp);
-    if (parse_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+    if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
 
     if (token == TELSE) {
         if (create_newlabel(&else_labelname) == ERROR) { return ERROR; }
@@ -495,7 +495,7 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp) {
 
         token = scan(inputfp);
 
-        if (parse_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+        if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
         fprintf(outputfp, "%s\n", else_labelname);
     } else {
         fprintf(outputfp, "%s\n", if_labelname);
@@ -504,7 +504,7 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_iteration_statement(FILE *inputfp, FILE *outputfp) {
+int parse_iteration_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int expression_type_holder = NORMAL;
     char *while_labelname[4] = {NULL};
 
@@ -535,7 +535,7 @@ int parse_iteration_statement(FILE *inputfp, FILE *outputfp) {
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
     fprintf(outputfp, "\tJZE \t%s\n", while_labelname[1]);
 
-    if (parse_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+    if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
     whether_inside_iteration--;
 
     fprintf(outputfp, "\tJUMP\t%s\n", while_labelname[0]);
@@ -671,7 +671,7 @@ int parse_return_statement(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_assignment_statement(FILE *inputfp, FILE *outputfp) {
+int parse_assignment_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
 
     if ((type_holder = parse_left_part(inputfp, outputfp)) == ERROR) { return ERROR; }
@@ -734,7 +734,7 @@ int parse_variable(FILE *inputfp, FILE *outputfp, int is_call) {
     init_type(parameter_type);
     if ((type_holder = ref_id(temp_valname->name, current_procname, temp_refnum, &parameter_type)) ==
         ERROR) { return ERROR; }
-    if (command_variable(outputfp, temp_valname->name, current_procname) == ERROR) {
+    if (command_variable(outputfp, temp_valname->name, current_procname, is_call) == ERROR) {
         return ERROR;
     }
     release_vallinenum();
