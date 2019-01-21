@@ -134,7 +134,6 @@ int command_process_arguments(FILE *outputfp) {
 /* Generate code of if statement */
 int command_condition_statement(FILE *outputfp, char **if_labelname) {
     if (create_newlabel(if_labelname) == ERROR) { return ERROR; }
-    fprintf(outputfp, "\tPOP \tgr1\n");
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
     fprintf(outputfp, "\tJZE \t%s\n", *if_labelname);
 
@@ -163,9 +162,50 @@ int command_variable(FILE *outputfp, char *name, char *procname, int is_incall) 
 }
 
 /* Generate code to calculate expression */
-void command_expression(FILE *outputfp) {
+int command_expression(FILE *outputfp, int opr) {
+    char *ok_labelname = NULL, *ng_labelname;
+
     fprintf(outputfp, "\tPOP \tgr2\n");
     fprintf(outputfp, "\tCPA \tgr2, gr1\n");
+    if (create_newlabel(&ok_labelname) == ERROR) { return ERROR; }
+    if (create_newlabel(&ng_labelname) == ERROR) { return ERROR; }
+    switch (opr) {
+        case TEQUAL:
+            fprintf(outputfp, "\tJZE \t%s\n", ok_labelname);
+            break;
+        case TNOTEQ:
+            fprintf(outputfp, "\tJNZ \t%s\n", ok_labelname);
+            break;
+        case TLE:
+            fprintf(outputfp, "\tJMI \t%s\n", ok_labelname);
+            break;
+        case TLEEQ:
+            fprintf(outputfp, "\tJPL \t%s\n", ok_labelname);
+            //todo →いらないのか　fprintf(outputfp, "\tJZE \t%s\n", ok_labelname);
+            break;
+        case TGR:
+            fprintf(outputfp, "\tJPL \t%s\n", ok_labelname);
+            break;
+        case TGREQ:
+            fprintf(outputfp, "\tJMI \t%s\n", ok_labelname);
+            //todo →いらないのか　fprintf(outputfp, "\tJZE \t%s\n", ok_labelname);
+            break;
+        default:
+            break;
+    }
+    if (opr == TLEEQ || opr == TGREQ) {
+        fprintf(outputfp, "\tLAD \tgr1, 1\n");
+    } else {
+        fprintf(outputfp, "\tLD  \tgr1, gr0\n");
+    }
+    fprintf(outputfp, "\tJUMP\t%s\n", ng_labelname);
+    fprintf(outputfp, "%s\n", ok_labelname);
+    if (opr == TLEEQ || opr == TGREQ) {
+        fprintf(outputfp, "\tLD  \tgr1, gr0\n");
+    } else {
+        fprintf(outputfp, "\tLAD \tgr1, 1\n");
+    }
+    fprintf(outputfp, "%s\n", ng_labelname);
 };
 
 /* Generate code to calculate simple expression */
@@ -186,7 +226,7 @@ void command_simple_expression(FILE *outputfp, int opr) {
     if (opr == TMINUS) {
         fprintf(outputfp, "\tLD  \tgr1, gr2\n");
     }
-    on_pl_flag(PLEROV);
+    on_pl_flag(PLEOVF);
 };
 
 /* Generate code to calculate terms */
@@ -194,17 +234,23 @@ void command_term(FILE *outputfp, int opr) {
     fprintf(outputfp, "\tPOP \tgr2\n");
     switch (opr) {
         case TSTAR:
-            fprintf(outputfp, "\tMULA");
+            fprintf(outputfp, "\tMULA\tgr1, gr2\n");
             break;
         case TDIV:
-            fprintf(outputfp, "\tDIVA");
+            fprintf(outputfp, "\tDIVA\tgr2, gr1\n");
             break;
         case TAND:
-            fprintf(outputfp, "\tAND ");
+            fprintf(outputfp, "\tAND \tgr1, gr2\n");
             break;
     }
-    fprintf(outputfp, "\tgr1, gr2\n");
-    fprintf(outputfp, "\tJOV \tEOVF\n");
+    if (opr == TDIV) {
+        fprintf(outputfp, "\tJOV \tE0DIV\n");
+        on_pl_flag(PLE0DIV);
+        fprintf(outputfp, "\tLD  \tgr1, gr2\n");
+    } else {
+        fprintf(outputfp, "\tJOV \tEOVF\n");
+        on_pl_flag(PLEOVF);
+    }
 };
 
 /* Generate code indicating constant

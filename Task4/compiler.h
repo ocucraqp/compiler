@@ -236,7 +236,7 @@ int command_condition_statement(FILE *outputfp, char **if_labelname);
 
 int command_variable(FILE *outputfp, char *name, char *procname, int is_incall);
 
-void command_expression(FILE *outputfp);
+int command_expression(FILE *outputfp, int opr);
 
 void command_simple_expression(FILE *outputfp, int opr);
 
