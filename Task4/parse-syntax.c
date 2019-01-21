@@ -58,17 +58,17 @@ int parse_return_statement(FILE *inputfp, FILE *outputfp);
 
 int parse_assignment_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
-int parse_left_part(FILE *inputfp, FILE *outputfp);
+int parse_left_part(FILE *inputfp, FILE *outputfp, struct ID **p, int is_insubproc, int is_inassign);
 
-int parse_variable(FILE *inputfp, FILE *outputfp, int is_call);
+int parse_variable(FILE *inputfp, FILE *outputfp, struct ID **p, int is_incall, int is_insubproc, int is_inassign);
 
-int parse_expression(FILE *inputfp, FILE *outputfp, int is_call);
+int parse_expression(FILE *inputfp, FILE *outputfp, int is_incall);
 
-int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call);
+int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_incall);
 
-int parse_term(FILE *inputfp, FILE *outputfp, int is_call);
+int parse_term(FILE *inputfp, FILE *outputfp, int is_incall);
 
-int parse_factor(FILE *inputfp, FILE *outputfp, int is_call);
+int parse_factor(FILE *inputfp, FILE *outputfp, int is_incall);
 
 int parse_constant(FILE *inputfp, FILE *outputfp);
 
@@ -673,10 +673,13 @@ int parse_return_statement(FILE *inputfp, FILE *outputfp) {
 
 int parse_assignment_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
+    struct ID *p;
 
-    if ((type_holder = parse_left_part(inputfp, outputfp)) == ERROR) { return ERROR; }
+    if ((type_holder = parse_left_part(inputfp, outputfp, &p, is_insubproc, 1)) == ERROR) { return ERROR; }
 
-    fprintf(outputfp, "\tPUSH\t0, gr1\n");
+    if (is_insubproc) {
+        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+    }
 
     if (token != TASSIGN) { return (error("Symbol ':=' is not found")); }
     token = scan(inputfp);
@@ -687,21 +690,29 @@ int parse_assignment_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) 
         return error("The type of the expression differs from the left part");
     }
 
-    fprintf(outputfp, "\tPOP \tgr2\n");
-    fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
+    if (is_insubproc) {
+        fprintf(outputfp, "\tPOP \tgr2\n");
+        fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
+    } else {
+        fprintf(outputfp, "\tST  \tgr1, $%s", p->name);
+        if (p->procname != NULL) {
+            fprintf(outputfp, "%%%s", p->procname);
+        }
+        fprintf(outputfp, "\n");
+    }
 
     return NORMAL;
 }
 
-int parse_left_part(FILE *inputfp, FILE *outputfp) {
+int parse_left_part(FILE *inputfp, FILE *outputfp, struct ID **p, int is_insubproc, int is_inassign) {
     int type_holder = NORMAL;
 
-    if ((type_holder = parse_variable(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
+    if ((type_holder = parse_variable(inputfp, outputfp, p, 0, is_insubproc, is_inassign)) == ERROR) { return ERROR; }
 
     return type_holder;
 }
 
-int parse_variable(FILE *inputfp, FILE *outputfp, int is_call) {
+int parse_variable(FILE *inputfp, FILE *outputfp, struct ID **p, int is_incall, int is_insubproc, int is_inassign) {
     int temp_refnum = -1, type_holder = NORMAL, expression_type_holder = NORMAL;
     struct TYPE *parameter_type;
     struct NAME *temp_valname;
@@ -718,7 +729,7 @@ int parse_variable(FILE *inputfp, FILE *outputfp, int is_call) {
             expression_type_holder = TPINT;
             token = scan(inputfp);
         } else {
-            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
             temp_refnum = 0;
         }
 
@@ -734,8 +745,12 @@ int parse_variable(FILE *inputfp, FILE *outputfp, int is_call) {
     init_type(parameter_type);
     if ((type_holder = ref_id(temp_valname->name, current_procname, temp_refnum, &parameter_type)) ==
         ERROR) { return ERROR; }
-    if (command_variable(outputfp, temp_valname->name, current_procname, is_call) == ERROR) {
-        return ERROR;
+    if (!is_insubproc && is_inassign) {
+        *p = search_idtab(temp_valname->name, current_procname, 1);
+    } else {
+        if (command_variable(outputfp, temp_valname->name, current_procname, is_incall) == ERROR) {
+            return ERROR;
+        }
     }
     release_vallinenum();
     release_names();
@@ -756,10 +771,10 @@ int parse_variable(FILE *inputfp, FILE *outputfp, int is_call) {
     return type_holder;
 }
 
-int parse_expression(FILE *inputfp, FILE *outputfp, int is_call) {
+int parse_expression(FILE *inputfp, FILE *outputfp, int is_incall) {
     int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    if ((operand1_type = parse_simple_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_simple_expression(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
     type_holder = operand1_type;
 
     while ((token == TEQUAL) || (token == TNOTEQ) || (token == TLE) || (token == TLEEQ) || (token == TGR) ||
@@ -769,7 +784,7 @@ int parse_expression(FILE *inputfp, FILE *outputfp, int is_call) {
         fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_simple_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_simple_expression(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
         if ((operand1_type % 100) != (operand2_type % 100)) {
             return error("The operands of relational operators have different types");
         }
@@ -780,7 +795,7 @@ int parse_expression(FILE *inputfp, FILE *outputfp, int is_call) {
     return type_holder;
 }
 
-int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call) {
+int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_incall) {
     int type_holder = NORMAL, pm_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
     switch (token) {
@@ -794,7 +809,7 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call) {
             break;
     }
 
-    if ((operand1_type = parse_term(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_term(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
     if (pm_flag == 1 && operand1_type != TPINT) {
         return error("The operands of + and - must be of type integer");
     }
@@ -806,7 +821,7 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call) {
         fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_term(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_term(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
         if (pm_flag != TOR && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '+' and '-' must be of type integer");
         }
@@ -820,13 +835,13 @@ int parse_simple_expression(FILE *inputfp, FILE *outputfp, int is_call) {
     return type_holder;
 }
 
-int parse_term(FILE *inputfp, FILE *outputfp, int is_call) {
+int parse_term(FILE *inputfp, FILE *outputfp, int is_incall) {
     char *labelname = NULL;
     char output_buf_add[MAX_OUTPUT_BUF_SIZE];
 
     int type_holder = NORMAL, md_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    if ((operand1_type = parse_factor(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_factor(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
 
     while ((token == TSTAR) || (token == TDIV) || (token == TAND)) {
         md_flag = token;
@@ -835,7 +850,7 @@ int parse_term(FILE *inputfp, FILE *outputfp, int is_call) {
         fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_factor(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_factor(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
         if (md_flag != TAND && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
@@ -844,7 +859,7 @@ int parse_term(FILE *inputfp, FILE *outputfp, int is_call) {
         }
         command_term(outputfp, md_flag);
 
-        if (is_call == 1) {
+        if (is_incall == 1) {
             create_newlabel(&labelname);
             fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
             fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
@@ -863,12 +878,14 @@ int parse_term(FILE *inputfp, FILE *outputfp, int is_call) {
     return type_holder;
 }
 
-int parse_factor(FILE *inputfp, FILE *outputfp, int is_call) {
+int parse_factor(FILE *inputfp, FILE *outputfp, int is_incall) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
+    struct ID *p;
 
     switch (token) {
         case TNAME:
-            if ((type_holder = parse_variable(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+            //todo parse_variable(inputfp, outputfp, &p, is_call, 0, 0) 5つめの引数
+            if ((type_holder = parse_variable(inputfp, outputfp, &p, is_incall, 0, 0)) == ERROR) { return ERROR; }
             break;
         case TNUMBER:
         case TFALSE:
@@ -879,7 +896,7 @@ int parse_factor(FILE *inputfp, FILE *outputfp, int is_call) {
         case TLPAREN:
             token = scan(inputfp);
 
-            if ((type_holder = parse_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
                 return (error("Symbol ')' is not found at the end of factor"));
@@ -889,7 +906,7 @@ int parse_factor(FILE *inputfp, FILE *outputfp, int is_call) {
         case TNOT:
             token = scan(inputfp);
 
-            if ((type_holder = parse_factor(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_factor(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
             if (type_holder != TPBOOL) {
                 return error("The operand of 'not' must be of type boolean.");
             }
@@ -904,7 +921,7 @@ int parse_factor(FILE *inputfp, FILE *outputfp, int is_call) {
             }
             token = scan(inputfp);
 
-            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_call)) == ERROR) { return ERROR; }
+            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_incall)) == ERROR) { return ERROR; }
             if (check_standard_type(expression_type_holder) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
@@ -1000,6 +1017,7 @@ int parse_relational_operator(FILE *inputfp, FILE *outputfp) {
 
 int parse_input_statement(FILE *inputfp, FILE *outputfp) {
     int is_ln = token;
+    struct ID *p;
 
     int type_holder = NORMAL;
     switch (token) {
@@ -1014,7 +1032,8 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
     if (token == TLPAREN) {
         token = scan(inputfp);
 
-        if ((type_holder = parse_variable(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
+        //todo parse_variable(inputfp, outputfp, &p, 0, 0, 0) 5つめの引数
+        if ((type_holder = parse_variable(inputfp, outputfp, &p, 0, 0, 0)) == ERROR) { return ERROR; }
         if (type_holder != TPINT && type_holder != TPCHAR) {
             return error("The variable in the input statement is not integer type or char type");
         } else if (type_holder == TPINT) {
@@ -1026,7 +1045,8 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
         while (token == TCOMMA) {
             token = scan(inputfp);
 
-            if ((type_holder = parse_variable(inputfp, outputfp, 0)) == ERROR) { return ERROR; }
+            //todo parse_variable(inputfp, outputfp, &p, 0, 0, 0) 5つめの引数
+            if ((type_holder = parse_variable(inputfp, outputfp, &p, 0, 0, 0)) == ERROR) { return ERROR; }
             if (type_holder != TPINT && type_holder != TPCHAR) {
                 return error("The variable in the input statement is not integer type or char type");
             } else if (type_holder == TPINT) {
