@@ -209,9 +209,13 @@ void command_term(FILE *outputfp, int opr) {
 
 /* Generate code indicating constant
  * Argument is the value of the constant
- * true = 0; false = 1;*/
+ * true = 1; false = 0;*/
 void command_constant_num(FILE *ouputfp, int num) {
-    fprintf(ouputfp, "\tLAD \tgr1, %d\n", num);
+    if (num == 0) {
+        fprintf(ouputfp, "\tLAD \tgr1, gr0\n");
+    } else {
+        fprintf(ouputfp, "\tLAD \tgr1, %d\n", num);
+    }
 }
 
 /* Generate code for outputting character string */

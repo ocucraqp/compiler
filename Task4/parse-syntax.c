@@ -929,12 +929,12 @@ int parse_constant(FILE *inputfp, FILE *outputfp) {
             token = scan(inputfp);
             break;
         case TFALSE:
-            command_constant_num(outputfp, 1);
+            command_constant_num(outputfp, 0);
             type_holder = TPBOOL;
             token = scan(inputfp);
             break;
         case TTRUE:
-            command_constant_num(outputfp, 0);
+            command_constant_num(outputfp, 1);
             type_holder = TPBOOL;
             token = scan(inputfp);
             break;
@@ -1091,8 +1091,6 @@ int parse_output_format(FILE *inputfp, FILE *outputfp) {
                 command_write_string(outputfp, string_attr);
                 token = scan(inputfp);
                 break;
-            } else {
-                return error("The length of the character string in output format must be other than 1");
             }
         case TPLUS:
         case TMINUS:
