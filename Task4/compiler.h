@@ -232,7 +232,7 @@ int command_start(FILE *fp, char *program_name, char **labelname);
 
 int command_process_arguments(FILE *outputfp);
 
-int command_condition_statement(FILE *outputfp, char **if_labelname);
+int command_condition_statement(FILE *outputfp, char *if_labelname);
 
 int command_variable(FILE *outputfp, char *name, char *procname, int is_incall);
 
@@ -242,7 +242,9 @@ void command_simple_expression(FILE *outputfp, int opr);
 
 void command_term(FILE *outputfp, int opr);
 
-void command_constant_num(FILE *ouputfp, int num);
+int command_factor_cast(FILE *outputfp, int cast_type, int expression_type);
+
+void command_constant_num(FILE *outputfp, int num);
 
 void command_read_int(FILE *outputfp);
 

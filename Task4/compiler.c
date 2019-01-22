@@ -132,10 +132,9 @@ int command_process_arguments(FILE *outputfp) {
 }
 
 /* Generate code of if statement */
-int command_condition_statement(FILE *outputfp, char **if_labelname) {
-    if (create_newlabel(if_labelname) == ERROR) { return ERROR; }
+int command_condition_statement(FILE *outputfp, char *if_labelname) {
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
-    fprintf(outputfp, "\tJZE \t%s\n", *if_labelname);
+    fprintf(outputfp, "\tJZE \t%s\n", if_labelname);
 
 };
 
@@ -163,7 +162,7 @@ int command_variable(FILE *outputfp, char *name, char *procname, int is_incall) 
 
 /* Generate code to calculate expression */
 int command_expression(FILE *outputfp, int opr) {
-    char *ok_labelname = NULL, *ng_labelname;
+    char *ok_labelname = NULL, *ng_labelname = NULL;
 
     fprintf(outputfp, "\tPOP \tgr2\n");
     fprintf(outputfp, "\tCPA \tgr2, gr1\n");
@@ -253,14 +252,77 @@ void command_term(FILE *outputfp, int opr) {
     }
 };
 
+int command_factor_cast(FILE *outputfp, int cast_type, int expression_type) {
+    char *labelname[2] = {NULL};
+
+    switch (expression_type) {
+        case TPINT:
+            switch (cast_type) {
+                case TPBOOL:
+                    if (create_newlabel(&labelname[0]) == ERROR) { return ERROR; }
+                    fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+                    fprintf(outputfp, "\tJZE \t%s\n", labelname[0]);
+                    fprintf(outputfp, "\tLAD \tgr1, 1\n");
+                    fprintf(outputfp, "%s\n", labelname[0]);
+                    break;
+                case TPCHAR:
+                    fprintf(outputfp, "\tLAD \tgr2, 127\n");
+                    fprintf(outputfp, "\tAND \tgr1, gr2\n");
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case TPBOOL:
+            switch (cast_type) {
+                case TPINT:
+                    /* No processing required */
+                    break;
+                case TPCHAR:
+                    // todo 文字を0,1と表示するのであってるのか確認
+                    if (create_newlabel(&labelname[0]) == ERROR) { return ERROR; }
+                    if (create_newlabel(&labelname[1]) == ERROR) { return ERROR; }
+                    fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+                    fprintf(outputfp, "\tJZE \t%s\n", labelname[0]);
+                    fprintf(outputfp, "\tLAD \tgr1, 49\n");
+                    fprintf(outputfp, "\tJUMP\t%s\n", labelname[1]);
+                    fprintf(outputfp, "%s\n", labelname[0]);
+                    fprintf(outputfp, "\tLAD \tgr1, 48\n");
+                    fprintf(outputfp, "%s\n", labelname[1]);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case TPCHAR:
+            switch (cast_type) {
+                case TPINT:
+                    /* No processing required */
+                    break;
+                case TPBOOL:
+                    if (create_newlabel(&labelname[0]) == ERROR) { return ERROR; }
+                    fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+                    fprintf(outputfp, "\tJZE \t%s\n", labelname[0]);
+                    fprintf(outputfp, "\tLAD \tgr1, 1\n");
+                    fprintf(outputfp, "%s\n", labelname[0]);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 /* Generate code indicating constant
  * Argument is the value of the constant
  * true = 1; false = 0;*/
-void command_constant_num(FILE *ouputfp, int num) {
+void command_constant_num(FILE *outputfp, int num) {
     if (num == 0) {
-        fprintf(ouputfp, "\tLD 　\tgr1, gr0\n");
+        fprintf(outputfp, "\tLD 　\tgr1, gr0\n");
     } else {
-        fprintf(ouputfp, "\tLAD \tgr1, %d\n", num);
+        fprintf(outputfp, "\tLAD \tgr1, %d\n", num);
     }
 }
 

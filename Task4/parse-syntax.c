@@ -475,6 +475,9 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int expression_type_holder = NORMAL;
     char *if_labelname = NULL, *else_labelname = NULL;
 
+    if (create_newlabel(&if_labelname) == ERROR) { return ERROR; }
+    if (create_newlabel(&else_labelname) == ERROR) { return ERROR; }
+
     if (token != TIF) { return (error("Keyword 'if' is not found")); }
     token = scan(inputfp);
 
@@ -482,14 +485,13 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     if (expression_type_holder != TPBOOL) {
         return error("The type of the expression in the condition statement must be boolean");
     }
-    command_condition_statement(outputfp, &if_labelname);
+    command_condition_statement(outputfp, if_labelname);
 
     if (token != TTHEN) { return (error("Keyword 'then is not found")); }
     token = scan(inputfp);
     if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
 
     if (token == TELSE) {
-        if (create_newlabel(&else_labelname) == ERROR) { return ERROR; }
         fprintf(outputfp, "\tJUMP\t%s\n", else_labelname);
         fprintf(outputfp, "%s\n", if_labelname);
 
@@ -864,6 +866,7 @@ int parse_term(FILE *inputfp, FILE *outputfp, int is_incall, int is_insubproc) {
         command_term(outputfp, md_flag);
 
         if (is_incall == 1) {
+            // todo このコード生成位置おかしい
             create_newlabel(&labelname);
             fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
             fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
@@ -883,13 +886,14 @@ int parse_term(FILE *inputfp, FILE *outputfp, int is_incall, int is_insubproc) {
 }
 
 int parse_factor(FILE *inputfp, FILE *outputfp, int is_incall, int is_insubproc) {
-    int type_holder = NORMAL, expression_type_holder = NORMAL;
+    int type_holder = NORMAL, expression_type_holder = NORMAL, temp_token = 0;
     struct ID *p;
 
+    temp_token = token;
     switch (token) {
         case TNAME:
-            //todo parse_variable(inputfp, outputfp, &p, is_call, 0, 0) 5つめの引数
-            if ((type_holder = parse_variable(inputfp, outputfp, &p, is_incall, 0, 0)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(inputfp, outputfp, &p, is_incall, is_insubproc, 0)) ==
+                ERROR) { return ERROR; }
             break;
         case TNUMBER:
         case TFALSE:
@@ -927,11 +931,15 @@ int parse_factor(FILE *inputfp, FILE *outputfp, int is_incall, int is_insubproc)
 
             if ((expression_type_holder = parse_expression(inputfp, outputfp, is_incall, is_insubproc)) ==
                 ERROR) { return ERROR; }
+
             if (check_standard_type(expression_type_holder) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
                 return (error("Symbol ')' is not found at the end of factor"));
             }
+
+            command_factor_cast(outputfp, type_holder, expression_type_holder);
+
             token = scan(inputfp);
             break;
         default:
@@ -964,7 +972,7 @@ int parse_constant(FILE *inputfp, FILE *outputfp) {
             if ((int) strlen(string_attr) != 1) {
                 return error("Constant string length must be 1");
             }
-            //todo
+            command_constant_num(outputfp, string_attr[0]);
             token = scan(inputfp);
             type_holder = TPCHAR;
             break;
