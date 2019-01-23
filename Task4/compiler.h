@@ -219,6 +219,7 @@ extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
 /* compiler.c */
 extern char label_buf[MAX_OUTPUT_BUF_SIZE];
+extern char *exit_label;
 
 int init_outputfile(char *inputfilename, FILE **fp);
 

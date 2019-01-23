@@ -6,6 +6,8 @@ int pl_flag[NUMOFPL + 1];
 
 char label_buf[MAX_OUTPUT_BUF_SIZE];
 
+char *exit_label = NULL;
+
 /* prototype declaration */
 
 /* Call before output, open the file,

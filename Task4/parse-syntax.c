@@ -509,9 +509,11 @@ int parse_condition_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
 int parse_iteration_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int expression_type_holder = NORMAL;
     char *while_labelname[2] = {NULL};
+    char *temp_exit_label = NULL;
 
     if (create_newlabel(&(while_labelname[0])) == ERROR) { return ERROR; }
     if (create_newlabel(&(while_labelname[1])) == ERROR) { return ERROR; }
+    temp_exit_label = exit_label;
 
     if (token != TWHILE) { return (error("Keyword 'while' is not found")); }
     token = scan(inputfp);
@@ -528,10 +530,12 @@ int parse_iteration_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     whether_inside_iteration++;
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
     fprintf(outputfp, "\tJZE \t%s\n", while_labelname[1]);
+    exit_label = while_labelname[1];
 
     if (parse_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
     whether_inside_iteration--;
 
+    exit_label = temp_exit_label;
     fprintf(outputfp, "\tJUMP\t%s\n", while_labelname[0]);
     fprintf(outputfp, "%s\n", while_labelname[1]);
 
@@ -545,6 +549,8 @@ int parse_exit_statement(FILE *inputfp, FILE *outputfp) {
     } else {
         return error("Exit statement is not included in iteration statement");
     }
+
+    fprintf(outputfp, "\tJUMP\t%s\n", exit_label);
 
     return NORMAL;
 }
