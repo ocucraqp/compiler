@@ -78,7 +78,7 @@ int parse_additive_operator(FILE *inputfp, FILE *outputfp);
 
 int parse_relational_operator(FILE *inputfp, FILE *outputfp);
 
-int parse_input_statement(FILE *inputfp, FILE *outputfp);
+int parse_input_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
 int parse_output_statement(FILE *inputfp, FILE *outputfp, int is_insubproc);
 
@@ -455,7 +455,7 @@ int parse_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
             break;
         case TREAD:
         case TREADLN:
-            if (parse_input_statement(inputfp, outputfp) == ERROR) { return ERROR; }
+            if (parse_input_statement(inputfp, outputfp, is_insubproc) == ERROR) { return ERROR; }
             break;
         case TWRITE:
         case TWRITELN:
@@ -667,6 +667,7 @@ int parse_expressions(FILE *inputfp, FILE *outputfp, struct TYPE *parameter_type
 int parse_return_statement(FILE *inputfp, FILE *outputfp) {
     if (token != TRETURN) { return (error("Keyword 'return' is not found")); }
     token = scan(inputfp);
+    fprintf(outputfp, "\tRET\n");
 
     return NORMAL;
 }
@@ -1034,7 +1035,7 @@ int parse_relational_operator(FILE *inputfp, FILE *outputfp) {
     return NORMAL;
 }
 
-int parse_input_statement(FILE *inputfp, FILE *outputfp) {
+int parse_input_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) {
     int is_ln = token;
     struct ID *p;
 
@@ -1051,27 +1052,25 @@ int parse_input_statement(FILE *inputfp, FILE *outputfp) {
     if (token == TLPAREN) {
         token = scan(inputfp);
 
-        //todo parse_variable(inputfp, outputfp, &p, 0, 0, 0) 5つめの引数
-        if ((type_holder = parse_variable(inputfp, outputfp, &p, 0, 0, 0)) == ERROR) { return ERROR; }
+        if ((type_holder = parse_variable(inputfp, outputfp, &p, 0, is_insubproc, 0)) == ERROR) { return ERROR; }
         if (type_holder != TPINT && type_holder != TPCHAR) {
             return error("The variable in the input statement is not integer type or char type");
         } else if (type_holder == TPINT) {
             command_read_int(outputfp);
         } else if (type_holder == TPCHAR) {
-            //todo
+            command_read_char(outputfp);
         }
 
         while (token == TCOMMA) {
             token = scan(inputfp);
 
-            //todo parse_variable(inputfp, outputfp, &p, 0, 0, 0) 5つめの引数
-            if ((type_holder = parse_variable(inputfp, outputfp, &p, 0, 0, 0)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(inputfp, outputfp, &p, 0, is_insubproc, 0)) == ERROR) { return ERROR; }
             if (type_holder != TPINT && type_holder != TPCHAR) {
                 return error("The variable in the input statement is not integer type or char type");
             } else if (type_holder == TPINT) {
                 command_read_int(outputfp);
             } else if (type_holder == TPCHAR) {
-                //todo
+                command_read_char(outputfp);
             }
         }
         if (token != TRPAREN) { return (error("Symbol ')' is not found")); }

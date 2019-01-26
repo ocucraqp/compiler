@@ -334,6 +334,12 @@ void command_read_int(FILE *outputfp) {
     on_pl_flag(PLREADINT);
 }
 
+/* Generate code for outputting character string */
+void command_read_char(FILE *outputfp) {
+    fprintf(outputfp, "\tCALL\tREADCHAR\n");
+    on_pl_flag(PLREADCHAR);
+}
+
 /* Generate code when output specification is expression */
 void command_write_expression(FILE *outputfp, int type, int length) {
     if (length > 0) {

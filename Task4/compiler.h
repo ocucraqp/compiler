@@ -249,6 +249,8 @@ void command_constant_num(FILE *outputfp, int num);
 
 void command_read_int(FILE *outputfp);
 
+void command_read_char(FILE *outputfp);
+
 void command_write_expression(FILE *outputfp, int type, int length);
 
 int command_write_string(FILE *outputfp, char *string);
