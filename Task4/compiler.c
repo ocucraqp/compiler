@@ -182,14 +182,12 @@ int command_expression(FILE *outputfp, int opr) {
             break;
         case TLEEQ:
             fprintf(outputfp, "\tJPL \t%s\n", ok_labelname);
-            //todo →いらないのか　fprintf(outputfp, "\tJZE \t%s\n", ok_labelname);
             break;
         case TGR:
             fprintf(outputfp, "\tJPL \t%s\n", ok_labelname);
             break;
         case TGREQ:
             fprintf(outputfp, "\tJMI \t%s\n", ok_labelname);
-            //todo →いらないのか　fprintf(outputfp, "\tJZE \t%s\n", ok_labelname);
             break;
         default:
             break;

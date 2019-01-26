@@ -695,9 +695,15 @@ int parse_assignment_statement(FILE *inputfp, FILE *outputfp, int is_insubproc) 
         fprintf(outputfp, "\tPOP \tgr2\n");
         fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
     } else {
+        if(p->itp->ttype==TPARRAYINT||p->itp->ttype==TPARRAYCHAR||p->itp->ttype==TPARRAYBOOL) {
+            fprintf(outputfp, "\tPOP \tgr2\n");
+        }
         fprintf(outputfp, "\tST  \tgr1, $%s", p->name);
         if (p->procname != NULL) {
             fprintf(outputfp, "%%%s", p->procname);
+        }
+        if(p->itp->ttype==TPARRAYINT||p->itp->ttype==TPARRAYCHAR||p->itp->ttype==TPARRAYBOOL) {
+            fprintf(outputfp, ", gr2");
         }
         fprintf(outputfp, "\n");
     }
@@ -724,22 +730,21 @@ int parse_variable(FILE *inputfp, FILE *outputfp, struct ID **p, int is_incall, 
 
     if (token == TLSQPAREN) {
         token = scan(inputfp);
+        temp_refnum = 0;
 
         if (token == TNUMBER) {
             temp_refnum = num_attr;
-            expression_type_holder = TPINT;
-            token = scan(inputfp);
-        } else {
-            //todo 配列の処理
-            if ((expression_type_holder = parse_expression(inputfp, outputfp, is_incall, is_insubproc)) ==
-                ERROR) { return ERROR; }
-            temp_refnum = 0;
         }
+
+        if ((expression_type_holder = parse_expression(inputfp, outputfp, is_incall, is_insubproc)) ==
+            ERROR) { return ERROR; }
 
         if (token != TRSQPAREN) {
             return (error("Symbol ']' is not found at the end of expression"));
         }
         token = scan(inputfp);
+
+        fprintf(outputfp, "\tPUSH\t0, gr1\n");
     }
 
     if ((parameter_type = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
