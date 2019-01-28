@@ -311,11 +311,7 @@ int command_factor_cast(int cast_type, int expression_type) {
  * Argument is the value of the constant
  * true = 1; false = 0;*/
 void command_constant_num(int num) {
-    if (num == 0) {
-        fprintf(outputfp, "\tLD 　\tgr1, gr0\n");
-    } else {
-        fprintf(outputfp, "\tLAD \tgr1, %d\n", num);
-    }
+    fprintf(outputfp, "\tLAD \tgr1, %d\n", num);
 }
 
 /* Generate code for outputting character string */
@@ -447,7 +443,7 @@ void output_pl() {
         fprintf(outputfp, "\tCALL\tBOVFCHECK\n");
         fprintf(outputfp, "\tST  \tgr7, OBUFSIZE\n");
         fprintf(outputfp, "\tRPOP\n");
-        fprintf(outputfp, "RET\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLSPACE);
         on_pl_flag(PLOBUFSIZE);
         on_pl_flag(PLONE);
@@ -475,7 +471,7 @@ void output_pl() {
         fprintf(outputfp, "\tJNZ \tWI2\n");
         fprintf(outputfp, "\tLD  \tgr4, ZERO\n");
         fprintf(outputfp, "\tST  \tgr4, INTBUF, gr6\n");
-        fprintf(outputfp, "\tJUMP\tW15\n");
+        fprintf(outputfp, "\tJUMP\tWI5\n");
         fprintf(outputfp, "WI2\n");
         fprintf(outputfp, "\tCPA \tgr1, gr0\n");
         fprintf(outputfp, "\tJZE \tWI3\n");
@@ -521,7 +517,7 @@ void output_pl() {
         fprintf(outputfp, "\tCPA \tgr1, gr0\n");
         fprintf(outputfp, "\tJZE \tWB1\n");
         fprintf(outputfp, "\tLAD \tgr1, WBTRUE\n");
-        fprintf(outputfp, "\tJAMP\tWB2\n");
+        fprintf(outputfp, "\tJUMP\tWB2\n");
         fprintf(outputfp, "WB1\n");
         fprintf(outputfp, "\tLAD \tgr1, WBFALSE\n");
         fprintf(outputfp, "WB2\n");
@@ -732,7 +728,7 @@ void output_pl() {
         fprintf(outputfp, "ZERO        DC  #0030\n");
     }
     if (pl_flag[PLNINE - PL]) {
-        fprintf(outputfp, "NINE        DC  #0029\n");
+        fprintf(outputfp, "NINE        DC  #0039\n");
     }
     if (pl_flag[PLNEWLINE - PL]) {
         fprintf(outputfp, "NEWLINE     DC  #000A\n");
