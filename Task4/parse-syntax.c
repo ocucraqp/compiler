@@ -819,6 +819,9 @@ int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
         return error("The operands of + and - must be of type integer");
     }
     if (pm_flag == TMINUS) {
+        if ((is_insubproc || is_incall) && !(*is_computed)) {
+            command_ld_gr1_0_gr1();
+        }
         command_minus();
     }
 
