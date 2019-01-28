@@ -64,11 +64,11 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc);
 
 int parse_expression(int is_incall, int is_insubproc);
 
-int parse_simple_expression(int is_incall, int is_insubproc);
+int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed);
 
-int parse_term(int is_incall, int is_insubproc);
+int parse_term(int is_incall, int is_insubproc, int *is_computed);
 
-int parse_factor(int is_incall, int is_insubproc);
+int parse_factor(int is_incall, int is_insubproc, int *is_computed);
 
 int parse_constant();
 
@@ -779,9 +779,11 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc) {
 }
 
 int parse_expression(int is_incall, int is_insubproc) {
-    int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL, opr = 0;
+    int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL, opr = 0, is_computed = 0;
+    char *labelname = NULL;
+    char output_buf_add[MAX_OUTPUT_BUF_SIZE];
 
-    if ((operand1_type = parse_simple_expression(is_incall, is_insubproc)) ==
+    if ((operand1_type = parse_simple_expression(is_incall, is_insubproc, &is_computed)) ==
         ERROR) { return ERROR; }
     type_holder = operand1_type;
 
@@ -790,12 +792,12 @@ int parse_expression(int is_incall, int is_insubproc) {
         opr = token;
         if (parse_relational_operator() == ERROR) { return ERROR; }
 
-        if (is_insubproc || is_incall) {
+        if ((is_insubproc || is_incall) && !(is_computed)) {
             fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         }
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_simple_expression(is_incall, is_insubproc)) ==
+        if ((operand2_type = parse_simple_expression(is_incall, is_insubproc, &is_computed)) ==
             ERROR) { return ERROR; }
         if ((operand1_type % 100) != (operand2_type % 100)) {
             return error("The operands of relational operators have different types");
@@ -803,12 +805,28 @@ int parse_expression(int is_incall, int is_insubproc) {
         type_holder = TPBOOL;
 
         if (command_expression(opr) == ERROR) { return ERROR; }
+
+        if (is_insubproc || is_incall) { is_computed = 1; };
+    }
+
+    if (!is_insubproc && is_computed) {
+        create_newlabel(&labelname);
+        fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
+        fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
+        fprintf(outputfp, "\tPUSH\t0, gr2\n");
+        init_char_array(output_buf_add, MAX_OUTPUT_BUF_SIZE);
+        snprintf(output_buf_add, MAX_OUTPUT_BUF_SIZE, "%s\tDC  \t0\n", labelname);
+        if ((strlen(label_buf) + strlen(output_buf_add)) >= MAX_OUTPUT_BUF_SIZE) {
+            return error("Over BUF_SIZE for output");
+        } else {
+            strcat(label_buf, output_buf_add);
+        }
     }
 
     return type_holder;
 }
 
-int parse_simple_expression(int is_incall, int is_insubproc) {
+int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
     int type_holder = NORMAL, pm_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
     switch (token) {
@@ -822,7 +840,7 @@ int parse_simple_expression(int is_incall, int is_insubproc) {
             break;
     }
 
-    if ((operand1_type = parse_term(is_incall, is_insubproc)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_term(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
     if (pm_flag == 1 && operand1_type != TPINT) {
         return error("The operands of + and - must be of type integer");
     }
@@ -831,12 +849,12 @@ int parse_simple_expression(int is_incall, int is_insubproc) {
         pm_flag = token;
         if (parse_additive_operator() == ERROR) { return ERROR; }
 
-        if (is_insubproc || is_incall) {
+        if ((is_insubproc || is_incall) && !(*is_computed)) {
             fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         }
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_term(is_incall, is_insubproc)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_term(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
         if (pm_flag != TOR && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '+' and '-' must be of type integer");
         }
@@ -844,30 +862,30 @@ int parse_simple_expression(int is_incall, int is_insubproc) {
             return error("The operands of 'or' must be of type boolean");
         }
         command_simple_expression(pm_flag);
+
+        if (is_insubproc || is_incall) { *is_computed = 1; };
     }
     type_holder = operand1_type;
 
     return type_holder;
 }
 
-int parse_term(int is_incall, int is_insubproc) {
-    char *labelname = NULL;
-    char output_buf_add[MAX_OUTPUT_BUF_SIZE];
+int parse_term(int is_incall, int is_insubproc, int *is_computed) {
 
     int type_holder = NORMAL, md_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    if ((operand1_type = parse_factor(is_incall, is_insubproc)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
 
     while ((token == TSTAR) || (token == TDIV) || (token == TAND)) {
         md_flag = token;
         if (parse_multiplicative_operator() == ERROR) { return ERROR; }
 
-        if (is_insubproc || is_incall) {
+        if ((is_insubproc || is_incall) && !(*is_computed)) {
             fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
         }
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
 
-        if ((operand2_type = parse_factor(is_incall, is_insubproc)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
         if (md_flag != TAND && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
@@ -876,27 +894,14 @@ int parse_term(int is_incall, int is_insubproc) {
         }
         command_term(md_flag);
 
-        if (is_incall == 1) {
-            // todo このコード生成位置おかしい
-            create_newlabel(&labelname);
-            fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
-            fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
-            fprintf(outputfp, "\tPUSH\t0, gr2\n");
-            init_char_array(output_buf_add, MAX_OUTPUT_BUF_SIZE);
-            snprintf(output_buf_add, MAX_OUTPUT_BUF_SIZE, "%s\tDC  \t0\n", labelname);
-            if ((strlen(label_buf) + strlen(output_buf_add)) >= MAX_OUTPUT_BUF_SIZE) {
-                return error("Over BUF_SIZE for output");
-            } else {
-                strcat(label_buf, output_buf_add);
-            }
-        }
+        if (is_insubproc || is_incall) { *is_computed = 1; };
     }
     type_holder = operand1_type;
 
     return type_holder;
 }
 
-int parse_factor(int is_incall, int is_insubproc) {
+int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
     struct ID *p;
     switch (token) {
@@ -923,7 +928,7 @@ int parse_factor(int is_incall, int is_insubproc) {
         case TNOT:
             token = scan();
 
-            if ((type_holder = parse_factor(is_incall, is_insubproc)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
             if (type_holder != TPBOOL) {
                 return error("The operand of 'not' must be of type boolean.");
             }
