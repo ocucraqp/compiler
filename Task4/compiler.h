@@ -9,7 +9,7 @@
 
 #define MAXSTRSIZE          1024
 #define MAX_IDENTIFIER_SIZE 8
-#define MAX_OUTPUT_BUF_SIZE 2048
+#define MAX_OUTPUT_BUF_SIZE 10192
 #define NORMAL              0
 #define ERROR               -1
 #define NUMOFKEYWORD        28
@@ -191,6 +191,7 @@ extern int parse_program();
 extern char *current_procname;
 
 extern struct TYPE temp_type;
+
 extern struct TYPE *end_type;
 
 extern void init_temp_names();
@@ -221,6 +222,7 @@ extern int check_standard_type_to_pointer(struct TYPE *ptype);
 
 /* compiler.c */
 extern char label_buf[MAX_OUTPUT_BUF_SIZE];
+
 extern char *exit_label;
 
 int init_outputfile(char *inputfilename);
@@ -235,19 +237,31 @@ void command_label(char *labelname);
 
 int command_start(char *program_name, char **labelname);
 
-int command_process_arguments();
+void command_process_arguments();
 
-int command_condition_statement(char *if_labelname);
+void command_condition_statement(char *if_labelname);
 
-int command_variable(struct ID *p, int is_incall, int is_ininput);
+void command_assign(int is_insubproc, struct ID *p);
+
+int command_variable(struct ID *p, int is_incall, int is_ininput, int is_index);
+
+int command_judge_index(int arraysize);
+
+void command_expressions(char *procname);
 
 int command_expression(int opr);
 
+int command_expression_by_call();
+
 void command_simple_expression(int opr);
+
+void command_minus();
 
 void command_term(int opr);
 
 int command_factor_cast(int cast_type, int expression_type);
+
+void command_factor_not_factor();
 
 void command_constant_num(int num);
 
@@ -255,11 +269,21 @@ void command_read_int();
 
 void command_read_char();
 
+void command_read_line();
+
 void command_write_expression(int type, int length);
 
 int command_write_string(char *string);
 
+void command_write_line();
+
 void command_return();
+
+void command_jump(char *labelname);
+
+void command_push_gr1();
+
+void command_ld_gr1_0_gr1();
 
 void output_label_buf();
 

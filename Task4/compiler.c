@@ -1,11 +1,15 @@
 #include "compiler.h"
 
+/* A variable holding the label number */
 int labelnum = 0;
 
+/* An array of variables that holds which libraries are needed */
 int pl_flag[NUMOFPL + 1];
 
+/* A buffer to hold the code to be added later */
 char label_buf[MAX_OUTPUT_BUF_SIZE];
 
+/* A pointer holding the label to which the exit statement jumps */
 char *exit_label = NULL;
 
 /* Call before output, open the file,
@@ -93,13 +97,13 @@ int create_id_label(struct ID *p) {
     }
 }
 
+/* Generate label */
 void command_label(char *labelname) {
     fprintf(outputfp, "%s\n", labelname);
 }
 
 /* Generate code at program start */
 int command_start(char *program_name, char **labelname) {
-
     /* program start */
     fprintf(outputfp, "$$%s\tSTART\n", program_name);
     /* Initialize gr 0 to 0 */
@@ -116,7 +120,7 @@ int command_start(char *program_name, char **labelname) {
 }
 
 /* Generate code to process arguments */
-int command_process_arguments() {
+void command_process_arguments() {
     struct PARAID **paraidp, *tempp;
     paraidp = &(paraidroot.nextparaidp);
 
@@ -135,17 +139,36 @@ int command_process_arguments() {
     }
 }
 
-/* Generate code of if statement */
-int command_condition_statement(char *if_labelname) {
+/* Generate code of if and while statement */
+void command_condition_statement(char *labelname) {
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
-    fprintf(outputfp, "\tJZE \t%s\n", if_labelname);
-
+    fprintf(outputfp, "\tJZE \t%s\n", labelname);
 };
+
+/* Generate code of assign statement */
+void command_assign(int is_insubproc, struct ID *p) {
+    if (is_insubproc) {
+        fprintf(outputfp, "\tPOP \tgr2\n");
+        fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
+    } else {
+        if (p->itp->ttype == TPARRAYINT || p->itp->ttype == TPARRAYCHAR || p->itp->ttype == TPARRAYBOOL) {
+            fprintf(outputfp, "\tPOP \tgr2\n");
+        }
+        fprintf(outputfp, "\tST  \tgr1, $%s", p->name);
+        if (p->procname != NULL) {
+            fprintf(outputfp, "%%%s", p->procname);
+        }
+        if (p->itp->ttype == TPARRAYINT || p->itp->ttype == TPARRAYCHAR || p->itp->ttype == TPARRAYBOOL) {
+            fprintf(outputfp, ", gr2");
+        }
+        fprintf(outputfp, "\n");
+    }
+}
 
 /* Generate code for outputting character string
  * When this function is called in a call statement,
  * it reads the address to gr1 */
-int command_variable(struct ID *p, int is_incall, int is_ininput) {
+int command_variable(struct ID *p, int is_incall, int is_ininput, int is_index) {
     if (is_incall == 1 || (is_ininput && !(p->ispara))) {
         fprintf(outputfp, "\tLAD  \tgr1, $%s", p->name);
     } else {
@@ -154,9 +177,33 @@ int command_variable(struct ID *p, int is_incall, int is_ininput) {
     if (p->procname != NULL) {
         fprintf(outputfp, "%%%s", p->procname);
     }
+    if (is_index) {
+        fprintf(outputfp, ", gr1");
+    }
     fprintf(outputfp, "\n");
 
     return NORMAL;
+}
+
+/* Generate code for determining whether the number of elements is within the range */
+int command_judge_index(int arraysize) {
+    char *labelname = NULL;
+    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
+
+    fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+    fprintf(outputfp, "\tJMI \tEROV\n");
+    fprintf(outputfp, "\tCPA \tgr1, %d\n", arraysize);
+    fprintf(outputfp, "\tJMI \t%s\n", labelname);
+    fprintf(outputfp, "\tJUMP\tEROV\n");
+    fprintf(outputfp, "%s\n", labelname);
+    on_pl_flag(PLEROV);
+
+    return NORMAL;
+}
+
+/* Generate code for expressions */
+void command_expressions(char *procname) {
+    fprintf(outputfp, "\tCALL\t$%s\n", procname);
 }
 
 /* Generate code to calculate expression */
@@ -202,7 +249,28 @@ int command_expression(int opr) {
         fprintf(outputfp, "\tLAD \tgr1, 1\n");
     }
     fprintf(outputfp, "%s\n", ng_labelname);
+
+    return NORMAL;
 };
+
+/* Generate code when it is necessary to hold the calculation result of the expression on the label */
+int command_expression_by_call() {
+    char *labelname = NULL;
+    char output_buf_add[MAX_OUTPUT_BUF_SIZE];
+
+    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
+    fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
+    fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
+    fprintf(outputfp, "\tPUSH\t0, gr2\n");
+    init_char_array(output_buf_add, MAX_OUTPUT_BUF_SIZE);
+    snprintf(output_buf_add, MAX_OUTPUT_BUF_SIZE, "%s\tDC  \t0\n", labelname);
+    if ((strlen(label_buf) + strlen(output_buf_add)) >= MAX_OUTPUT_BUF_SIZE) {
+        return error("Over BUF_SIZE for output");
+    } else {
+        strcat(label_buf, output_buf_add);
+    }
+    return NORMAL;
+}
 
 /* Generate code to calculate simple expression */
 void command_simple_expression(int opr) {
@@ -217,6 +285,8 @@ void command_simple_expression(int opr) {
         case TOR:
             fprintf(outputfp, "\tOR  \tgr1, gr2\n");
             break;
+        default:
+            break;
     }
     fprintf(outputfp, "\tJOV \tEOVF\n");
     if (opr == TMINUS) {
@@ -224,6 +294,14 @@ void command_simple_expression(int opr) {
     }
     on_pl_flag(PLEOVF);
 };
+
+/* Generate code when '-' was attached before the term */
+void command_minus() {
+    fprintf(outputfp, "\tLAD \tgr2, -1\n");
+    fprintf(outputfp, "\tMULA\tgr1, gr2\n");
+    fprintf(outputfp, "\tJOV \tEOVF\n");
+    on_pl_flag(PLEOVF);
+}
 
 /* Generate code to calculate terms */
 void command_term(int opr) {
@@ -238,6 +316,8 @@ void command_term(int opr) {
         case TAND:
             fprintf(outputfp, "\tAND \tgr1, gr2\n");
             break;
+        default:
+            break;
     }
     if (opr == TDIV) {
         fprintf(outputfp, "\tJOV \tE0DIV\n");
@@ -249,6 +329,7 @@ void command_term(int opr) {
     }
 };
 
+/* Generate code to cast the type of factor */
 int command_factor_cast(int cast_type, int expression_type) {
     char *labelname = NULL;
 
@@ -305,25 +386,37 @@ int command_factor_cast(int cast_type, int expression_type) {
         default:
             break;
     }
+
+    return NORMAL;
 }
 
-/* Generate code indicating constant
- * Argument is the value of the constant
- * true = 1; false = 0;*/
+/* Generate code with logical negation */
+void command_factor_not_factor() {
+    fprintf(outputfp, "\tLAD \tgr2, 1\n");
+    fprintf(outputfp, "\tXOR \tgr1, gr2\n");
+}
+
+/* Generate code indicating constant */
 void command_constant_num(int num) {
     fprintf(outputfp, "\tLAD \tgr1, %d\n", num);
 }
 
-/* Generate code for outputting character string */
+/* Generate code for reading character string */
 void command_read_int() {
     fprintf(outputfp, "\tCALL\tREADINT\n");
     on_pl_flag(PLREADINT);
 }
 
-/* Generate code for outputting character string */
+/* Generate code for reading character string */
 void command_read_char() {
     fprintf(outputfp, "\tCALL\tREADCHAR\n");
     on_pl_flag(PLREADCHAR);
+}
+
+/* Generate code for reading new line */
+void command_read_line() {
+    fprintf(outputfp, "\tCALL\tREADLINE\n");
+    on_pl_flag(PLREADLINE);
 }
 
 /* Generate code when output specification is expression */
@@ -346,6 +439,8 @@ void command_write_expression(int type, int length) {
         case TPBOOL:
             fprintf(outputfp, "WRITEBOOL\n");
             on_pl_flag(PLWRITEBOOL);
+            break;
+        default:
             break;
     }
 };
@@ -377,8 +472,30 @@ int command_write_string(char *string) {
     return NORMAL;
 }
 
+/* Generate code for outputting new line */
+void command_write_line() {
+    fprintf(outputfp, "\tCALL\tWRITELINE\n");
+    on_pl_flag(PLWRITELINE);
+}
+
+/* Generate code of return */
 void command_return() {
     fprintf(outputfp, "\tRET\n");
+}
+
+/* Generate code of jump */
+void command_jump(char *labelname) {
+    fprintf(outputfp, "\tJUMP\t%s\n", labelname);
+}
+
+/* Generate code of push */
+void command_push_gr1() {
+    fprintf(outputfp, "\tPUSH\t0, gr1\n");
+}
+
+/* Generate code of load */
+void command_ld_gr1_0_gr1() {
+    fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
 }
 
 /* Add label_buf to outputfp */

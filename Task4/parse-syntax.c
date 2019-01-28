@@ -494,7 +494,7 @@ int parse_condition_statement(int is_insubproc) {
     if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
 
     if (token == TELSE) {
-        fprintf(outputfp, "\tJUMP\t%s\n", else_labelname);
+        command_jump(else_labelname);
         command_label(if_labelname);
 
         token = scan();
@@ -530,15 +530,15 @@ int parse_iteration_statement(int is_insubproc) {
     if (token != TDO) { return (error("Keyword 'do' is not found")); }
     token = scan();
     whether_inside_iteration++;
-    fprintf(outputfp, "\tCPA \tgr1, gr0\n");
-    fprintf(outputfp, "\tJZE \t%s\n", while_labelname[1]);
+
+    command_condition_statement(while_labelname[1]);
     exit_label = while_labelname[1];
 
     if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
     whether_inside_iteration--;
 
     exit_label = temp_exit_label;
-    fprintf(outputfp, "\tJUMP\t%s\n", while_labelname[0]);
+    command_jump(while_labelname[0]);
     command_label(while_labelname[1]);
 
     return NORMAL;
@@ -551,8 +551,7 @@ int parse_exit_statement() {
     } else {
         return error("Exit statement is not included in iteration statement");
     }
-
-    fprintf(outputfp, "\tJUMP\t%s\n", exit_label);
+    command_jump(exit_label);
 
     return NORMAL;
 }
@@ -612,7 +611,7 @@ int parse_call_statement() {
         token = scan();
     }
 
-    fprintf(outputfp, "\tCALL\t$%s\n", temp_procname);
+    command_expressions(temp_procname);
 
     return NORMAL;
 }
@@ -657,7 +656,7 @@ int parse_expressions(struct TYPE *parameter_type) {
         }
     }
 
-    fprintf(outputfp, "\tPUSH\t0, gr1\n");
+    command_push_gr1();
 
     if ((*temp_type)->paratp != NULL) {
         return error("Argument shortage");
@@ -681,7 +680,7 @@ int parse_assignment_statement(int is_insubproc) {
     if ((type_holder = parse_left_part(&p, is_insubproc, 1)) == ERROR) { return ERROR; }
 
     if (is_insubproc) {
-        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+        command_push_gr1();
     }
 
     if (token != TASSIGN) { return (error("Symbol ':=' is not found")); }
@@ -693,22 +692,7 @@ int parse_assignment_statement(int is_insubproc) {
         return error("The type of the expression differs from the left part");
     }
 
-    if (is_insubproc) {
-        fprintf(outputfp, "\tPOP \tgr2\n");
-        fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
-    } else {
-        if (p->itp->ttype == TPARRAYINT || p->itp->ttype == TPARRAYCHAR || p->itp->ttype == TPARRAYBOOL) {
-            fprintf(outputfp, "\tPOP \tgr2\n");
-        }
-        fprintf(outputfp, "\tST  \tgr1, $%s", p->name);
-        if (p->procname != NULL) {
-            fprintf(outputfp, "%%%s", p->procname);
-        }
-        if (p->itp->ttype == TPARRAYINT || p->itp->ttype == TPARRAYCHAR || p->itp->ttype == TPARRAYBOOL) {
-            fprintf(outputfp, ", gr2");
-        }
-        fprintf(outputfp, "\n");
-    }
+    command_assign(is_insubproc, p);
 
     return NORMAL;
 }
@@ -722,7 +706,7 @@ int parse_left_part(struct ID **p, int is_insubproc, int is_inassign) {
 }
 
 int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign, int is_ininput) {
-    int type_holder = NORMAL, expression_type_holder = NORMAL;
+    int type_holder = NORMAL, expression_type_holder = NORMAL, is_index = 0;
     struct TYPE *parameter_type;
     struct NAME *temp_valname;
 
@@ -743,10 +727,7 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
         }
         token = scan();
 
-        //todo fprintf(outputfp, "\tCPA \tgr1, %d", );
-
-        /* PUSH array index */
-        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+        is_index = 1;
     }
 
     if ((parameter_type = (struct TYPE *) malloc(sizeof(struct TYPE))) == NULL) {
@@ -759,8 +740,15 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
         return error("%s is not defined", current_procname);
     }
 
+    if (is_index) {
+        command_judge_index((*p)->itp->arraysize);
+    }
+
     if (is_insubproc || !is_inassign) {
-        if (command_variable(*p, is_incall, is_ininput) == ERROR) { return ERROR; }
+        if (command_variable(*p, is_incall, is_ininput, is_index) == ERROR) { return ERROR; }
+    } else if (is_index) {
+        /* PUSH array index */
+        command_push_gr1();
     }
 
     release_vallinenum();
@@ -784,8 +772,6 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
 
 int parse_expression(int is_incall, int is_insubproc) {
     int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL, opr = 0, is_computed = 0;
-    char *labelname = NULL;
-    char output_buf_add[MAX_OUTPUT_BUF_SIZE];
 
     if ((operand1_type = parse_simple_expression(is_incall, is_insubproc, &is_computed)) ==
         ERROR) { return ERROR; }
@@ -797,9 +783,9 @@ int parse_expression(int is_incall, int is_insubproc) {
         if (parse_relational_operator() == ERROR) { return ERROR; }
 
         if ((is_insubproc || is_incall) && !(is_computed)) {
-            fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
+            command_ld_gr1_0_gr1();
         }
-        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+        command_push_gr1();
 
         if ((operand2_type = parse_simple_expression(is_incall, is_insubproc, &is_computed)) ==
             ERROR) { return ERROR; }
@@ -814,17 +800,7 @@ int parse_expression(int is_incall, int is_insubproc) {
     }
 
     if (!is_insubproc && is_computed) {
-        create_newlabel(&labelname);
-        fprintf(outputfp, "\tLAD \tgr2, %s\n", labelname);
-        fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
-        fprintf(outputfp, "\tPUSH\t0, gr2\n");
-        init_char_array(output_buf_add, MAX_OUTPUT_BUF_SIZE);
-        snprintf(output_buf_add, MAX_OUTPUT_BUF_SIZE, "%s\tDC  \t0\n", labelname);
-        if ((strlen(label_buf) + strlen(output_buf_add)) >= MAX_OUTPUT_BUF_SIZE) {
-            return error("Over BUF_SIZE for output");
-        } else {
-            strcat(label_buf, output_buf_add);
-        }
+        command_expression_by_call();
     }
 
     return type_holder;
@@ -833,20 +809,17 @@ int parse_expression(int is_incall, int is_insubproc) {
 int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
     int type_holder = NORMAL, pm_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    switch (token) {
-        case TPLUS:
-        case TMINUS:
-            token = scan();
-            pm_flag = 1;
-            break;
-        default:
-            pm_flag = 0;
-            break;
+    pm_flag = token;
+    if (pm_flag == TPLUS || pm_flag == TMINUS) {
+        token = scan();
     }
 
     if ((operand1_type = parse_term(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
-    if (pm_flag == 1 && operand1_type != TPINT) {
+    if ((pm_flag == TPLUS || pm_flag == TMINUS) && operand1_type != TPINT) {
         return error("The operands of + and - must be of type integer");
+    }
+    if (pm_flag == TMINUS) {
+        command_minus();
     }
 
     while ((token == TPLUS) || (token == TMINUS) || (token == TOR)) {
@@ -854,9 +827,9 @@ int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
         if (parse_additive_operator() == ERROR) { return ERROR; }
 
         if ((is_insubproc || is_incall) && !(*is_computed)) {
-            fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
+            command_ld_gr1_0_gr1();
         }
-        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+        command_push_gr1();
 
         if ((operand2_type = parse_term(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
         if (pm_flag != TOR && (operand1_type != TPINT || operand2_type != TPINT)) {
@@ -885,9 +858,9 @@ int parse_term(int is_incall, int is_insubproc, int *is_computed) {
         if (parse_multiplicative_operator() == ERROR) { return ERROR; }
 
         if ((is_insubproc || is_incall) && !(*is_computed)) {
-            fprintf(outputfp, "\tLD  \tgr1, 0, gr1\n");
+            command_ld_gr1_0_gr1();
         }
-        fprintf(outputfp, "\tPUSH\t0, gr1\n");
+        command_push_gr1();
 
         if ((operand2_type = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
         if (md_flag != TAND && (operand1_type != TPINT || operand2_type != TPINT)) {
@@ -931,11 +904,11 @@ int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
             break;
         case TNOT:
             token = scan();
-
             if ((type_holder = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
             if (type_holder != TPBOOL) {
                 return error("The operand of 'not' must be of type boolean.");
             }
+            command_factor_not_factor();
             break;
         case TINTEGER:
         case TBOOLEAN:
@@ -1089,8 +1062,7 @@ int parse_input_statement(int is_insubproc) {
     }
 
     if (is_ln == TREADLN) {
-        fprintf(outputfp, "\tCALL\tREADLINE\n");
-        on_pl_flag(PLREADLINE);
+        command_read_line();
     }
 
     return NORMAL;
@@ -1123,8 +1095,7 @@ int parse_output_statement(int is_insubproc) {
     }
 
     if (is_ln == TWRITELN) {
-        fprintf(outputfp, "\tCALL\tWRITELINE\n");
-        on_pl_flag(PLWRITELINE);
+        command_write_line();
     }
 
     return NORMAL;
