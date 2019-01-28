@@ -61,26 +61,28 @@ int main(int nc, char *np[]) {
     is_success = parse_program();
 
     /* Add labels and data such as character strings */
-    output_label_buf(outputfp);
+    output_label_buf();
 
     /* Add necessary processing */
-    output_pl(outputfp);
+    output_pl();
 
     /* end scan */
     end_scan();
 
-    /* Display cross reference table */
-    print_idtab();
+//    /* Display cross reference table */
+//    print_idtab();
 
     /* Release id table */
     release_idtab();
 
     /* end output */
-    end_output(outputfp);
+    end_output();
 
     if (is_success == NORMAL) {
+        printf("Compilation succeeded.\n");
         return EXIT_SUCCESS;
     } else {
+        printf("Compilation failed.\n");
         return EXIT_FAILURE;
     }
 }
