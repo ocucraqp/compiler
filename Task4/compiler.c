@@ -8,11 +8,9 @@ char label_buf[MAX_OUTPUT_BUF_SIZE];
 
 char *exit_label = NULL;
 
-/* prototype declaration */
-
 /* Call before output, open the file,
  * Success:0 Failed:-1 */
-int init_outputfile(char *inputfilename, FILE **fp) {
+int init_outputfile(char *inputfilename) {
     char *outputfilename;
     char outputfilename_extension[32];
 
@@ -20,9 +18,9 @@ int init_outputfile(char *inputfilename, FILE **fp) {
     sprintf(outputfilename_extension, "%.27s.csl", outputfilename);
 
     /* The file pointer is received as a pointer to the pointer */
-    *fp = fopen(outputfilename_extension, "w");
+    outputfp = fopen(outputfilename_extension, "w");
 
-    if (*fp == NULL) {
+    if (outputfp == NULL) {
         fprintf(stderr, "\nERROR: File %s can not open.\n", outputfilename_extension);
         return -1;
     }
@@ -34,9 +32,9 @@ int init_outputfile(char *inputfilename, FILE **fp) {
 }
 
 /* Close the call file after output */
-void end_output(FILE *fp) {
-    fprintf(fp, "\tEND\n");
-    if (fclose(fp) == EOF) {
+void end_output() {
+    fprintf(outputfp, "\tEND\n");
+    if (fclose(outputfp) == EOF) {
         fprintf(stderr, "\nERROR: Output file can not close.\n");
     };
 }
@@ -59,7 +57,7 @@ int create_newlabel(char **labelname) {
 }
 
 /* Create a label for each id name */
-int create_id_label(struct ID *p, FILE *outputfp) {
+int create_id_label(struct ID *p) {
     /* id_label output */
     if (p != NULL) {
         if (p->name != NULL) {
@@ -95,26 +93,30 @@ int create_id_label(struct ID *p, FILE *outputfp) {
     }
 }
 
+void command_label(char *labelname) {
+    fprintf(outputfp, "%s\n", labelname);
+}
+
 /* Generate code at program start */
-int command_start(FILE *fp, char *program_name, char **labelname) {
+int command_start(char *program_name, char **labelname) {
 
     /* program start */
-    fprintf(fp, "$$%s\tSTART\n", program_name);
+    fprintf(outputfp, "$$%s\tSTART\n", program_name);
     /* Initialize gr 0 to 0 */
-    fprintf(fp, "\tLAD \tgr0, 0\n");
+    fprintf(outputfp, "\tLAD \tgr0, 0\n");
     /* Call a label indicating compound statement of main program */
     if (create_newlabel(labelname) == ERROR) { return ERROR; }
-    fprintf(fp, "\tCALL\t%s\n", *labelname);
+    fprintf(outputfp, "\tCALL\t%s\n", *labelname);
     /* End processing */
-    fprintf(fp, "\tCALL\tFLUSH\n");
+    fprintf(outputfp, "\tCALL\tFLUSH\n");
     on_pl_flag(PLFLUSH);
-    fprintf(fp, "\tSVC \t0\n");
+    fprintf(outputfp, "\tSVC \t0\n");
 
     return NORMAL;
 }
 
 /* Generate code to process arguments */
-int command_process_arguments(FILE *outputfp) {
+int command_process_arguments() {
     struct PARAID **paraidp, *tempp;
     paraidp = &(paraidroot.nextparaidp);
 
@@ -134,7 +136,7 @@ int command_process_arguments(FILE *outputfp) {
 }
 
 /* Generate code of if statement */
-int command_condition_statement(FILE *outputfp, char *if_labelname) {
+int command_condition_statement(char *if_labelname) {
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
     fprintf(outputfp, "\tJZE \t%s\n", if_labelname);
 
@@ -143,12 +145,7 @@ int command_condition_statement(FILE *outputfp, char *if_labelname) {
 /* Generate code for outputting character string
  * When this function is called in a call statement,
  * it reads the address to gr1 */
-int command_variable(FILE *outputfp, char *name, char *procname, int is_incall) {
-    struct ID *p;
-
-    if ((p = search_idtab(name, procname, 1)) == NULL) {
-        return error("%s is not defined.", current_procname);
-    }
+int command_variable(struct ID *p, int is_incall) {
     if (is_incall == 1) {
         fprintf(outputfp, "\tLAD  \tgr1, $%s", p->name);
     } else {
@@ -163,7 +160,7 @@ int command_variable(FILE *outputfp, char *name, char *procname, int is_incall) 
 }
 
 /* Generate code to calculate expression */
-int command_expression(FILE *outputfp, int opr) {
+int command_expression(int opr) {
     char *ok_labelname = NULL, *ng_labelname = NULL;
 
     fprintf(outputfp, "\tPOP \tgr2\n");
@@ -208,7 +205,7 @@ int command_expression(FILE *outputfp, int opr) {
 };
 
 /* Generate code to calculate simple expression */
-void command_simple_expression(FILE *outputfp, int opr) {
+void command_simple_expression(int opr) {
     fprintf(outputfp, "\tPOP \tgr2\n");
     switch (opr) {
         case TPLUS:
@@ -229,7 +226,7 @@ void command_simple_expression(FILE *outputfp, int opr) {
 };
 
 /* Generate code to calculate terms */
-void command_term(FILE *outputfp, int opr) {
+void command_term(int opr) {
     fprintf(outputfp, "\tPOP \tgr2\n");
     switch (opr) {
         case TSTAR:
@@ -252,18 +249,18 @@ void command_term(FILE *outputfp, int opr) {
     }
 };
 
-int command_factor_cast(FILE *outputfp, int cast_type, int expression_type) {
-    char *labelname[2] = {NULL};
+int command_factor_cast(int cast_type, int expression_type) {
+    char *labelname = NULL;
 
     switch (expression_type) {
         case TPINT:
             switch (cast_type) {
                 case TPBOOL:
-                    if (create_newlabel(&labelname[0]) == ERROR) { return ERROR; }
+                    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
                     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
-                    fprintf(outputfp, "\tJZE \t%s\n", labelname[0]);
+                    fprintf(outputfp, "\tJZE \t%s\n", labelname);
                     fprintf(outputfp, "\tLAD \tgr1, 1\n");
-                    fprintf(outputfp, "%s\n", labelname[0]);
+                    fprintf(outputfp, "%s\n", labelname);
                     break;
                 case TPCHAR:
                     fprintf(outputfp, "\tLAD \tgr2, 127\n");
@@ -279,16 +276,11 @@ int command_factor_cast(FILE *outputfp, int cast_type, int expression_type) {
                     /* No processing required */
                     break;
                 case TPCHAR:
-                    // todo 文字を0,1と表示するのであってるのか確認
-                    if (create_newlabel(&labelname[0]) == ERROR) { return ERROR; }
-                    if (create_newlabel(&labelname[1]) == ERROR) { return ERROR; }
+                    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
                     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
-                    fprintf(outputfp, "\tJZE \t%s\n", labelname[0]);
-                    fprintf(outputfp, "\tLAD \tgr1, 49\n");
-                    fprintf(outputfp, "\tJUMP\t%s\n", labelname[1]);
-                    fprintf(outputfp, "%s\n", labelname[0]);
-                    fprintf(outputfp, "\tLAD \tgr1, 48\n");
-                    fprintf(outputfp, "%s\n", labelname[1]);
+                    fprintf(outputfp, "\tJZE \t%s\n", labelname);
+                    fprintf(outputfp, "\tLAD \tgr1, 1\n");
+                    fprintf(outputfp, "%s\n", labelname);
                     break;
                 default:
                     break;
@@ -300,11 +292,11 @@ int command_factor_cast(FILE *outputfp, int cast_type, int expression_type) {
                     /* No processing required */
                     break;
                 case TPBOOL:
-                    if (create_newlabel(&labelname[0]) == ERROR) { return ERROR; }
+                    if (create_newlabel(&labelname) == ERROR) { return ERROR; }
                     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
-                    fprintf(outputfp, "\tJZE \t%s\n", labelname[0]);
+                    fprintf(outputfp, "\tJZE \t%s\n", labelname);
                     fprintf(outputfp, "\tLAD \tgr1, 1\n");
-                    fprintf(outputfp, "%s\n", labelname[0]);
+                    fprintf(outputfp, "%s\n", labelname);
                     break;
                 default:
                     break;
@@ -318,7 +310,7 @@ int command_factor_cast(FILE *outputfp, int cast_type, int expression_type) {
 /* Generate code indicating constant
  * Argument is the value of the constant
  * true = 1; false = 0;*/
-void command_constant_num(FILE *outputfp, int num) {
+void command_constant_num(int num) {
     if (num == 0) {
         fprintf(outputfp, "\tLD 　\tgr1, gr0\n");
     } else {
@@ -327,19 +319,19 @@ void command_constant_num(FILE *outputfp, int num) {
 }
 
 /* Generate code for outputting character string */
-void command_read_int(FILE *outputfp) {
+void command_read_int() {
     fprintf(outputfp, "\tCALL\tREADINT\n");
     on_pl_flag(PLREADINT);
 }
 
 /* Generate code for outputting character string */
-void command_read_char(FILE *outputfp) {
+void command_read_char() {
     fprintf(outputfp, "\tCALL\tREADCHAR\n");
     on_pl_flag(PLREADCHAR);
 }
 
 /* Generate code when output specification is expression */
-void command_write_expression(FILE *outputfp, int type, int length) {
+void command_write_expression(int type, int length) {
     if (length > 0) {
         fprintf(outputfp, "\tLD  \tgr2, %d\n", length);
     } else {
@@ -363,7 +355,7 @@ void command_write_expression(FILE *outputfp, int type, int length) {
 };
 
 /* Generate code for outputting character string */
-int command_write_string(FILE *outputfp, char *string) {
+int command_write_string(char *string) {
     char *labelname = NULL;
     char output_buf_add[MAX_OUTPUT_BUF_SIZE];
 
@@ -389,22 +381,26 @@ int command_write_string(FILE *outputfp, char *string) {
     return NORMAL;
 }
 
+void command_return() {
+    fprintf(outputfp, "\tRET\n");
+}
+
 /* Add label_buf to outputfp */
-void output_label_buf(FILE *outputfp) {
+void output_label_buf() {
     fprintf(outputfp, "%s", label_buf);
 }
 
 /* Output Processing label */
-void output_pl(FILE *outputfp) {
+void output_pl() {
     if (pl_flag[PLE0DIV - PL]) {
         fprintf(outputfp, "E0DIV\n");
-        fprintf(outputfp, "  JNZ     EOVF\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  LAD     gr1, E0DIV1\n");
-        fprintf(outputfp, "  LD      gr2, gr0\n");
-        fprintf(outputfp, "  CALL    WRITESTR\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  SVC     2\n");
+        fprintf(outputfp, "\tJNZ \tEOVF\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tLAD \tgr1, E0DIV1\n");
+        fprintf(outputfp, "\tLD  \tgr2, gr0\n");
+        fprintf(outputfp, "\tCALL\tWRITESTR\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tSVC \t2\n");
         fprintf(outputfp, "E0DIV1  DC  '***** Run-Time Error : Zero-Divide *****'\n");
         on_pl_flag(PLEOVF);
         on_pl_flag(PLWRITELINE);
@@ -412,45 +408,45 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLEOVF - PL]) {
         fprintf(outputfp, "EOVF\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  LAD     gr1, EOVF1\n");
-        fprintf(outputfp, "  LD      gr2, gr0\n");
-        fprintf(outputfp, "  CALL    WRITESTR\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  SVC     1\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tLAD \tgr1, EOVF1\n");
+        fprintf(outputfp, "\tLD  \tgr2, gr0\n");
+        fprintf(outputfp, "\tCALL\tWRITESTR\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tSVC \t1\n");
         fprintf(outputfp, "EOVF1   DC  '***** Run-Time Error : Overfrow *****'\n");
         on_pl_flag(PLWRITELINE);
         on_pl_flag(PLWRITESTR);
     }
     if (pl_flag[PLEROV - PL]) {
         fprintf(outputfp, "EROV\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  LAD     gr1, EROV1\n");
-        fprintf(outputfp, "  LD      gr2, gr0\n");
-        fprintf(outputfp, "  CALL    WRITESTR\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  SVC     3\n");
-        fprintf(outputfp, "EROV1  DC  '***** Run-Time Error : Range-Over in Array Index *****'\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tLAD \tgr1, EROV1\n");
+        fprintf(outputfp, "\tLD  \tgr2, gr0\n");
+        fprintf(outputfp, "\tCALL\tWRITESTR\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tSVC \t3\n");
+        fprintf(outputfp, "EROV1   DC  '***** Run-Time Error : Range-Over in Array Index *****'\n");
         on_pl_flag(PLWRITELINE);
         on_pl_flag(PLWRITESTR);
     }
     if (pl_flag[PLWRITECHAR - PL]) {
         fprintf(outputfp, "WRITECHAR\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  LD      gr6, SPACE\n");
-        fprintf(outputfp, "  LD      gr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tLD  \tgr6, SPACE\n");
+        fprintf(outputfp, "\tLD  \tgr7, OBUFSIZE\n");
         fprintf(outputfp, "WC1\n");
-        fprintf(outputfp, "  SUBA    gr2, ONE\n");
-        fprintf(outputfp, "  JZE     WC2\n");
-        fprintf(outputfp, "  JMI     WC2\n");
-        fprintf(outputfp, "  ST      gr6, OBUF, gr7\n");
-        fprintf(outputfp, "  CALL    BOVFCHECK\n");
-        fprintf(outputfp, "  JUMP    WC1\n");
+        fprintf(outputfp, "\tSUBA\tgr2, ONE\n");
+        fprintf(outputfp, "\tJZE \tWC2\n");
+        fprintf(outputfp, "\tJMI \tWC2\n");
+        fprintf(outputfp, "\tST  \tgr6, OBUF, gr7\n");
+        fprintf(outputfp, "\tCALL\tBOVFCHECK\n");
+        fprintf(outputfp, "\tJUMP\tWC1\n");
         fprintf(outputfp, "WC2\n");
-        fprintf(outputfp, "  ST      gr1, OBUF, gr7\n");
-        fprintf(outputfp, "  CALL    BOVFCHECK\n");
-        fprintf(outputfp, "  ST      gr7, OBUFSIZE\n");
-        fprintf(outputfp, "  RPOP\n");
+        fprintf(outputfp, "\tST  \tgr1, OBUF, gr7\n");
+        fprintf(outputfp, "\tCALL\tBOVFCHECK\n");
+        fprintf(outputfp, "\tST  \tgr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tRPOP\n");
         fprintf(outputfp, "RET\n");
         on_pl_flag(PLSPACE);
         on_pl_flag(PLOBUFSIZE);
@@ -460,57 +456,57 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLWRITEINT - PL]) {
         fprintf(outputfp, "WRITEINT\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  LD      gr7, gr0\n");
-        fprintf(outputfp, "  CPA     gr1, gr0\n");
-        fprintf(outputfp, "  JPL     WI1\n");
-        fprintf(outputfp, "  JZE     WI1\n");
-        fprintf(outputfp, "  LD      gr4, gr0\n");
-        fprintf(outputfp, "  SUBA    gr4, gr1\n");
-        fprintf(outputfp, "  CPA     gr4, gr1\n");
-        fprintf(outputfp, "  JZE     WI6\n");
-        fprintf(outputfp, "  LD      gr1, gr4\n");
-        fprintf(outputfp, "  LD      gr7, ONE\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tLD  \tgr7, gr0\n");
+        fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+        fprintf(outputfp, "\tJPL \tWI1\n");
+        fprintf(outputfp, "\tJZE \tWI1\n");
+        fprintf(outputfp, "\tLD  \tgr4, gr0\n");
+        fprintf(outputfp, "\tSUBA\tgr4, gr1\n");
+        fprintf(outputfp, "\tCPA \tgr4, gr1\n");
+        fprintf(outputfp, "\tJZE \tWI6\n");
+        fprintf(outputfp, "\tLD  \tgr1, gr4\n");
+        fprintf(outputfp, "\tLD  \tgr7, ONE\n");
         fprintf(outputfp, "WI1\n");
-        fprintf(outputfp, "  LD      gr6, SIX\n");
-        fprintf(outputfp, "  ST      gr0, INTBUF, gr6\n");
-        fprintf(outputfp, "  SUBA    gr6, ONE\n");
-        fprintf(outputfp, "  CPA     gr1, gr0\n");
-        fprintf(outputfp, "  JNZ     WI2\n");
-        fprintf(outputfp, "  LD      gr4, ZERO\n");
-        fprintf(outputfp, "  ST      gr4, INTBUF, gr6\n");
-        fprintf(outputfp, "  JUMP    W15\n");
+        fprintf(outputfp, "\tLD  \tgr6, SIX\n");
+        fprintf(outputfp, "\tST  \tgr0, INTBUF, gr6\n");
+        fprintf(outputfp, "\tSUBA\tgr6, ONE\n");
+        fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+        fprintf(outputfp, "\tJNZ \tWI2\n");
+        fprintf(outputfp, "\tLD  \tgr4, ZERO\n");
+        fprintf(outputfp, "\tST  \tgr4, INTBUF, gr6\n");
+        fprintf(outputfp, "\tJUMP\tW15\n");
         fprintf(outputfp, "WI2\n");
-        fprintf(outputfp, "  CPA     gr1, gr0\n");
-        fprintf(outputfp, "  JZE     WI3\n");
-        fprintf(outputfp, "  LD      gr5, gr1\n");
-        fprintf(outputfp, "  DIVA    gr1, TEN\n");
-        fprintf(outputfp, "  LD      gr4, gr1\n");
-        fprintf(outputfp, "  MULA    gr4, TEN\n");
-        fprintf(outputfp, "  SUBA    gr5, gr4\n");
-        fprintf(outputfp, "  ADDA    gr5, ZERO\n");
-        fprintf(outputfp, "  ST      gr5, INTBUF, gr6\n");
-        fprintf(outputfp, "  SUBA    gr6, ONE\n");
-        fprintf(outputfp, "  JUMP    WI2\n");
+        fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+        fprintf(outputfp, "\tJZE \tWI3\n");
+        fprintf(outputfp, "\tLD  \tgr5, gr1\n");
+        fprintf(outputfp, "\tDIVA\tgr1, TEN\n");
+        fprintf(outputfp, "\tLD  \tgr4, gr1\n");
+        fprintf(outputfp, "\tMULA\tgr4, TEN\n");
+        fprintf(outputfp, "\tSUBA\tgr5, gr4\n");
+        fprintf(outputfp, "\tADDA\tgr5, ZERO\n");
+        fprintf(outputfp, "\tST  \tgr5, INTBUF, gr6\n");
+        fprintf(outputfp, "\tSUBA\tgr6, ONE\n");
+        fprintf(outputfp, "\tJUMP\tWI2\n");
         fprintf(outputfp, "WI3\n");
-        fprintf(outputfp, "  CPA     gr7, gr0\n");
-        fprintf(outputfp, "  JZE     WI4\n");
-        fprintf(outputfp, "  LD      gr4, MINUS\n");
-        fprintf(outputfp, "  ST      gr4, INTBUF, gr6\n");
-        fprintf(outputfp, "  JUMP    WI5\n");
+        fprintf(outputfp, "\tCPA \tgr7, gr0\n");
+        fprintf(outputfp, "\tJZE \tWI4\n");
+        fprintf(outputfp, "\tLD  \tgr4, MINUS\n");
+        fprintf(outputfp, "\tST  \tgr4, INTBUF, gr6\n");
+        fprintf(outputfp, "\tJUMP\tWI5\n");
         fprintf(outputfp, "WI4\n");
-        fprintf(outputfp, "  ADDA    gr6, ONE\n");
+        fprintf(outputfp, "\tADDA\tgr6, ONE\n");
         fprintf(outputfp, "WI5\n");
-        fprintf(outputfp, "  LAD     gr1, INTBUF, gr6\n");
-        fprintf(outputfp, "  CALL    WRITESTR\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tLAD \tgr1, INTBUF, gr6\n");
+        fprintf(outputfp, "\tCALL\tWRITESTR\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         fprintf(outputfp, "WI6\n");
-        fprintf(outputfp, "  LAD     gr1, MMINT\n");
-        fprintf(outputfp, "  CALL    WRITESTR\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
-        fprintf(outputfp, "MMINT     DC  '-32768'\n");
+        fprintf(outputfp, "\tLAD \tgr1, MMINT\n");
+        fprintf(outputfp, "\tCALL\tWRITESTR\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
+        fprintf(outputfp, "MMINT   DC  '-32768'\n");
         on_pl_flag(PLONE);
         on_pl_flag(PLSIX);
         on_pl_flag(PLINTBUF);
@@ -521,51 +517,51 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLWRITEBOOL - PL]) {
         fprintf(outputfp, "WRITEBOOL\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  CPA     gr1, gr0\n");
-        fprintf(outputfp, "  JZE     WB1\n");
-        fprintf(outputfp, "  LAD     gr1, WBTRUE\n");
-        fprintf(outputfp, "  JAMP    WB2\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tCPA \tgr1, gr0\n");
+        fprintf(outputfp, "\tJZE \tWB1\n");
+        fprintf(outputfp, "\tLAD \tgr1, WBTRUE\n");
+        fprintf(outputfp, "\tJAMP\tWB2\n");
         fprintf(outputfp, "WB1\n");
-        fprintf(outputfp, "  LAD     gr1, WBFALSE\n");
+        fprintf(outputfp, "\tLAD \tgr1, WBFALSE\n");
         fprintf(outputfp, "WB2\n");
-        fprintf(outputfp, "  CALL    WRITESTR\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tCALL\tWRITESTR\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         fprintf(outputfp, "WBTRUE  DC  'TRUE'\n");
         fprintf(outputfp, "WBFALSE DC  'FALSE'\n");
         on_pl_flag(PLWRITESTR);
     }
     if (pl_flag[PLWRITESTR - PL]) {
         fprintf(outputfp, "WRITESTR\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  LD      gr6, gr1\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tLD  \tgr6, gr1\n");
         fprintf(outputfp, "WS1\n");
-        fprintf(outputfp, "  LD      gr4, 0, gr6\n");
-        fprintf(outputfp, "  JZE     WS2\n");
-        fprintf(outputfp, "  ADDA    gr6, ONE\n");
-        fprintf(outputfp, "  SUBA    gr2, ONE\n");
-        fprintf(outputfp, "  JUMP    WS1\n");
+        fprintf(outputfp, "\tLD  \tgr4, 0, gr6\n");
+        fprintf(outputfp, "\tJZE \tWS2\n");
+        fprintf(outputfp, "\tADDA\tgr6, ONE\n");
+        fprintf(outputfp, "\tSUBA\tgr2, ONE\n");
+        fprintf(outputfp, "\tJUMP\tWS1\n");
         fprintf(outputfp, "WS2\n");
-        fprintf(outputfp, "  LD      gr7, OBUFSIZE\n");
-        fprintf(outputfp, "  LD      gr5, SPACE\n");
+        fprintf(outputfp, "\tLD  \tgr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tLD  \tgr5, SPACE\n");
         fprintf(outputfp, "WS3\n");
-        fprintf(outputfp, "  SUBA    gr2, ONE\n");
-        fprintf(outputfp, "  JMI     WS4\n");
-        fprintf(outputfp, "  ST      gr5, OBUF, gr7\n");
-        fprintf(outputfp, "  CALL    BOVFCHECK\n");
-        fprintf(outputfp, "  JUMP    WS3\n");
+        fprintf(outputfp, "\tSUBA\tgr2, ONE\n");
+        fprintf(outputfp, "\tJMI \tWS4\n");
+        fprintf(outputfp, "\tST  \tgr5, OBUF, gr7\n");
+        fprintf(outputfp, "\tCALL\tBOVFCHECK\n");
+        fprintf(outputfp, "\tJUMP\tWS3\n");
         fprintf(outputfp, "WS4\n");
-        fprintf(outputfp, "  LD      gr4, 0, gr1\n");
-        fprintf(outputfp, "  JZE     WS5\n");
-        fprintf(outputfp, "  ST      gr4, OBUF, gr7\n");
-        fprintf(outputfp, "  ADDA    gr1, ONE\n");
-        fprintf(outputfp, "  CALL    BOVFCHECK\n");
-        fprintf(outputfp, "  JUMP    WS4\n");
+        fprintf(outputfp, "\tLD  \tgr4, 0, gr1\n");
+        fprintf(outputfp, "\tJZE \tWS5\n");
+        fprintf(outputfp, "\tST  \tgr4, OBUF, gr7\n");
+        fprintf(outputfp, "\tADDA\tgr1, ONE\n");
+        fprintf(outputfp, "\tCALL\tBOVFCHECK\n");
+        fprintf(outputfp, "\tJUMP\tWS4\n");
         fprintf(outputfp, "WS5\n");
-        fprintf(outputfp, "  ST      gr7, OBUFSIZE\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tST  \tgr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLONE);
         on_pl_flag(PLOBUFSIZE);
         on_pl_flag(PLSPACE);
@@ -574,42 +570,42 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLBOVFCHECK - PL]) {
         fprintf(outputfp, "BOVFCHECK\n");
-        fprintf(outputfp, "  ADDA    gr7, ONE\n");
-        fprintf(outputfp, "  CPA     gr7, BOVFLEVEL\n");
-        fprintf(outputfp, "  JMI     BOVF1\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
-        fprintf(outputfp, "  LD      gr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tADDA\tgr7, ONE\n");
+        fprintf(outputfp, "\tCPA \tgr7, BOVFLEVEL\n");
+        fprintf(outputfp, "\tJMI \tBOVF1\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
+        fprintf(outputfp, "\tLD  \tgr7, OBUFSIZE\n");
         fprintf(outputfp, "BOVF1\n");
-        fprintf(outputfp, "  RET\n");
-        fprintf(outputfp, "BOVFLEVEL\n");
+        fprintf(outputfp, "\tRET\n");
+        fprintf(outputfp, "BOVFLEVEL   DC  256\n");
         on_pl_flag(PLONE);
         on_pl_flag(PLWRITELINE);
         on_pl_flag(PLOBUFSIZE);
     }
     if (pl_flag[PLFLUSH - PL]) {
         fprintf(outputfp, "FLUSH\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  LD      gr7, OBUFSIZE\n");
-        fprintf(outputfp, "  JZE     FL1\n");
-        fprintf(outputfp, "  CALL    WRITELINE\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tLD  \tgr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tJZE \tFL1\n");
+        fprintf(outputfp, "\tCALL\tWRITELINE\n");
         fprintf(outputfp, "FL1\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLOBUFSIZE);
         on_pl_flag(PLWRITELINE);
     }
     if (pl_flag[PLWRITELINE - PL]) {
         fprintf(outputfp, "WRITELINE\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  LD      gr7, OBUFSIZE\n");
-        fprintf(outputfp, "  LD      gr6, NEWLINE\n");
-        fprintf(outputfp, "  ST      gr6, OBUF, gr7\n");
-        fprintf(outputfp, "  ADDA    gr7, ONE\n");
-        fprintf(outputfp, "  ST      gr7, OBUFSIZE\n");
-        fprintf(outputfp, "  OUT     OBUF, OBUFSIZE\n");
-        fprintf(outputfp, "  ST      gr0, OBUFSIZE\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tLD  \tgr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tLD  \tgr6, NEWLINE\n");
+        fprintf(outputfp, "\tST  \tgr6, OBUF, gr7\n");
+        fprintf(outputfp, "\tADDA\tgr7, ONE\n");
+        fprintf(outputfp, "\tST  \tgr7, OBUFSIZE\n");
+        fprintf(outputfp, "\tOUT \tOBUF, OBUFSIZE\n");
+        fprintf(outputfp, "\tST  \tgr0, OBUFSIZE\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLOBUFSIZE);
         on_pl_flag(PLNEWLINE);
         on_pl_flag(PLOBUF);
@@ -617,45 +613,45 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLREADINT - PL]) {
         fprintf(outputfp, "READINT\n");
-        fprintf(outputfp, "  RPUSH\n");
+        fprintf(outputfp, "\tRPUSH\n");
         fprintf(outputfp, "RI1\n");
-        fprintf(outputfp, "  CALL    READCHAR\n");
-        fprintf(outputfp, "  LD      gr7, 0, gr1\n");
-        fprintf(outputfp, "  CPA     gr7, SPACE\n");
-        fprintf(outputfp, "  JZE     RI1\n");
-        fprintf(outputfp, "  CPA     gr7, TAB\n");
-        fprintf(outputfp, "  JZE     RI1\n");
-        fprintf(outputfp, "  CPA     gr7, NEWLINE\n");
-        fprintf(outputfp, "  JZE     RI1\n");
-        fprintf(outputfp, "  LD      gr5, ONE\n");
-        fprintf(outputfp, "  CPA     gr7, MINUS\n");
-        fprintf(outputfp, "  JNZ     RI4\n");
-        fprintf(outputfp, "  LD      gr5, gr0\n");
-        fprintf(outputfp, "  CALL    READCHAR\n");
-        fprintf(outputfp, "  LD      gr7, 0, gr1\n");
+        fprintf(outputfp, "\tCALL\tREADCHAR\n");
+        fprintf(outputfp, "\tLD  \tgr7, 0, gr1\n");
+        fprintf(outputfp, "\tCPA \tgr7, SPACE\n");
+        fprintf(outputfp, "\tJZE \tRI1\n");
+        fprintf(outputfp, "\tCPA \tgr7, TAB\n");
+        fprintf(outputfp, "\tJZE \tRI1\n");
+        fprintf(outputfp, "\tCPA \tgr7, NEWLINE\n");
+        fprintf(outputfp, "\tJZE \tRI1\n");
+        fprintf(outputfp, "\tLD  \tgr5, ONE\n");
+        fprintf(outputfp, "\tCPA \tgr7, MINUS\n");
+        fprintf(outputfp, "\tJNZ \tRI4\n");
+        fprintf(outputfp, "\tLD  \tgr5, gr0\n");
+        fprintf(outputfp, "\tCALL\tREADCHAR\n");
+        fprintf(outputfp, "\tLD  \tgr7, 0, gr1\n");
         fprintf(outputfp, "RI4\n");
-        fprintf(outputfp, "  LD      gr6, gr0\n");
+        fprintf(outputfp, "\tLD  \tgr6, gr0\n");
         fprintf(outputfp, "RI2\n");
-        fprintf(outputfp, "  CPA     gr7, ZERO\n");
-        fprintf(outputfp, "  JMI     RI3\n");
-        fprintf(outputfp, "  CPA     gr7, NINE\n");
-        fprintf(outputfp, "  JPL     RI3\n");
-        fprintf(outputfp, "  MULA    gr6, TEN\n");
-        fprintf(outputfp, "  ADDA    gr6, gr7\n");
-        fprintf(outputfp, "  SUBA    gr6, ZERO\n");
-        fprintf(outputfp, "  CALL    READCHAR\n");
-        fprintf(outputfp, "  LD      gr7, 0, gr1\n");
-        fprintf(outputfp, "  JUMP    RI2\n");
+        fprintf(outputfp, "\tCPA \tgr7, ZERO\n");
+        fprintf(outputfp, "\tJMI \tRI3\n");
+        fprintf(outputfp, "\tCPA \tgr7, NINE\n");
+        fprintf(outputfp, "\tJPL \tRI3\n");
+        fprintf(outputfp, "\tMULA\tgr6, TEN\n");
+        fprintf(outputfp, "\tADDA\tgr6, gr7\n");
+        fprintf(outputfp, "\tSUBA\tgr6, ZERO\n");
+        fprintf(outputfp, "\tCALL\tREADCHAR\n");
+        fprintf(outputfp, "\tLD  \tgr7, 0, gr1\n");
+        fprintf(outputfp, "\tJUMP\tRI2\n");
         fprintf(outputfp, "RI3\n");
-        fprintf(outputfp, "  ST      gr7, RPBBUF\n");
-        fprintf(outputfp, "  ST      gr6, 0, gr1\n");
-        fprintf(outputfp, "  CPA     gr5, gr0\n");
-        fprintf(outputfp, "  JNZ     RI5\n");
-        fprintf(outputfp, "  SUBA    gr5, gr6\n");
-        fprintf(outputfp, "  ST      gr5, 0, gr1\n");
+        fprintf(outputfp, "\tST  \tgr7, RPBBUF\n");
+        fprintf(outputfp, "\tST  \tgr6, 0, gr1\n");
+        fprintf(outputfp, "\tCPA \tgr5, gr0\n");
+        fprintf(outputfp, "\tJNZ \tRI5\n");
+        fprintf(outputfp, "\tSUBA\tgr5, gr6\n");
+        fprintf(outputfp, "\tST  \tgr5, 0, gr1\n");
         fprintf(outputfp, "RI5\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLREADCHAR);
         on_pl_flag(PLSPACE);
         on_pl_flag(PLTAB);
@@ -669,34 +665,34 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLREADCHAR - PL]) {
         fprintf(outputfp, "READCHAR\n");
-        fprintf(outputfp, "  RPUSH\n");
-        fprintf(outputfp, "  LD      gr5, RPBBUF\n");
-        fprintf(outputfp, "  JZE     RC0\n");
-        fprintf(outputfp, "  ST      gr5, 0, gr1\n");
-        fprintf(outputfp, "  ST      gr0, RPBBUF\n");
-        fprintf(outputfp, "  JUMP    RC3\n");
+        fprintf(outputfp, "\tRPUSH\n");
+        fprintf(outputfp, "\tLD  \tgr5, RPBBUF\n");
+        fprintf(outputfp, "\tJZE \tRC0\n");
+        fprintf(outputfp, "\tST  \tgr5, 0, gr1\n");
+        fprintf(outputfp, "\tST  \tgr0, RPBBUF\n");
+        fprintf(outputfp, "\tJUMP\tRC3\n");
         fprintf(outputfp, "RC0\n");
-        fprintf(outputfp, "  LD      gr7, INP\n");
-        fprintf(outputfp, "  LD      gr6, IBUFSIZE\n");
-        fprintf(outputfp, "  JNZ     RC1\n");
-        fprintf(outputfp, "  IN      IBUF, IBUFSIZE\n");
-        fprintf(outputfp, "  LD      gr7, gr0\n");
+        fprintf(outputfp, "\tLD  \tgr7, INP\n");
+        fprintf(outputfp, "\tLD  \tgr6, IBUFSIZE\n");
+        fprintf(outputfp, "\tJNZ \tRC1\n");
+        fprintf(outputfp, "\tIN  \tIBUF, IBUFSIZE\n");
+        fprintf(outputfp, "\tLD  \tgr7, gr0\n");
         fprintf(outputfp, "RC1\n");
-        fprintf(outputfp, "  CPA     gr7, IBUFSIZE\n");
-        fprintf(outputfp, "  JNZ     RC2\n");
-        fprintf(outputfp, "  LD      gr5, NEWLINE\n");
-        fprintf(outputfp, "  ST      gr5, 0, gr1\n");
-        fprintf(outputfp, "  ST      gr0, IBUFSIZE\n");
-        fprintf(outputfp, "  ST      gr0, INP\n");
-        fprintf(outputfp, "  JUMP    RC3\n");
+        fprintf(outputfp, "\tCPA \tgr7, IBUFSIZE\n");
+        fprintf(outputfp, "\tJNZ \tRC2\n");
+        fprintf(outputfp, "\tLD  \tgr5, NEWLINE\n");
+        fprintf(outputfp, "\tST  \tgr5, 0, gr1\n");
+        fprintf(outputfp, "\tST  \tgr0, IBUFSIZE\n");
+        fprintf(outputfp, "\tST  \tgr0, INP\n");
+        fprintf(outputfp, "\tJUMP\tRC3\n");
         fprintf(outputfp, "RC2\n");
-        fprintf(outputfp, "  LD      gr5, IBUF, gr7\n");
-        fprintf(outputfp, "  ADDA    gr7, ONE\n");
-        fprintf(outputfp, "  ST      gr5, 0, gr1\n");
-        fprintf(outputfp, "  ST      gr7, INP\n");
+        fprintf(outputfp, "\tLD  \tgr5, IBUF, gr7\n");
+        fprintf(outputfp, "\tADDA\tgr7, ONE\n");
+        fprintf(outputfp, "\tST  \tgr5, 0, gr1\n");
+        fprintf(outputfp, "\tST  \tgr7, INP\n");
         fprintf(outputfp, "RC3\n");
-        fprintf(outputfp, "  RPOP\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tRPOP\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLRPBBUF);
         on_pl_flag(PLINP);
         on_pl_flag(PLIBUFSIZE);
@@ -706,10 +702,10 @@ void output_pl(FILE *outputfp) {
     }
     if (pl_flag[PLREADLINE - PL]) {
         fprintf(outputfp, "READLINE\n");
-        fprintf(outputfp, "  ST      gr0, IBUFSIZE\n");
-        fprintf(outputfp, "  ST      gr0, INP\n");
-        fprintf(outputfp, "  ST      gr0, RPBBUF\n");
-        fprintf(outputfp, "  RET\n");
+        fprintf(outputfp, "\tST  \tgr0, IBUFSIZE\n");
+        fprintf(outputfp, "\tST  \tgr0, INP\n");
+        fprintf(outputfp, "\tST  \tgr0, RPBBUF\n");
+        fprintf(outputfp, "\tRET\n");
         on_pl_flag(PLIBUFSIZE);
         on_pl_flag(PLINP);
         on_pl_flag(PLRPBBUF);

@@ -20,7 +20,7 @@ int is_check_number(char c);
 
 int is_check_symbol(char c);
 
-int skip_separator(char c, FILE *fp);
+int skip_separator(char c);
 
 int identify_keyword(const char *tokenstr);
 
@@ -28,21 +28,21 @@ int identify_name(const char *tokenstr);
 
 int identify_number(const char *tokenstr);
 
-int identify_symbol(char *tokenstr, FILE *fp);
+int identify_symbol(char *tokenstr);
 
-int identify_string(FILE *fp);
+int identify_string();
 
-int skip_comment(FILE *fp, int sep_type);
+int skip_comment(int sep_type);
 
 int is_check_token_size(int i);
 
 /* Call before scanning, open the file, prepare for scanning
  * Success:0 Failed:-1 */
-int init_scan(char *filename, FILE **fp) {
+int init_scan(char *filename) {
     /* The file pointer is received as a pointer to the pointer */
-    *fp = fopen(filename, "r");
+    inputfp = fopen(filename, "r");
 
-    if (*fp == NULL) {
+    if (inputfp == NULL) {
         fprintf(stderr, "\nERROR: File %s can not open.\n", filename);
         return -1;
     }
@@ -51,7 +51,7 @@ int init_scan(char *filename, FILE **fp) {
     linenum = 1;
 
     /* Read one character in cbuf */
-    cbuf = (char) fgetc(*fp);
+    cbuf = (char) fgetc(inputfp);
 
     return 0;
 
@@ -59,7 +59,7 @@ int init_scan(char *filename, FILE **fp) {
 
 /* Return the code of the token
  * failed:-1 */
-int scan(FILE *fp) {
+int scan() {
     char strbuf[MAXSTRSIZE];
     int i = 0, temp = 0, sep_type = 0;
 
@@ -69,7 +69,7 @@ int scan(FILE *fp) {
     /* Checks whether cbuf contains a separator or EOF,
      * if it is a separator, it skips the separator
      * until there is no separator and returns -1 if it is EOF */
-    while ((sep_type = skip_separator(cbuf, fp)) != 0) {
+    while ((sep_type = skip_separator(cbuf)) != 0) {
         if (sep_type == -1) {
             return -1;
         }
@@ -84,13 +84,13 @@ int scan(FILE *fp) {
     if (is_check_symbol(cbuf)) {
         /* If there is a symbol, identify which symbol and return */
         strbuf[0] = cbuf;
-        cbuf = (char) fgetc(fp);
-        return identify_symbol(strbuf, fp);
+        cbuf = (char) fgetc(inputfp);
+        return identify_symbol(strbuf);
     } else if (is_check_number(cbuf)) {
         /* If there is a number,
          * continue as long as the number continues, call identify_number */
         strbuf[0] = cbuf;
-        for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+        for (i = 1; (cbuf = (char) fgetc(inputfp)) != EOF; i++) {
             if (is_check_token_size(i) == -1) {
                 return -1;
             }
@@ -104,14 +104,14 @@ int scan(FILE *fp) {
     } else if (cbuf == '\'') {
         /* If "'" is included,
          * think it as a character string and call identify_string */
-        return identify_string(fp);
+        return identify_string(inputfp);
     } else if (is_check_alphabet(cbuf)) {
         /* If there is an alphabetic character,
          * it is a keyword or name, so long as an alphabetic character
          * or digit continues, put it in strbuf, call identify_keyword,
          * call identify_name if it is not keyword */
         strbuf[0] = cbuf;
-        for (i = 1; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+        for (i = 1; (cbuf = (char) fgetc(inputfp)) != EOF; i++) {
             if (is_check_token_size(i) == -1) {
                 return -1;
             }
@@ -181,32 +181,32 @@ int is_check_symbol(char c) {
  * 3 for annotations beginning with "/" "*"
  * Otherwise 0
  * return it */
-int skip_separator(char c, FILE *fp) {
+int skip_separator(char c) {
     switch (c) {
         case '\t': // Horizontal tab
         case '\v': // Vertical tab
         case 0x20: // Space
-            cbuf = (char) fgetc(fp);
+            cbuf = (char) fgetc(inputfp);
             return 1;
         case '\r': // Return
-            cbuf = (char) fgetc(fp);
+            cbuf = (char) fgetc(inputfp);
             if (cbuf == '\n') {
-                cbuf = (char) fgetc(fp);
+                cbuf = (char) fgetc(inputfp);
             }
             linenum++;
             return 1;
         case '\n': // new line
-            cbuf = (char) fgetc(fp);
+            cbuf = (char) fgetc(inputfp);
             if (cbuf == '\r') {
-                cbuf = (char) fgetc(fp);
+                cbuf = (char) fgetc(inputfp);
             }
             linenum++;
             return 1;
         case '{':
-            return skip_comment(fp, 2);
+            return skip_comment(2);
         case '/':
-            if ((cbuf = (char) fgetc(fp)) == '*') {
-                return skip_comment(fp, 3);
+            if ((cbuf = (char) fgetc(inputfp)) == '*') {
+                return skip_comment(3);
             }
             error("contain unexpected token.");
             return -1;
@@ -236,7 +236,7 @@ int identify_name(const char *tokenstr) {
     return TNAME;
 }
 
-int identify_symbol(char *tokenstr, FILE *fp) {
+int identify_symbol(char *tokenstr) {
     switch (tokenstr[0]) {
         case '(':
             return TLPAREN;
@@ -255,7 +255,7 @@ int identify_symbol(char *tokenstr, FILE *fp) {
         case ':':
             switch (cbuf) {
                 case '=':
-                    cbuf = (char) fgetc(fp);
+                    cbuf = (char) fgetc(inputfp);
                     return TASSIGN;
                 case EOF:
                     return -1;
@@ -267,10 +267,10 @@ int identify_symbol(char *tokenstr, FILE *fp) {
         case '<':
             switch (cbuf) {
                 case '>':
-                    cbuf = (char) fgetc(fp);
+                    cbuf = (char) fgetc(inputfp);
                     return TNOTEQ;
                 case '=':
-                    cbuf = (char) fgetc(fp);
+                    cbuf = (char) fgetc(inputfp);
                     return TLEEQ;
                 case EOF:
                     return -1;
@@ -282,7 +282,7 @@ int identify_symbol(char *tokenstr, FILE *fp) {
         case '>':
             switch (cbuf) {
                 case '=':
-                    cbuf = (char) fgetc(fp);
+                    cbuf = (char) fgetc(inputfp);
                     return TGREQ;
                 case EOF:
                     return -1;
@@ -317,17 +317,17 @@ int identify_number(const char *tokenstr) {
 }
 
 /* String is stored in string_attr and TSTRING is returned */
-int identify_string(FILE *fp) {
+int identify_string() {
     int i = 0;
     char tempbuf[MAXSTRSIZE];
     init_char_array(tempbuf, MAXSTRSIZE);
 
-    for (i = 0; (cbuf = (char) fgetc(fp)) != EOF; i++) {
+    for (i = 0; (cbuf = (char) fgetc(inputfp)) != EOF; i++) {
         if (is_check_token_size(i + 1) == -1) {
             return -1;
         }
         if (cbuf == '\'') {
-            cbuf = (char) fgetc(fp);
+            cbuf = (char) fgetc(inputfp);
             if (cbuf == '\'') {
                 tempbuf[i] = '\'';
                 i++;
@@ -348,16 +348,16 @@ int identify_string(FILE *fp) {
 
 /* Skip annotations
  * If it reaches EOF, it returns -1 */
-int skip_comment(FILE *fp, int sep_type) {
-    while ((cbuf = (char) fgetc(fp)) != EOF) {
+int skip_comment(int sep_type) {
+    while ((cbuf = (char) fgetc(inputfp)) != EOF) {
         if (cbuf == '}') {
             if (sep_type == 2) {
-                cbuf = (char) fgetc(fp);
+                cbuf = (char) fgetc(inputfp);
                 return 2;
             }
         } else if (cbuf == '*') {
-            if ((cbuf = (char) fgetc(fp)) == '/') {
-                cbuf = (char) fgetc(fp);
+            if ((cbuf = (char) fgetc(inputfp)) == '/') {
+                cbuf = (char) fgetc(inputfp);
                 return 3;
             }
         }
@@ -373,8 +373,8 @@ int get_linenum(void) {
 }
 
 /* Close the call file after scanning */
-void end_scan(FILE *fp) {
-    if (fclose(fp) == EOF) {
+void end_scan() {
+    if (fclose(inputfp) == EOF) {
         fprintf(stderr, "\nERROR: Input file can not close.\n");
     };
 }

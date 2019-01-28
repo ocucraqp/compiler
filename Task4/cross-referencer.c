@@ -121,7 +121,7 @@ struct ID *search_idtab(const char *name, const char *procname, int calling_func
     }
 }
 
-int def_id(const char *name, const char *procname, const struct TYPE *itp, int ispara, FILE *outputfp) {
+int def_id(const char *name, const char *procname, const struct TYPE *itp, int ispara) {
     /* Define id */
     struct ID *p, **pp, **prevpp;
     char *temp_name;
@@ -175,7 +175,7 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp, int i
 
         /* id_label output */
         if (p->itp->ttype != TPPROC) {
-            if (create_id_label(p, outputfp) == ERROR) { return ERROR; }
+            if (create_id_label(p) == ERROR) { return ERROR; }
         }
 
         /* Insert in list from name and procname lexicographically */
@@ -237,7 +237,7 @@ int def_id(const char *name, const char *procname, const struct TYPE *itp, int i
     return NORMAL;
 }
 
-int ref_id(const char *name, const char *procname, int refnum, struct TYPE **parameter_type) {
+int ref_id(const char *name, const char *procname, struct TYPE **parameter_type) {
     /* If the name is not in procedure compound statement, procname is NULL.
      * refnum is Element number of array.
      * Initial refnum is -1.
@@ -254,15 +254,6 @@ int ref_id(const char *name, const char *procname, int refnum, struct TYPE **par
             return error("%s:%s is not defined.", name, procname);
         }
     } else {
-        /* Confirm element size when expression is attached */
-        if (refnum >= 0) {
-            if (p->itp->arraysize == 0) {
-                return error("Variable %s is not array type");
-            } else if (refnum >= p->itp->arraysize) {
-                return error("The number of subscripts is too large");
-            }
-        }
-
         /* Save reference row */
         if ((temp_irefp = (struct LINE *) malloc(sizeof(struct LINE))) == NULL) {
             return error("can not malloc in ref_id");

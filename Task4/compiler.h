@@ -157,6 +157,8 @@ extern struct PARAID {
 } paraidroot, *paraidend;
 
 /* main.c */
+extern FILE *inputfp, *outputfp;
+
 extern int error(char *mes, ...);
 
 /* scan.c */
@@ -166,9 +168,9 @@ extern char string_attr[MAXSTRSIZE];
 
 extern int linenum;
 
-extern int init_scan(char *filename, FILE **fp);
+extern int init_scan(char *filename);
 
-extern int scan(FILE *fp);
+extern int scan();
 
 extern void init_int_array(int *array, int arraylength);
 
@@ -176,14 +178,14 @@ extern void init_char_array(char *array, int arraylength);
 
 extern int get_linenum(void);
 
-extern void end_scan(FILE *fp);
+extern void end_scan();
 
 /* parse-syntax.c */
 extern char *tokenstr[NUMOFTOKEN + 1];
 
 extern int token;
 
-extern int parse_program(FILE *inputfp, FILE *outputfp);
+extern int parse_program();
 
 /* cross-referencer.c */
 extern char *current_procname;
@@ -205,9 +207,9 @@ extern void release_vallinenum();
 
 struct ID *search_idtab(const char *name, const char *procname, int calling_func);
 
-extern int def_id(const char *name, const char *procname, const struct TYPE *itp, int ispara, FILE *outputfp);
+extern int def_id(const char *name, const char *procname, const struct TYPE *itp, int ispara);
 
-extern int ref_id(const char *name, const char *procname, int refnum, struct TYPE **temp_type);
+extern int ref_id(const char *name, const char *procname, struct TYPE **temp_type);
 
 extern void print_idtab();
 
@@ -221,43 +223,47 @@ extern int check_standard_type_to_pointer(struct TYPE *ptype);
 extern char label_buf[MAX_OUTPUT_BUF_SIZE];
 extern char *exit_label;
 
-int init_outputfile(char *inputfilename, FILE **fp);
+int init_outputfile(char *inputfilename);
 
-void end_output(FILE *fp);
+void end_output();
 
 int create_newlabel(char **labelname);
 
-int create_id_label(struct ID *p, FILE *outputfp);
+int create_id_label(struct ID *p);
 
-int command_start(FILE *fp, char *program_name, char **labelname);
+void command_label(char *labelname);
 
-int command_process_arguments(FILE *outputfp);
+int command_start(char *program_name, char **labelname);
 
-int command_condition_statement(FILE *outputfp, char *if_labelname);
+int command_process_arguments();
 
-int command_variable(FILE *outputfp, char *name, char *procname, int is_incall);
+int command_condition_statement(char *if_labelname);
 
-int command_expression(FILE *outputfp, int opr);
+int command_variable(struct ID *p, int is_incall);
 
-void command_simple_expression(FILE *outputfp, int opr);
+int command_expression(int opr);
 
-void command_term(FILE *outputfp, int opr);
+void command_simple_expression(int opr);
 
-int command_factor_cast(FILE *outputfp, int cast_type, int expression_type);
+void command_term(int opr);
 
-void command_constant_num(FILE *outputfp, int num);
+int command_factor_cast(int cast_type, int expression_type);
 
-void command_read_int(FILE *outputfp);
+void command_constant_num(int num);
 
-void command_read_char(FILE *outputfp);
+void command_read_int();
 
-void command_write_expression(FILE *outputfp, int type, int length);
+void command_read_char();
 
-int command_write_string(FILE *outputfp, char *string);
+void command_write_expression(int type, int length);
 
-void output_label_buf(FILE *outputfp);
+int command_write_string(char *string);
 
-void output_pl(FILE *outputfp);
+void command_return();
+
+void output_label_buf();
+
+void output_pl();
 
 void on_pl_flag(int plnum);
 

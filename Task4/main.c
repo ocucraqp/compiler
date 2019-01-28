@@ -32,8 +32,10 @@ struct KEY key[NUMOFKEYWORD] = {
         {"writeln",   TWRITELN}
 };
 
+/* pointer to I/O File */
+FILE *inputfp, *outputfp;
+
 int main(int nc, char *np[]) {
-    FILE *inputfp, *outputfp;
     int is_success = 0;
 
     /* End without argument */
@@ -43,20 +45,20 @@ int main(int nc, char *np[]) {
     }
 
     /* End if input file can not be opened */
-    if (init_scan(np[1], &inputfp) < 0) {
+    if (init_scan(np[1]) < 0) {
         return EXIT_FAILURE;
     }
 
     /* End if output file can not be opened */
-    if (init_outputfile(np[1], &outputfp) < 0) {
+    if (init_outputfile(np[1]) < 0) {
         return EXIT_FAILURE;
     }
 
     /* Prefetch one token */
-    token = scan(inputfp);
+    token = scan();
 
     /* Parse program */
-    is_success = parse_program(inputfp, outputfp);
+    is_success = parse_program();
 
     /* Add labels and data such as character strings */
     output_label_buf(outputfp);
@@ -65,7 +67,7 @@ int main(int nc, char *np[]) {
     output_pl(outputfp);
 
     /* end scan */
-    end_scan(inputfp);
+    end_scan();
 
     /* Display cross reference table */
     print_idtab();
