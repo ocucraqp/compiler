@@ -145,8 +145,8 @@ int command_condition_statement(char *if_labelname) {
 /* Generate code for outputting character string
  * When this function is called in a call statement,
  * it reads the address to gr1 */
-int command_variable(struct ID *p, int is_incall) {
-    if (is_incall == 1) {
+int command_variable(struct ID *p, int is_incall, int is_ininput) {
+    if (is_incall == 1 || (is_ininput && !(p->ispara))) {
         fprintf(outputfp, "\tLAD  \tgr1, $%s", p->name);
     } else {
         fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);

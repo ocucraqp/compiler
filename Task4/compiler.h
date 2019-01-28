@@ -239,7 +239,7 @@ int command_process_arguments();
 
 int command_condition_statement(char *if_labelname);
 
-int command_variable(struct ID *p, int is_incall);
+int command_variable(struct ID *p, int is_incall, int is_ininput);
 
 int command_expression(int opr);
 

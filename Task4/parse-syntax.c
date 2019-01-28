@@ -60,7 +60,7 @@ int parse_assignment_statement(int is_insubproc);
 
 int parse_left_part(struct ID **p, int is_insubproc, int is_inassign);
 
-int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign);
+int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign, int is_ininput);
 
 int parse_expression(int is_incall, int is_insubproc);
 
@@ -716,12 +716,12 @@ int parse_assignment_statement(int is_insubproc) {
 int parse_left_part(struct ID **p, int is_insubproc, int is_inassign) {
     int type_holder = NORMAL;
 
-    if ((type_holder = parse_variable(p, 0, is_insubproc, is_inassign)) == ERROR) { return ERROR; }
+    if ((type_holder = parse_variable(p, 0, is_insubproc, is_inassign, 0)) == ERROR) { return ERROR; }
 
     return type_holder;
 }
 
-int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign) {
+int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign, int is_ininput) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
     struct TYPE *parameter_type;
     struct NAME *temp_valname;
@@ -743,7 +743,7 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
         }
         token = scan();
 
-        //fprintf(outputfp, "\tCPA \tgr1, %d", );
+        //todo fprintf(outputfp, "\tCPA \tgr1, %d", );
 
         /* PUSH array index */
         fprintf(outputfp, "\tPUSH\t0, gr1\n");
@@ -760,7 +760,7 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
     }
 
     if (is_insubproc || !is_inassign) {
-        if (command_variable(*p, is_incall) == ERROR) { return ERROR; }
+        if (command_variable(*p, is_incall, is_ininput) == ERROR) { return ERROR; }
     }
 
     release_vallinenum();
@@ -910,7 +910,7 @@ int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
     struct ID *p;
     switch (token) {
         case TNAME:
-            if ((type_holder = parse_variable(&p, is_incall, is_insubproc, 0)) ==
+            if ((type_holder = parse_variable(&p, is_incall, is_insubproc, 0, 0)) ==
                 ERROR) { return ERROR; }
             break;
         case TNUMBER:
@@ -1063,7 +1063,7 @@ int parse_input_statement(int is_insubproc) {
     if (token == TLPAREN) {
         token = scan();
 
-        if ((type_holder = parse_variable(&p, 0, is_insubproc, 0)) == ERROR) { return ERROR; }
+        if ((type_holder = parse_variable(&p, 0, is_insubproc, 0, 1)) == ERROR) { return ERROR; }
         if (type_holder == TPINT) {
             command_read_int();
         } else if (type_holder == TPCHAR) {
@@ -1075,7 +1075,7 @@ int parse_input_statement(int is_insubproc) {
         while (token == TCOMMA) {
             token = scan();
 
-            if ((type_holder = parse_variable(&p, 0, is_insubproc, 0)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(&p, 0, is_insubproc, 0, 1)) == ERROR) { return ERROR; }
             if (type_holder == TPINT) {
                 command_read_int();
             } else if (type_holder == TPCHAR) {
