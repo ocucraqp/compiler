@@ -192,7 +192,8 @@ int command_judge_index(int arraysize) {
 
     fprintf(outputfp, "\tCPA \tgr1, gr0\n");
     fprintf(outputfp, "\tJMI \tEROV\n");
-    fprintf(outputfp, "\tCPA \tgr1, %d\n", arraysize);
+    fprintf(outputfp, "\tLAD \tgr2, %d\n", arraysize);
+    fprintf(outputfp, "\tCPA \tgr1, gr2\n");
     fprintf(outputfp, "\tJMI \t%s\n", labelname);
     fprintf(outputfp, "\tJUMP\tEROV\n");
     fprintf(outputfp, "%s\n", labelname);
