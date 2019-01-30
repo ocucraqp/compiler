@@ -19,6 +19,8 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 /* Structure for creating a list of dummy argument IDs */
 struct PARAID paraidroot, *paraidend;
 
+int is_insubproc = 0, is_incall = 0, is_inassign = 0, is_inleft_part = 0, is_ininput = 0;
+
 /* prototype declaration */
 int parse_block(char *start_labelname);
 
@@ -40,13 +42,13 @@ int parse_procedure_name();
 
 int parse_formal_parameters();
 
-int parse_compound_statement(int is_insubproc);
+int parse_compound_statement();
 
-int parse_statement(int is_insubproc);
+int parse_statement();
 
-int parse_condition_statement(int is_insubproc);
+int parse_condition_statement();
 
-int parse_iteration_statement(int is_insubproc);
+int parse_iteration_statement();
 
 int parse_exit_statement();
 
@@ -56,19 +58,19 @@ int parse_expressions(struct TYPE *parameter_type);
 
 int parse_return_statement();
 
-int parse_assignment_statement(int is_insubproc);
+int parse_assignment_statement();
 
-int parse_left_part(struct ID **p, int is_insubproc, int is_inassign);
+int parse_left_part(struct ID **p);
 
-int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign, int is_ininput);
+int parse_variable(struct ID **p);
 
-int parse_expression(int is_incall, int is_insubproc);
+int parse_expression(int *is_computed);
 
-int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed);
+int parse_simple_expression(struct ID **p, int *is_computed);
 
-int parse_term(int is_incall, int is_insubproc, int *is_computed);
+int parse_term(struct ID **p, int *is_computed);
 
-int parse_factor(int is_incall, int is_insubproc, int *is_computed);
+int parse_factor(struct ID **p, int *is_computed);
 
 int parse_constant();
 
@@ -78,11 +80,11 @@ int parse_additive_operator();
 
 int parse_relational_operator();
 
-int parse_input_statement(int is_insubproc);
+int parse_input_statement();
 
-int parse_output_statement(int is_insubproc);
+int parse_output_statement();
 
-int parse_output_format(int is_insubproc);
+int parse_output_format();
 
 int parse_program() {
     char *start_labelname = NULL;
@@ -284,6 +286,8 @@ int parse_array_type() {
 int parse_subprogram_declaration() {
     struct ID *p;
 
+    is_insubproc = 1;
+
     if (token != TPROCEDURE) { return (error("Keyword 'procedure' is not found")); }
     token = scan();
 
@@ -318,12 +322,14 @@ int parse_subprogram_declaration() {
         command_process_arguments();
     }
 
-    if (parse_compound_statement(1) == ERROR) { return ERROR; }
+    if (parse_compound_statement() == ERROR) { return ERROR; }
 
     if (token != TSEMI) { return (error("Symbol ';' is not found")); }
     token = scan();
 
     command_return();
+
+    is_insubproc = 0;
 
     return NORMAL;
 }
@@ -416,17 +422,17 @@ int parse_formal_parameters() {
     return NORMAL;
 }
 
-int parse_compound_statement(int is_insubproc) {
+int parse_compound_statement() {
     if (token != TBEGIN) { return (error("Keyword 'begin' is not found")); }
     token = scan();
 
-    if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
+    if (parse_statement() == ERROR) { return ERROR; }
 
     while (token == TSEMI) {
         if (token != TSEMI) { return (error("Symbol ';' is not found")); }
         token = scan();
 
-        if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
+        if (parse_statement() == ERROR) { return ERROR; }
     }
 
     if (token != TEND) { return (error("Keyword 'end' is not found")); }
@@ -435,16 +441,16 @@ int parse_compound_statement(int is_insubproc) {
     return NORMAL;
 }
 
-int parse_statement(int is_insubproc) {
+int parse_statement() {
     switch (token) {
         case TNAME:
-            if (parse_assignment_statement(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_assignment_statement() == ERROR) { return ERROR; }
             break;
         case TIF:
-            if (parse_condition_statement(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_condition_statement() == ERROR) { return ERROR; }
             break;
         case TWHILE:
-            if (parse_iteration_statement(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_iteration_statement() == ERROR) { return ERROR; }
             break;
         case TBREAK:
             if (parse_exit_statement() == ERROR) { return ERROR; }
@@ -457,14 +463,14 @@ int parse_statement(int is_insubproc) {
             break;
         case TREAD:
         case TREADLN:
-            if (parse_input_statement(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_input_statement() == ERROR) { return ERROR; }
             break;
         case TWRITE:
         case TWRITELN:
-            if (parse_output_statement(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_output_statement() == ERROR) { return ERROR; }
             break;
         case TBEGIN:
-            if (parse_compound_statement(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_compound_statement() == ERROR) { return ERROR; }
             break;
         default:
             break;
@@ -473,8 +479,8 @@ int parse_statement(int is_insubproc) {
     return NORMAL;
 }
 
-int parse_condition_statement(int is_insubproc) {
-    int expression_type_holder = NORMAL;
+int parse_condition_statement() {
+    int expression_type_holder = NORMAL, is_computed = 0;
     char *if_labelname = NULL, *else_labelname = NULL;
 
     if (create_newlabel(&if_labelname) == ERROR) { return ERROR; }
@@ -483,7 +489,7 @@ int parse_condition_statement(int is_insubproc) {
     if (token != TIF) { return (error("Keyword 'if' is not found")); }
     token = scan();
 
-    if ((expression_type_holder = parse_expression(0, is_insubproc)) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
     if (expression_type_holder != TPBOOL) {
         return error("The type of the expression in the condition statement must be boolean");
     }
@@ -491,7 +497,7 @@ int parse_condition_statement(int is_insubproc) {
 
     if (token != TTHEN) { return (error("Keyword 'then is not found")); }
     token = scan();
-    if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
+    if (parse_statement() == ERROR) { return ERROR; }
 
     if (token == TELSE) {
         command_jump(else_labelname);
@@ -499,7 +505,7 @@ int parse_condition_statement(int is_insubproc) {
 
         token = scan();
 
-        if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
+        if (parse_statement() == ERROR) { return ERROR; }
         command_label(else_labelname);
     } else {
         command_label(if_labelname);
@@ -508,8 +514,8 @@ int parse_condition_statement(int is_insubproc) {
     return NORMAL;
 }
 
-int parse_iteration_statement(int is_insubproc) {
-    int expression_type_holder = NORMAL;
+int parse_iteration_statement() {
+    int expression_type_holder = NORMAL, is_computed = 0;
     char *while_labelname[2] = {NULL};
     char *temp_exit_label = NULL;
 
@@ -522,7 +528,7 @@ int parse_iteration_statement(int is_insubproc) {
 
     command_label(while_labelname[0]);
 
-    if ((expression_type_holder = parse_expression(0, is_insubproc)) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
     if (expression_type_holder != TPBOOL) {
         return error("The type of the expression in the iteration statement must be boolean");
     }
@@ -534,7 +540,7 @@ int parse_iteration_statement(int is_insubproc) {
     command_condition_statement(while_labelname[1]);
     exit_label = while_labelname[1];
 
-    if (parse_statement(is_insubproc) == ERROR) { return ERROR; }
+    if (parse_statement() == ERROR) { return ERROR; }
     whether_inside_iteration--;
 
     exit_label = temp_exit_label;
@@ -561,6 +567,8 @@ int parse_call_statement() {
     char *call_procname;
     char temp_procname[MAX_IDENTIFIER_SIZE + 1];
     call_procname = NULL;
+
+    is_incall = 1;
 
     if (current_procname != NULL) {
         if ((call_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
@@ -613,11 +621,13 @@ int parse_call_statement() {
 
     command_expressions(temp_procname);
 
+    is_incall = 0;
+
     return NORMAL;
 }
 
 int parse_expressions(struct TYPE *parameter_type) {
-    int type_holder = NORMAL, i = 0;
+    int type_holder = NORMAL, i = 0, is_computed = 0;
     struct TYPE **temp_type;
 
     if (parameter_type->paratp == NULL) {
@@ -626,7 +636,7 @@ int parse_expressions(struct TYPE *parameter_type) {
         temp_type = &(parameter_type->paratp);
     }
 
-    if ((type_holder = parse_expression(1, 0)) == ERROR) { return ERROR; }
+    if ((type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
     i++;
     if (type_holder != (*temp_type)->ttype) {
         return error("The type of the 1st argument is incorrect.");
@@ -634,8 +644,12 @@ int parse_expressions(struct TYPE *parameter_type) {
 
     while (token == TCOMMA) {
         token = scan();
+        if (!is_computed) {
+            command_push_gr1();
+        }
+        is_computed = 0;
 
-        if ((type_holder = parse_expression(1, 0)) == ERROR) { return ERROR; }
+        if ((type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
         i++;
         temp_type = &((*temp_type)->paratp);
         if ((*temp_type) != NULL) {
@@ -673,40 +687,47 @@ int parse_return_statement() {
     return NORMAL;
 }
 
-int parse_assignment_statement(int is_insubproc) {
-    int type_holder = NORMAL, expression_type_holder = NORMAL;
+int parse_assignment_statement() {
+    int type_holder = NORMAL, expression_type_holder = NORMAL, is_computed = 0;
     struct ID *p;
 
-    if ((type_holder = parse_left_part(&p, is_insubproc, 1)) == ERROR) { return ERROR; }
+    is_inassign = 1;
 
-    if (is_insubproc) {
+    if ((type_holder = parse_left_part(&p)) == ERROR) { return ERROR; }
+
+    if (is_insubproc && p->ispara) {
         command_push_gr1();
     }
 
     if (token != TASSIGN) { return (error("Symbol ':=' is not found")); }
     token = scan();
 
-    if ((expression_type_holder = parse_expression(0, is_insubproc)) == ERROR) { return ERROR; }
+    if ((expression_type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
 
     if ((type_holder % 100) != (expression_type_holder % 100)) {
         return error("The type of the expression differs from the left part");
     }
-
     command_assign(is_insubproc, p);
+
+    is_inassign = 0;
 
     return NORMAL;
 }
 
-int parse_left_part(struct ID **p, int is_insubproc, int is_inassign) {
+int parse_left_part(struct ID **p) {
     int type_holder = NORMAL;
 
-    if ((type_holder = parse_variable(p, 0, is_insubproc, is_inassign, 0)) == ERROR) { return ERROR; }
+    is_inleft_part = 1;
+
+    if ((type_holder = parse_variable(p)) == ERROR) { return ERROR; }
+
+    is_inleft_part = 0;
 
     return type_holder;
 }
 
-int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassign, int is_ininput) {
-    int type_holder = NORMAL, expression_type_holder = NORMAL, is_index = 0;
+int parse_variable(struct ID **p) {
+    int type_holder = NORMAL, expression_type_holder = NORMAL, is_index = 0, is_computed = 0;
     struct TYPE *parameter_type;
     struct NAME *temp_valname;
 
@@ -719,8 +740,7 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
         /* Handling expressions for arrays */
         token = scan();
 
-        if ((expression_type_holder = parse_expression(is_incall, is_insubproc)) ==
-            ERROR) { return ERROR; }
+        if ((expression_type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
 
         if (token != TRSQPAREN) {
             return (error("Symbol ']' is not found at the end of expression"));
@@ -734,8 +754,7 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
         return error("can not malloc in parse_variable");
     }
     init_type(parameter_type);
-    if ((type_holder = ref_id(temp_valname->name, current_procname, &parameter_type)) ==
-        ERROR) { return ERROR; }
+    if ((type_holder = ref_id(temp_valname->name, current_procname, &parameter_type)) == ERROR) { return ERROR; }
     if ((*p = search_idtab(temp_valname->name, current_procname, 1)) == NULL) {
         return error("%s is not defined", current_procname);
     }
@@ -744,11 +763,17 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
         command_judge_index((*p)->itp->arraysize);
     }
 
-    if (is_insubproc || !is_inassign) {
-        if (command_variable(*p, is_incall, is_ininput, is_index) == ERROR) { return ERROR; }
+    if ((is_insubproc || !(is_inassign && is_inleft_part))
+        && !(is_inleft_part && !(*p)->ispara)) {
+        if (command_variable(*p, is_incall, is_insubproc, is_ininput, is_index) == ERROR) { return ERROR; }
     } else if (is_index) {
         /* PUSH array index */
         command_push_gr1();
+    }
+
+    if ((is_incall && (token != TRPAREN && token != TCOMMA))
+        || (is_insubproc && !is_incall && !is_inleft_part && !is_ininput && (*p)->ispara)) {
+        command_ld_gr1_0_gr1();
     }
 
     release_vallinenum();
@@ -770,11 +795,11 @@ int parse_variable(struct ID **p, int is_incall, int is_insubproc, int is_inassi
     return type_holder;
 }
 
-int parse_expression(int is_incall, int is_insubproc) {
-    int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL, opr = 0, is_computed = 0;
+int parse_expression(int *is_computed) {
+    int type_holder = NORMAL, operand1_type = NORMAL, operand2_type = NORMAL, opr = 0;
+    struct ID *p = NULL;
 
-    if ((operand1_type = parse_simple_expression(is_incall, is_insubproc, &is_computed)) ==
-        ERROR) { return ERROR; }
+    if ((operand1_type = parse_simple_expression(&p, is_computed)) == ERROR) { return ERROR; }
     type_holder = operand1_type;
 
     while ((token == TEQUAL) || (token == TNOTEQ) || (token == TLE) || (token == TLEEQ) || (token == TGR) ||
@@ -782,13 +807,9 @@ int parse_expression(int is_incall, int is_insubproc) {
         opr = token;
         if (parse_relational_operator() == ERROR) { return ERROR; }
 
-        if ((is_insubproc || is_incall) && !(is_computed)) {
-            command_ld_gr1_0_gr1();
-        }
         command_push_gr1();
 
-        if ((operand2_type = parse_simple_expression(is_incall, is_insubproc, &is_computed)) ==
-            ERROR) { return ERROR; }
+        if ((operand2_type = parse_simple_expression(&p, is_computed)) == ERROR) { return ERROR; }
         if ((operand1_type % 100) != (operand2_type % 100)) {
             return error("The operands of relational operators have different types");
         }
@@ -796,17 +817,17 @@ int parse_expression(int is_incall, int is_insubproc) {
 
         if (command_expression(opr) == ERROR) { return ERROR; }
 
-        if (is_insubproc || is_incall) { is_computed = 1; };
+        if (is_insubproc || is_incall) { (*is_computed) = 1; };
     }
 
-    if (!is_insubproc && is_computed) {
+    if (is_incall && (*is_computed)) {
         command_expression_by_call();
     }
 
     return type_holder;
 }
 
-int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
+int parse_simple_expression(struct ID **p, int *is_computed) {
     int type_holder = NORMAL, pm_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
     pm_flag = token;
@@ -814,27 +835,22 @@ int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
         token = scan();
     }
 
-    if ((operand1_type = parse_term(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_term(p, is_computed)) == ERROR) { return ERROR; }
     if ((pm_flag == TPLUS || pm_flag == TMINUS) && operand1_type != TPINT) {
         return error("The operands of + and - must be of type integer");
     }
     if (pm_flag == TMINUS) {
-        if ((is_insubproc || is_incall) && !(*is_computed)) {
-            command_ld_gr1_0_gr1();
-        }
-        command_minus();
+        command_minus(is_incall);
+        *is_computed = 1;
     }
 
     while ((token == TPLUS) || (token == TMINUS) || (token == TOR)) {
         pm_flag = token;
         if (parse_additive_operator() == ERROR) { return ERROR; }
 
-        if ((is_insubproc || is_incall) && !(*is_computed)) {
-            command_ld_gr1_0_gr1();
-        }
         command_push_gr1();
 
-        if ((operand2_type = parse_term(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_term(p, is_computed)) == ERROR) { return ERROR; }
         if (pm_flag != TOR && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '+' and '-' must be of type integer");
         }
@@ -850,22 +866,19 @@ int parse_simple_expression(int is_incall, int is_insubproc, int *is_computed) {
     return type_holder;
 }
 
-int parse_term(int is_incall, int is_insubproc, int *is_computed) {
+int parse_term(struct ID **p, int *is_computed) {
 
     int type_holder = NORMAL, md_flag = 0, operand1_type = NORMAL, operand2_type = NORMAL;
 
-    if ((operand1_type = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
+    if ((operand1_type = parse_factor(p, is_computed)) == ERROR) { return ERROR; }
 
     while ((token == TSTAR) || (token == TDIV) || (token == TAND)) {
         md_flag = token;
         if (parse_multiplicative_operator() == ERROR) { return ERROR; }
 
-        if ((is_insubproc || is_incall) && !(*is_computed)) {
-            command_ld_gr1_0_gr1();
-        }
         command_push_gr1();
 
-        if ((operand2_type = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
+        if ((operand2_type = parse_factor(p, is_computed)) == ERROR) { return ERROR; }
         if (md_flag != TAND && (operand1_type != TPINT || operand2_type != TPINT)) {
             return error("The operands of '*' and 'div' must be of type integer");
         }
@@ -881,13 +894,12 @@ int parse_term(int is_incall, int is_insubproc, int *is_computed) {
     return type_holder;
 }
 
-int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
+int parse_factor(struct ID **p, int *is_computed) {
     int type_holder = NORMAL, expression_type_holder = NORMAL;
-    struct ID *p;
+
     switch (token) {
         case TNAME:
-            if ((type_holder = parse_variable(&p, is_incall, is_insubproc, 0, 0)) ==
-                ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(p)) == ERROR) { return ERROR; }
             break;
         case TNUMBER:
         case TFALSE:
@@ -898,7 +910,7 @@ int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
         case TLPAREN:
             token = scan();
 
-            if ((type_holder = parse_expression(is_incall, is_insubproc)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(is_computed)) == ERROR) { return ERROR; }
 
             if (token != TRPAREN) {
                 return (error("Symbol ')' is not found at the end of factor"));
@@ -907,7 +919,7 @@ int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
             break;
         case TNOT:
             token = scan();
-            if ((type_holder = parse_factor(is_incall, is_insubproc, is_computed)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_factor(p, is_computed)) == ERROR) { return ERROR; }
             if (type_holder != TPBOOL) {
                 return error("The operand of 'not' must be of type boolean.");
             }
@@ -923,8 +935,7 @@ int parse_factor(int is_incall, int is_insubproc, int *is_computed) {
             }
             token = scan();
 
-            if ((expression_type_holder = parse_expression(is_incall, is_insubproc)) ==
-                ERROR) { return ERROR; }
+            if ((expression_type_holder = parse_expression(is_computed)) == ERROR) { return ERROR; }
 
             if (check_standard_type(expression_type_holder) == ERROR) { return ERROR; }
 
@@ -1022,9 +1033,11 @@ int parse_relational_operator() {
     return NORMAL;
 }
 
-int parse_input_statement(int is_insubproc) {
+int parse_input_statement() {
     int is_ln = token;
     struct ID *p;
+
+    is_ininput = 1;
 
     int type_holder = NORMAL;
     switch (token) {
@@ -1039,7 +1052,7 @@ int parse_input_statement(int is_insubproc) {
     if (token == TLPAREN) {
         token = scan();
 
-        if ((type_holder = parse_variable(&p, 0, is_insubproc, 0, 1)) == ERROR) { return ERROR; }
+        if ((type_holder = parse_variable(&p)) == ERROR) { return ERROR; }
         if (type_holder == TPINT) {
             command_read_int();
         } else if (type_holder == TPCHAR) {
@@ -1051,7 +1064,7 @@ int parse_input_statement(int is_insubproc) {
         while (token == TCOMMA) {
             token = scan();
 
-            if ((type_holder = parse_variable(&p, 0, is_insubproc, 0, 1)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_variable(&p)) == ERROR) { return ERROR; }
             if (type_holder == TPINT) {
                 command_read_int();
             } else if (type_holder == TPCHAR) {
@@ -1068,10 +1081,12 @@ int parse_input_statement(int is_insubproc) {
         command_read_line();
     }
 
+    is_ininput = 0;
+
     return NORMAL;
 }
 
-int parse_output_statement(int is_insubproc) {
+int parse_output_statement() {
     int is_ln = token;
 
     switch (token) {
@@ -1086,12 +1101,12 @@ int parse_output_statement(int is_insubproc) {
     if (token == TLPAREN) {
         token = scan();
 
-        if (parse_output_format(is_insubproc) == ERROR) { return ERROR; }
+        if (parse_output_format() == ERROR) { return ERROR; }
 
         while (token == TCOMMA) {
             token = scan();
 
-            if (parse_output_format(is_insubproc) == ERROR) { return ERROR; }
+            if (parse_output_format() == ERROR) { return ERROR; }
         }
         if (token != TRPAREN) { return (error("Symbol ')' is not found")); }
         token = scan();
@@ -1104,8 +1119,8 @@ int parse_output_statement(int is_insubproc) {
     return NORMAL;
 }
 
-int parse_output_format(int is_insubproc) {
-    int str_length = 0, type_holder = NORMAL;
+int parse_output_format() {
+    int str_length = 0, type_holder = NORMAL, is_computed = 0;
 
     switch (token) {
         case TSTRING:
@@ -1126,7 +1141,7 @@ int parse_output_format(int is_insubproc) {
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
-            if ((type_holder = parse_expression(0, is_insubproc)) == ERROR) { return ERROR; }
+            if ((type_holder = parse_expression(&is_computed)) == ERROR) { return ERROR; }
             if (check_standard_type(type_holder) == ERROR) { return ERROR; }
 
             if (token == TCOLON) {

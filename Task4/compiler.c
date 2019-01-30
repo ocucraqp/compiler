@@ -147,7 +147,7 @@ void command_condition_statement(char *labelname) {
 
 /* Generate code of assign statement */
 void command_assign(int is_insubproc, struct ID *p) {
-    if (is_insubproc) {
+    if (is_insubproc && p->ispara) {
         fprintf(outputfp, "\tPOP \tgr2\n");
         fprintf(outputfp, "\tST  \tgr1, 0, gr2\n");
     } else {
@@ -168,8 +168,8 @@ void command_assign(int is_insubproc, struct ID *p) {
 /* Generate code for outputting character string
  * When this function is called in a call statement,
  * it reads the address to gr1 */
-int command_variable(struct ID *p, int is_incall, int is_ininput, int is_index) {
-    if (is_incall == 1 || (is_ininput && !(p->ispara))) {
+int command_variable(struct ID *p, int is_incall, int is_insubproc, int is_ininput, int is_index) {
+    if ((is_incall && !is_insubproc) || (((is_incall && is_insubproc) || is_ininput) && !(p->ispara))) {
         fprintf(outputfp, "\tLAD  \tgr1, $%s", p->name);
     } else {
         fprintf(outputfp, "\tLD  \tgr1, $%s", p->name);
@@ -279,9 +279,14 @@ void command_simple_expression(int opr) {
     switch (opr) {
         case TPLUS:
             fprintf(outputfp, "\tADDA\tgr1, gr2\n");
+            fprintf(outputfp, "\tJOV \tEOVF\n");
+            on_pl_flag(PLEOVF);
             break;
         case TMINUS:
             fprintf(outputfp, "\tSUBA\tgr2, gr1\n");
+            fprintf(outputfp, "\tJOV \tEOVF\n");
+            on_pl_flag(PLEOVF);
+            fprintf(outputfp, "\tLD  \tgr1, gr2\n");
             break;
         case TOR:
             fprintf(outputfp, "\tOR  \tgr1, gr2\n");
@@ -289,15 +294,13 @@ void command_simple_expression(int opr) {
         default:
             break;
     }
-    fprintf(outputfp, "\tJOV \tEOVF\n");
-    if (opr == TMINUS) {
-        fprintf(outputfp, "\tLD  \tgr1, gr2\n");
-    }
-    on_pl_flag(PLEOVF);
 };
 
 /* Generate code when '-' was attached before the term */
-void command_minus() {
+void command_minus(int is_incall) {
+    if (is_incall) {
+        command_ld_gr1_0_gr1();
+    }
     fprintf(outputfp, "\tLAD \tgr2, -1\n");
     fprintf(outputfp, "\tMULA\tgr1, gr2\n");
     fprintf(outputfp, "\tJOV \tEOVF\n");
@@ -310,23 +313,20 @@ void command_term(int opr) {
     switch (opr) {
         case TSTAR:
             fprintf(outputfp, "\tMULA\tgr1, gr2\n");
+            fprintf(outputfp, "\tJOV \tEOVF\n");
+            on_pl_flag(PLEOVF);
             break;
         case TDIV:
             fprintf(outputfp, "\tDIVA\tgr2, gr1\n");
+            fprintf(outputfp, "\tJOV \tE0DIV\n");
+            on_pl_flag(PLE0DIV);
+            fprintf(outputfp, "\tLD  \tgr1, gr2\n");
             break;
         case TAND:
             fprintf(outputfp, "\tAND \tgr1, gr2\n");
             break;
         default:
             break;
-    }
-    if (opr == TDIV) {
-        fprintf(outputfp, "\tJOV \tE0DIV\n");
-        on_pl_flag(PLE0DIV);
-        fprintf(outputfp, "\tLD  \tgr1, gr2\n");
-    } else {
-        fprintf(outputfp, "\tJOV \tEOVF\n");
-        on_pl_flag(PLEOVF);
     }
 };
 

@@ -243,7 +243,7 @@ void command_condition_statement(char *if_labelname);
 
 void command_assign(int is_insubproc, struct ID *p);
 
-int command_variable(struct ID *p, int is_incall, int is_ininput, int is_index);
+int command_variable(struct ID *p, int is_incall, int is_insubproc, int is_ininput, int is_index);
 
 int command_judge_index(int arraysize);
 
@@ -255,7 +255,7 @@ int command_expression_by_call();
 
 void command_simple_expression(int opr);
 
-void command_minus();
+void command_minus(int is_incall);
 
 void command_term(int opr);
 
