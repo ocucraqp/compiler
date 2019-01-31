@@ -1,5 +1,11 @@
-Task1/sample/
-
+*/.idea/
+*/cmake-build-debug/
+*/CMakeLists.txt
+*/sample/
+*/sample_output/
 */tex/
-
 *.pdf
+Task4/*.dll
+Task4/*.exe
+Task4/output
+Task4/result

@@ -1,9 +1,18 @@
-/* token-list.h  */
+#ifndef TASK3_CROSS_REFERENCER_H
+#define TASK3_CROSS_REFERENCER_H
+
+/* cross-referencer.h  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define MAXSTRSIZE 1024
+#define MAX_IDENTIFIER_SIZE 8
+#define NORMAL 0
+#define ERROR -1
+#define NUMOFKEYWORD    28
+#define MAXKEYWORDLENGTH    9
 
 /* Token */
 #define    TNAME        1    /* Name : Alphabet { Alphabet | Digit } */
@@ -58,19 +67,62 @@
 
 #define NUMOFTOKEN    49
 
-/* token-list.c */
+/* Type */
+#define TPINT TINTEGER+100
+#define TPCHAR TCHAR+100
+#define TPBOOL TBOOLEAN+100
+#define TPARRAYINT TINTEGER+200
+#define TPARRAYCHAR TCHAR+200
+#define TPARRAYBOOL TBOOLEAN+200
+#define TPPROC 100
 
-#define NUMOFKEYWORD    28
-#define MAXKEYWORDLENGTH    9
-
+/* Structure */
 extern struct KEY {
     char *keyword;
     int keytoken;
 } key[NUMOFKEYWORD];
 
-extern void error(char *mes);
+extern struct TYPE {
+    int ttype;
+    /* TPINT TPCHAR TPBOOL TPARRAYINT TPARRAYCHAR
+    TPARRAYBOOL TPPROC */
+    int arraysize;
+    /* size of array, if TPARRAY */
+    struct TYPE *paratp;
+    /* pointer to parameter's type list if ttype is TPPROC
+     * paratp is NULL if ttype is not TPROC*/
+} temp_type, *end_type;
+
+extern struct LINE {
+    int linenum;
+    struct LINE *nextlinep;
+} *vallinenumroot;
+
+extern struct ID {
+    char *name;
+    char *procname;
+    /* procedure name within which this name is defined */ /* NULL if global name */
+    struct TYPE *itp;
+    int deflinenum;
+    struct LINE *irefp;
+    struct ID *nextp;
+} *idroot;
+
+extern struct NAME {
+    char *name;
+    struct NAME *nextnamep;
+} *temp_name_root;
+
+/* main.c */
+extern int error(char *mes, ...);
 
 /* scan.c */
+extern int num_attr;
+
+extern char string_attr[MAXSTRSIZE];
+
+extern int linenum;
+
 extern int init_scan(char *filename, FILE **fp);
 
 extern int scan(FILE *fp);
@@ -79,48 +131,42 @@ extern void init_int_array(int *array, int arraylength);
 
 extern void init_char_array(char *array, int arraylength);
 
-extern int is_check_alphabet(char c);
-
-extern int is_check_number(char c);
-
-extern int is_check_symbol(char c);
-
-extern int skip_separator(char c, FILE *fp);
-
-extern int identify_keyword(const char *tokenstr);
-
-extern int identify_name(const char *tokenstr);
-
-extern int identify_number(const char *tokenstr);
-
-extern int identify_symbol(char *tokenstr, FILE *fp);
-
-extern int identify_string(FILE *fp);
-
-extern int skip_comment(FILE *fp, int sep_type);
-
-extern int num_attr;
-
-extern char string_attr[MAXSTRSIZE];
-
-extern char cbuf;
-
-extern int linenum;
-
 extern int get_linenum(void);
 
 extern void end_scan(FILE *fp);
 
-extern int is_check_token_size(int i);
+/* parse-syntax.c */
+extern char *tokenstr[NUMOFTOKEN + 1];
 
-/* id-list.c */
+extern int token;
 
-extern void init_idtab();
+extern int parse_program(FILE *fp);
 
-extern struct ID *search_idtab(char *np);
+/* cross-referencer.c */
+extern char *current_procname;
 
-extern void id_countup(char *np);
+extern void init_temp_names();
+
+extern int temp_names(char *name);
+
+extern void release_names();
+
+extern void init_type(struct TYPE *type);
+
+extern int save_vallinenum();
+
+extern void release_vallinenum();
+
+extern int def_id(const char *name, const char *procname, const struct TYPE *itp);
+
+extern int ref_id(const char *name, const char *procname, int refnum, struct TYPE **temp_type);
 
 extern void print_idtab();
 
 extern void release_idtab();
+
+extern int check_standard_type(int type);
+
+extern int check_standard_type_to_pointer(struct TYPE *ptype);
+
+#endif //TASK3_CROSS_REFERENCER_H

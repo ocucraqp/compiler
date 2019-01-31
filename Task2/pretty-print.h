@@ -1,9 +1,14 @@
-/* token-list.h  */
+#ifndef TASK2_PRETTY_PRINT_H
+#define TASK2_PRETTY_PRINT_H
+
+/* pretty-print.h  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #define MAXSTRSIZE 1024
+#define NORMAL 0
+#define ERROR 1
 
 /* Token */
 #define    TNAME        1    /* Name : Alphabet { Alphabet | Digit } */
@@ -58,7 +63,7 @@
 
 #define NUMOFTOKEN    49
 
-/* token-list.c */
+/* main.c */
 
 #define NUMOFKEYWORD    28
 #define MAXKEYWORDLENGTH    9
@@ -68,7 +73,7 @@ extern struct KEY {
     int keytoken;
 } key[NUMOFKEYWORD];
 
-extern void error(char *mes);
+extern int error(char *mes);
 
 /* scan.c */
 extern int init_scan(char *filename, FILE **fp);
@@ -113,14 +118,78 @@ extern void end_scan(FILE *fp);
 
 extern int is_check_token_size(int i);
 
-/* id-list.c */
+/* pretty-print.c */
 
-extern void init_idtab();
+extern int token;
 
-extern struct ID *search_idtab(char *np);
+extern int paragraph_number;
 
-extern void id_countup(char *np);
+extern int parse_program(FILE *fp);
 
-extern void print_idtab();
+extern int parse_block(FILE *fp);
 
-extern void release_idtab();
+extern int parse_variable_declaration(FILE *fp);
+
+extern int parse_variable_names(FILE *fp);
+
+extern int parse_variable_name(FILE *fp);
+
+extern int parse_type(FILE *fp);
+
+extern int parse_standard_type(FILE *fp);
+
+extern int parse_array_type(FILE *fp);
+
+extern int parse_subprogram_declaration(FILE *fp);
+
+extern int parse_procedure_name(FILE *fp);
+
+extern int parse_formal_parameters(FILE *fp);
+
+extern int parse_compound_statement(FILE *fp);
+
+extern int parse_statement(FILE *fp);
+
+extern int parse_condition_statement(FILE *fp);
+
+extern int parse_iteration_statement(FILE *fp);
+
+extern int parse_exit_statement(FILE *fp);
+
+extern int parse_call_statement(FILE *fp);
+
+extern int parse_expressions(FILE *fp);
+
+extern int parse_return_statement(FILE *fp);
+
+extern int parse_assignment_statement(FILE *fp);
+
+extern int parse_left_part(FILE *fp);
+
+extern int parse_variable(FILE *fp);
+
+extern int parse_expression(FILE *fp);
+
+extern int parse_simple_expression(FILE *fp);
+
+extern int parse_term(FILE *fp);
+
+extern int parse_factor(FILE *fp);
+
+extern int parse_constant(FILE *fp);
+
+extern int parse_multiplicative_operator(FILE *fp);
+
+extern int parse_additive_operator(FILE *fp);
+
+extern int parse_relational_operator(FILE *fp);
+
+extern int parse_input_statement(FILE *fp);
+
+extern int parse_output_statement(FILE *fp);
+
+extern int parse_output_format(FILE *fp);
+
+extern void make_paragraph();
+
+#endif //TASK2_PRETTY_PRINT_H
