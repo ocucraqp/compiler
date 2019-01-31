@@ -19,6 +19,7 @@ char *tokenstr[NUMOFTOKEN + 1] = {
 /* Structure for creating a list of dummy argument IDs */
 struct PARAID paraidroot, *paraidend;
 
+/* Variable to be determined in each syntax */
 int is_insubproc = 0, is_incall = 0, is_inassign = 0, is_inleft_part = 0, is_ininput = 0;
 
 /* prototype declaration */
@@ -134,7 +135,7 @@ int parse_block(char *start_labelname) {
 
     command_label(start_labelname);
 
-    if (parse_compound_statement(0) == ERROR) { return ERROR; }
+    if (parse_compound_statement() == ERROR) { return ERROR; }
 
     command_return();
 
