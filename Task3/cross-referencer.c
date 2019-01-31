@@ -85,7 +85,7 @@ void release_vallinenum() { /* Release tha data structure */
         for (pline = vallinenumroot; pline != NULL; pline = qline) {
             qline = pline->nextlinep;
             free(pline);
-            pline == NULL;
+            pline = NULL;
         }
     }
 }

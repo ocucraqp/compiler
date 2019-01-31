@@ -91,7 +91,7 @@ extern struct TYPE {
     struct TYPE *paratp;
     /* pointer to parameter's type list if ttype is TPPROC
      * paratp is NULL if ttype is not TPROC*/
-} temp_type;
+} temp_type, *end_type;
 
 extern struct LINE {
     int linenum;
@@ -144,9 +144,6 @@ extern int parse_program(FILE *fp);
 
 /* cross-referencer.c */
 extern char *current_procname;
-
-extern struct TYPE temp_type;
-extern struct TYPE *end_type;
 
 extern void init_temp_names();
 

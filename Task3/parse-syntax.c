@@ -489,7 +489,7 @@ int parse_exit_statement(FILE *fp) {
 int parse_call_statement(FILE *fp) {
     struct TYPE *parameter_type;
     char *temp_procname;
-    temp_procname == NULL;
+    temp_procname = NULL;
 
     if (current_procname != NULL) {
         if ((temp_procname = (char *) malloc((MAX_IDENTIFIER_SIZE * sizeof(char)) + 1)) == NULL) {
@@ -961,7 +961,7 @@ int parse_output_format(FILE *fp) {
     switch (token) {
         case TSTRING:
             str_length = (int) strlen(string_attr);
-            if (str_length == 0 || str_length > 2) {
+            if (str_length == 0 || str_length >= 2) {
                 token = scan(fp);
                 break;
             }
