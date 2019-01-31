@@ -5,3 +5,7 @@
 */sample_output/
 */tex/
 *.pdf
+Task4/*.dll
+Task4/*.exe
+Task4/output
+Task4/result
