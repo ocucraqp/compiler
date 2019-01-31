@@ -402,7 +402,7 @@ void command_constant_num(int num) {
     fprintf(outputfp, "\tLAD \tgr1, %d\n", num);
 }
 
-/* Generate code for reading character string */
+/* Generate code for reading integer */
 void command_read_int() {
     fprintf(outputfp, "\tCALL\tREADINT\n");
     on_pl_flag(PLREADINT);
