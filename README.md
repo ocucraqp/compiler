@@ -1,7 +1,5 @@
 MPPL Compiler
 ====
-
-Overview
 c言語によるMPPLコンパイラ
 
 ## Description
